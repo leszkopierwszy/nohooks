@@ -1,0 +1,235 @@
+{
+  "overview": {
+    "subtitle": "Plan dnia, kalendarz i szybki podgląd oszczędności oraz pogody.",
+    "layout": {
+      "hintEdit": "Przeciągnij uchwyt lub rozciągnij krawędź kafelka. Układ zapisuje się po wyjściu z edycji.",
+      "editStart": "Edytuj układ",
+      "editDone": "Gotowe",
+      "reset": "Przywróć domyślny układ",
+      "gridLabel": "Kafelki przeglądu",
+      "dragTile": "Przenieś kafelek — {tile}",
+      "tiles": {
+        "day": "Plan dnia",
+        "calendar": "Kalendarz",
+        "savings": "Główny target",
+        "weather": "Pogoda"
+      }
+    },
+    "calendar": {
+      "title": "Kalendarz",
+      "open": "Pełny kalendarz",
+      "prevMonth": "Poprzedni miesiąc",
+      "nextMonth": "Następny miesiąc"
+    },
+    "savings": {
+      "label": "Główny target"
+    },
+    "weather": {
+      "title": "Pogoda",
+      "location": "Lokalizacja",
+      "locationUnknown": "Nie ustawiono",
+      "placeholder": "Dane wkrótce",
+      "comingSoon": "Docelowo pobieranie z API na podstawie lokalizacji."
+    },
+    "day": {
+      "title": "Plan dnia",
+      "open": "Kalendarz — ten dzień",
+      "empty": "Brak wpisów w tym dniu — wybierz inny dzień lub dodaj wydarzenie w kalendarzu."
+    }
+  },
+  "nav": {
+    "overview": "Przegląd",
+    "souls": "Souls",
+    "prims": "Prims",
+    "collection": "Kolekcja",
+    "finance": "Finanse",
+    "growth": "Rozwój",
+    "calendar": "Kalendarz",
+    "items": "Itemy"
+  },
+  "account": {
+    "section": "Konto",
+    "title": "Ustawienia konta",
+    "subtitle": "Profil zalogowanego użytkownika — niezależny od Souls (Prims).",
+    "avatarUrl": "Adres awatara",
+    "displayName": "Nazwa wyświetlana",
+    "username": "Nazwa użytkownika",
+    "email": "E-mail",
+    "bio": "Bio",
+    "saveProfile": "Zapisz profil",
+    "saved": "Zapisano.",
+    "nav": {
+      "settings": "Ustawienia użytkownika",
+      "backend": "Backend"
+    },
+    "backend": {
+      "title": "Backend",
+      "subtitle": "Katalog modeli ComfyUI, Langfuse (trace’y importu) i konfiguracja usług.",
+      "openLink": "Otwórz w nowej karcie",
+      "links": {
+        "home": "Backend Settings",
+        "homeHint": "Katalog modeli, instalacja pakietów i magazyn ComfyUI.",
+        "catalog": "Katalog modeli",
+        "catalogHint": "Presety, pakiety HF, status na dysku i instalacja.",
+        "addModel": "Dodaj model",
+        "addModelHint": "Import z linku Hugging Face do comfyui-models.",
+        "langfuse": "Langfuse",
+        "langfuseHint": "UI observability — trace’y product-parser i Ollama.",
+        "langfuseGuide": "Langfuse w przewodniku",
+        "langfuseGuideHint": "Opis i status usług w Backend Settings."
+      }
+    }
+  },
+  "display": {
+    "theme": {
+      "title": "Motyw kolorystyczny",
+      "hint": "Jasny, ciemny lub zgodny z ustawieniami systemu.",
+      "light": "Jasny",
+      "dark": "Ciemny",
+      "system": "System"
+    },
+    "locale": {
+      "title": "Język wyświetlania",
+      "hint": "Etykiety interfejsu i główne teksty stron. Domyślnie angielski."
+    },
+    "zoom": {
+      "title": "Powiększenie treści",
+      "hint": "Dotyczy kolumny po prawej (sidebar bez zmian). 100% to domyślna gęstość."
+    },
+    "dialog": {
+      "title": "Wyświetlanie",
+      "subtitle": "Motyw, język i powiększenie treści.",
+      "accountLink": "Ustawienia konta",
+      "done": "Gotowe"
+    }
+  },
+  "search": {
+    "kinds": {
+      "command": "Polecenia",
+      "page": "Nawigacja",
+      "calendar_event": "Kalendarz",
+      "item": "Itemy",
+      "collection": "Kolekcje",
+      "persona": "Prims",
+      "savings_target": "Oszczędności",
+      "portfolio_asset": "Portfel",
+      "finance_account": "Konta"
+    },
+    "trigger": "Szukaj w całej aplikacji…",
+    "inputPlaceholder": "Szukaj lub wpisz polecenie (np. cal:)",
+    "clear": "Wyczyść",
+    "openLabel": "Szukaj w aplikacji",
+    "commands": "Polecenia",
+    "noResults": "Brak wyników dla „{query}”.",
+    "context": {
+      "calendar": "Na tym widoku cal: i exp: dodatkowo filtrują kalendarz pod paskiem.",
+      "finance": "Priorytet targety, portfel, konta i wydarzenia finansowe.",
+      "collection": "Priorytet itemy i kolekcje.",
+      "personas": "Priorytet Prims.",
+      "filterActive": "Filtr: {label}. Enter — pierwszy wynik."
+    },
+    "results": {
+      "one": "wynik",
+      "few": "wyniki",
+      "many": "wyników"
+    }
+  },
+  "souls": {
+    "prims": {
+      "title": "Prims",
+      "subtitle": "Przełącz perspektywę dopasowania w Souls — itemy nie należą do Prima, ale mogą do niego pasować.",
+      "activePrim": "Aktywny Prim",
+      "loading": "Ładowanie Primów…",
+      "viewProfile": "Zobacz profil →",
+      "active": "Aktywna"
+    },
+    "animals": {
+      "title": "Zwierzęta",
+      "subtitle": "Souls poza Primami — profile pupili i zwierząt domowych.",
+      "new": "Nowe zwierzę",
+      "add": "Dodaj zwierzę",
+      "adding": "Zapisywanie…",
+      "edit": "Edytuj",
+      "editTitle": "Edycja zwierzęcia",
+      "save": "Zapisz zmiany",
+      "updateError": "Nie udało się zapisać zmian.",
+      "delete": "Usuń",
+      "deleteConfirmTitle": "Usunąć zwierzę?",
+      "deleteConfirmBody": "„{name}” zostanie usunięte. Powiązane konto wydatków (mock) też zniknie z listy kont.",
+      "deleteError": "Nie udało się usunąć zwierzęcia.",
+      "cancel": "Anuluj",
+      "empty": "Brak zwierząt — użyj przycisku powyżej, aby dodać pierwsze.",
+      "addError": "Nie udało się dodać zwierzęcia.",
+      "name": "Imię",
+      "namePlaceholder": "np. Luna",
+      "description": "Opis",
+      "descriptionPlaceholder": "Rasa, charakter, notatki…",
+      "species": "Gatunek",
+      "speciesPlaceholder": "Wybierz gatunek",
+      "sexLabel": "Płeć",
+      "birthDate": "Data urodzenia",
+      "biometrics": "Biometria",
+      "weightKg": "Masa (kg)",
+      "heightCm": "Wysokość w kłębie (cm)",
+      "microchip": "Numer chipa",
+      "speciesTypes": {
+        "dog": "Pies",
+        "cat": "Kot",
+        "rabbit": "Królik",
+        "bird": "Ptak",
+        "rodent": "Gryzoń",
+        "reptile": "Gad",
+        "fish": "Ryba",
+        "horse": "Koń",
+        "other": "Inne"
+      },
+      "sex": {
+        "female": "Samica",
+        "male": "Samiec",
+        "unknown": "Nieznana"
+      },
+      "purchaseTypes": {
+        "food": "Karma",
+        "vet": "Weterynarz",
+        "grooming": "Pielęgnacja",
+        "supplies": "Akcesoria",
+        "insurance": "Ubezpieczenie",
+        "other": "Inne"
+      },
+      "frequency": {
+        "weekly": "Co tydzień",
+        "monthly": "Co miesiąc",
+        "quarterly": "Co kwartał",
+        "yearly": "Co rok",
+        "ad_hoc": "Nieregularnie",
+        "label": "Domyślna częstotliwość zakupów"
+      },
+      "expenseAccount": {
+        "title": "Konto wydatków",
+        "createdTitle": "Utworzono konto powiązane w Finansach",
+        "createdBody": "Dla „{name}” powstało konto „{account}”. Możesz tam śledzić koszty, częstotliwość zakupów oraz typy wydatków (karma, weterynarz, pielęgnacja itd.).",
+        "viewFinance": "Otwórz listę kont",
+        "trackHint": "Powiązane z Finansami → Wydatki (mock)"
+      },
+      "card": {
+        "speciesLabel": "Gatunek",
+        "biometricsLabel": "Biometria",
+        "expenseLink": "Konto wydatków",
+        "noBiometrics": "Brak wpisu biometrii"
+      }
+    }
+  },
+  "userMenu": {
+    "accountMenu": "Menu konta",
+    "openMenu": "Otwórz menu",
+    "closeMenu": "Zamknij menu",
+    "displayNameFallback": "Konto",
+    "displaySection": "Wyświetlanie",
+    "accountSettings": "Ustawienia konta",
+    "displaySettings": "Wyświetlanie",
+    "zoom": "Powiększenie {label}"
+  },
+  "common": {
+    "loading": "Ładowanie…"
+  }
+}

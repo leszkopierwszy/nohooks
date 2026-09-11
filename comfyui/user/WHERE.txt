@@ -1,0 +1,13 @@
+Dane użytkownika ComfyUI na Macu (workflowy z UI, ustawienia, cache Managera).
+
+Domyślna ścieżka: nohooks/comfyui/user/
+Montowane jako: /opt/ComfyUI/user w kontenerze nohooks-comfyui
+
+Workflowy zapisane w ComfyUI (Menu → Save):
+  user/default/workflows/*.json
+
+Workflowy API dla Nohooks (backend) — osobny folder:
+  nohooks/comfyui/workflows/  →  /opt/ComfyUI/custom_workflows
+
+Migracja z istniejącego kontenera (jednorazowo):
+  docker cp nohooks-comfyui:/opt/ComfyUI/user/. ./comfyui/user/

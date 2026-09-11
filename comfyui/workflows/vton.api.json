@@ -1,0 +1,25 @@
+{
+  "_meta": {
+    "description": "Szablon virtual try-on (IDM-VTON) — zainstaluj custom nodes w ComfyUI i podmień ten plik wyeksportowanym workflow.",
+    "node_map_hint": "config/persona_ai.php → comfyui.node_map.vton"
+  },
+  "20": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "persona_human.png"
+    }
+  },
+  "21": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "persona_garment.png"
+    }
+  },
+  "22": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "persona_vton",
+      "images": ["20", 0]
+    }
+  }
+}

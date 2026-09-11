@@ -1,0 +1,17 @@
+# Ścieżki modeli nohooks — używane przez natywne ComfyUI na Macu (MPS).
+# base_path jest nadpisywany przy starcie przez scripts/start-comfyui-native.sh
+nohooks:
+  base_path: PLACEHOLDER_MODELS_DIR
+  is_default: true
+  checkpoints: checkpoints
+  clip: clip
+  clip_vision: clip_vision
+  controlnet: controlnet
+  diffusion_models: diffusion_models
+  embeddings: embeddings
+  loras: loras
+  text_encoders: text_encoders
+  unet: unet
+  upscale_models: upscale_models
+  vae: vae
+  vae_approx: vae_approx

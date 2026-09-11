@@ -1,0 +1,19 @@
+{
+  "_meta": {
+    "description": "Szablon awatara — podmień w ComfyUI na własny graf SD+ControlNet OpenPose i wyeksportuj API (Save API format).",
+    "node_map_hint": "Ustaw ID węzłów w config/persona_ai.php → comfyui.node_map.avatar"
+  },
+  "10": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "persona_placeholder.png"
+    }
+  },
+  "11": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "persona_avatar",
+      "images": ["10", 0]
+    }
+  }
+}

@@ -1,0 +1,210 @@
+# English — default display language. Edit labels here without touching Vue files.
+
+overview:
+  subtitle: Your day plan, calendar, and quick savings and weather glance.
+  layout:
+    hintEdit: Drag the handle or resize tile edges. Layout is saved when you finish editing.
+    editStart: Edit layout
+    editDone: Done
+    reset: Reset default layout
+    gridLabel: Overview tiles
+    dragTile: Move tile — {tile}
+    tiles:
+      day: Day plan
+      calendar: Calendar
+      savings: Main target
+      weather: Weather
+  calendar:
+    title: Calendar
+    open: Full calendar
+    prevMonth: Previous month
+    nextMonth: Next month
+  savings:
+    label: Main target
+  weather:
+    title: Weather
+    location: Location
+    locationUnknown: Not set
+    placeholder: Data coming soon
+    comingSoon: Live weather from an API based on your location later.
+  day:
+    title: Day plan
+    open: Calendar — this day
+    empty: Nothing on this day — pick another day or add an event in the calendar.
+
+nav:
+  overview: Overview
+  souls: Souls
+  prims: Prims
+  collection: Collection
+  finance: Finance
+  growth: Growth
+  calendar: Calendar
+  items: Items
+
+account:
+  section: Account
+  title: Account settings
+  subtitle: Signed-in user profile — separate from Souls (Prims).
+  avatarUrl: Avatar URL
+  displayName: Display name
+  username: Username
+  email: Email
+  bio: Bio
+  saveProfile: Save profile
+  saved: Saved.
+  nav:
+    settings: User settings
+    backend: Backend
+  backend:
+    title: Backend
+    subtitle: ComfyUI model catalog, Langfuse (import traces), and service configuration.
+    openLink: Open in new tab
+    links:
+      home: Backend Settings
+      homeHint: Model catalog, bundle installation, and ComfyUI storage.
+      catalog: Model catalog
+      catalogHint: Presets, HF bundles, disk status, and installation.
+      addModel: Add model
+      addModelHint: Import from a Hugging Face link into comfyui-models.
+      langfuse: Langfuse
+      langfuseHint: Observability UI — product-parser and Ollama traces.
+      langfuseGuide: Langfuse guide
+      langfuseGuideHint: Overview and service status in Backend Settings.
+
+display:
+  theme:
+    title: Color theme
+    hint: Light, dark, or follow your system setting.
+    light: Light
+    dark: Dark
+    system: System
+  locale:
+    title: Display language
+    hint: UI labels and main page copy. Default is English.
+  zoom:
+    title: Content zoom
+    hint: Applies to the right column only (sidebar unchanged). 100% is the default density.
+  dialog:
+    title: Display
+    subtitle: Theme, language, and content zoom.
+    accountLink: Account settings
+    done: Done
+
+search:
+  kinds:
+    command: Commands
+    page: Navigation
+    calendar_event: Calendar
+    item: Items
+    collection: Collections
+    persona: Prims
+    savings_target: Savings
+    portfolio_asset: Portfolio
+    finance_account: Accounts
+  trigger: Search the app…
+  inputPlaceholder: Search or type a command (e.g. cal:)
+  clear: Clear
+  openLabel: Search the app
+  commands: Commands
+  noResults: No results for “{query}”.
+  context:
+    calendar: "On this view, cal: and exp: also filter the calendar below the bar."
+    finance: Priority savings targets, portfolio, accounts, and finance events.
+    collection: Priority items and collections.
+    personas: Priority Prims.
+    filterActive: "Filter: {label}. Enter — first result."
+  results:
+    one: result
+    few: results
+    many: results
+
+souls:
+  prims:
+    title: Prims
+    subtitle: Switch fit perspective in Souls — items are not owned by a Prim but may fit one.
+    activePrim: Active Prim
+    loading: Loading Prims…
+    viewProfile: View profile →
+    active: Active
+  animals:
+    title: Animals
+    subtitle: Souls beyond Prims — profiles for pets and companion animals.
+    new: New animal
+    add: Add animal
+    adding: Saving…
+    edit: Edit
+    editTitle: Edit animal
+    save: Save changes
+    updateError: Could not save changes.
+    delete: Delete
+    deleteConfirmTitle: Delete this animal?
+    deleteConfirmBody: “{name}” will be removed. The linked expense account (mock) will also disappear from the account list.
+    deleteError: Could not delete the animal.
+    cancel: Cancel
+    empty: No animals yet — use the button above to add the first one.
+    addError: Could not add the animal.
+    name: Name
+    namePlaceholder: e.g. Luna
+    description: Description
+    descriptionPlaceholder: Breed, temperament, notes…
+    species: Species
+    speciesPlaceholder: Select species
+    sexLabel: Sex
+    birthDate: Date of birth
+    biometrics: Biometrics
+    weightKg: Weight (kg)
+    heightCm: Height at withers (cm)
+    microchip: Microchip number
+    speciesTypes:
+      dog: Dog
+      cat: Cat
+      rabbit: Rabbit
+      bird: Bird
+      rodent: Rodent
+      reptile: Reptile
+      fish: Fish
+      horse: Horse
+      other: Other
+    sex:
+      female: Female
+      male: Male
+      unknown: Unknown
+    purchaseTypes:
+      food: Food
+      vet: Veterinary
+      grooming: Grooming
+      supplies: Supplies
+      insurance: Insurance
+      other: Other
+    frequency:
+      weekly: Weekly
+      monthly: Monthly
+      quarterly: Quarterly
+      yearly: Yearly
+      ad_hoc: Ad hoc
+      label: Default purchase frequency
+    expenseAccount:
+      title: Expense account
+      createdTitle: Linked expense account created
+      createdBody: An account “{account}” was created for “{name}”. Track costs, purchase frequency, and expense types (food, vet, grooming, etc.) there.
+      viewFinance: Open account list
+      trackHint: Linked under Finance → expense accounts (mock)
+    card:
+      speciesLabel: Species
+      biometricsLabel: Biometrics
+      expenseLink: Expense account
+      noBiometrics: No biometrics recorded
+
+userMenu:
+  accountMenu: Account menu
+  openMenu: Open menu
+  closeMenu: Close menu
+  displayNameFallback: Account
+  displaySection: Display
+  accountSettings: Account settings
+  displaySettings: Display
+  zoom: Zoom {label}
+
+common:
+  loading: Loading…

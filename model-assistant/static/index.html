@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Backend Settings — Nohooks</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'] },
+          colors: { accent: 'var(--accent)' },
+        },
+      },
+    }
+  </script>
+  <link rel="stylesheet" href="static/app.css" />
+</head>
+<body>
+  <div id="sidebar-backdrop" class="sidebar-backdrop" aria-hidden="true"></div>
+
+  <div class="app-shell">
+  <aside id="sidebar" class="sidebar">
+    <div class="flex items-center gap-2.5 px-5 py-5 border-b" style="border-color: var(--card-border)">
+      <div class="logo-mark" aria-hidden="true">B</div>
+      <span class="font-semibold text-sm tracking-tight" style="color: var(--text)">Backend Settings</span>
+    </div>
+
+    <nav class="pb-6" aria-label="Spis treści">
+      <p class="nav-group-title">Przewodnik</p>
+      <a href="#intro" class="nav-link active" data-section="intro">Wprowadzenie</a>
+      <p class="nav-group-title">Observability</p>
+      <a href="#langfuse" class="nav-link" data-section="langfuse">Langfuse</a>
+      <p class="nav-group-title">Modele</p>
+      <a href="#getting-started" class="nav-link" data-section="getting-started">Pierwsze kroki</a>
+      <a href="#add-model" class="nav-link" data-section="add-model">Dodaj model</a>
+      <a href="#bundles" class="nav-link" data-section="bundles">Katalog pakietów</a>
+      <a href="#storage" class="nav-link" data-section="storage">Magazyn</a>
+      <a href="#appearance" class="nav-link" data-section="appearance">Wygląd</a>
+
+      <p class="nav-group-title">Pakiety</p>
+      <div id="nav-bundles" class="max-h-48 overflow-y-auto"></div>
+    </nav>
+  </aside>
+
+  <div class="main-column">
+    <header class="topbar">
+      <div class="flex items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+        <div class="flex items-center gap-3 min-w-0">
+          <button type="button" id="btn-menu" class="lg:hidden p-2 -ml-2 rounded-md hover:opacity-80" aria-label="Menu">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+          <div class="relative hidden sm:block">
+            <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 themed-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-width="2" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z"/></svg>
+            <input type="search" id="bundle-search" class="search-input" placeholder="Szukaj pakietów…" autocomplete="off" />
+          </div>
+        </div>
+        <div class="flex items-center gap-4 text-sm">
+          <a href="http://localhost:3100" target="_blank" rel="noopener" class="themed-muted hover:opacity-80 hidden sm:inline">Langfuse</a>
+          <a href="http://localhost:8188" target="_blank" rel="noopener" class="themed-muted hover:opacity-80 hidden sm:inline">ComfyUI</a>
+          <span id="storage-summary" class="themed-muted text-xs sm:text-sm truncate max-w-[10rem] sm:max-w-none"></span>
+        </div>
+      </div>
+    </header>
+
+    <section class="hero-protocol relative">
+      <svg class="hero-mesh" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" viewBox="0 0 1200 400" aria-hidden="true">
+        <defs>
+          <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#10b981;stop-opacity:0.35"/>
+            <stop offset="100%" style="stop-color:#06b6d4;stop-opacity:0.1"/>
+          </linearGradient>
+        </defs>
+        <polygon fill="url(#g1)" points="0,400 0,120 280,0 520,180 0,400"/>
+        <polygon fill="url(#g1)" opacity="0.6" points="400,400 200,80 680,40 900,200 1200,120 1200,400"/>
+        <polygon fill="url(#g1)" opacity="0.4" points="800,400 600,100 1200,60 1200,400"/>
+      </svg>
+      <div class="relative max-w-3xl mx-auto px-6 sm:px-10">
+        <h1 class="text-3xl sm:text-4xl font-bold tracking-tight" style="color: var(--text)">
+          Backend Settings
+        </h1>
+        <p class="mt-4 text-base sm:text-lg max-w-xl leading-relaxed themed-muted">
+          Modele ComfyUI, import produktów, observability (Langfuse) i konfiguracja usług w Dockerze.
+        </p>
+        <div class="mt-8 flex flex-wrap gap-3">
+          <a href="#bundles" class="btn-primary inline-flex items-center gap-1 rounded-lg px-4 py-2.5 text-sm font-semibold no-underline text-white">
+            Przejdź do katalogu
+            <span aria-hidden="true">→</span>
+          </a>
+          <a href="#add-model" class="btn-outline inline-flex rounded-lg px-4 py-2.5 text-sm font-semibold no-underline">
+            Dodaj z linku HF
+          </a>
+        </div>
+        <div class="mt-8 relative max-w-md">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 themed-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-width="2" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z"/></svg>
+          <input type="search" id="hero-search" class="themed-input w-full pl-10 pr-16 py-2.5 text-sm" placeholder="Znajdź pakiet…" />
+          <kbd class="absolute right-3 top-1/2 -translate-y-1/2 text-xs themed-muted border rounded px-1.5 py-0.5" style="border-color: var(--input-border)">⌘K</kbd>
+        </div>
+      </div>
+    </section>
+
+    <div class="content-wrap">
+      <section id="intro" class="prose-section">
+        <h2>Wprowadzenie</h2>
+        <p>
+          Ten asystent zarządza katalogiem modeli i zapisuje pliki w
+          <code class="text-sm px-1 py-0.5 rounded" style="background: var(--tag-bg)">comfyui-models</code>
+          (modele) oraz
+          <code class="text-sm px-1 py-0.5 rounded" style="background: var(--tag-bg)">comfyui/user</code>
+          (workflowy zapisane w UI ComfyUI).
+        </p>
+        <div class="guide-grid">
+          <div class="guide-card">
+            <h3>Presety</h3>
+            <p>Gotowe pakiety (Z-Image, Qwen, LoRA) z rozmiarami i statusem na dysku.</p>
+            <a href="#bundles" class="themed-link text-sm">Katalog →</a>
+          </div>
+          <div class="guide-card">
+            <h3>Własny HF</h3>
+            <p>Wklej link resolve/blob — asystent wykryje repo i folder docelowy.</p>
+            <a href="#add-model" class="themed-link text-sm">Dodaj model →</a>
+          </div>
+          <div class="guide-card">
+            <h3>Cofanie</h3>
+            <p>„Cofnij instalację” usuwa pobrane pliki z manifestu — bezpieczny rollback.</p>
+            <a href="#bundles" class="themed-link text-sm">Zarządzaj →</a>
+          </motion.div>
+          <div class="guide-card">
+            <h3>Langfuse</h3>
+            <p>Trace’y parsera produktów i Ollama — logi importu i rankingu zdjęć.</p>
+            <a href="#langfuse" class="themed-link text-sm">Statystyki →</a>
+          </div>
+        </div>
+      </section>
+
+      <section id="langfuse" class="prose-section">
+        <h2>Langfuse — info i statystyki</h2>
+        <p>
+          Observability dla <strong style="color: var(--text)">product-parser</strong> i wywołań
+          <strong style="color: var(--text)">Ollama</strong>: trace’y importu produktu, rankingu zdjęć i vision.
+        </p>
+        <div class="mt-6 flex flex-wrap gap-3">
+          <a
+            href="http://localhost:3100"
+            target="_blank"
+            rel="noopener"
+            class="btn-primary inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold no-underline text-white"
+          >
+            Otwórz Langfuse
+            <span aria-hidden="true">↗</span>
+          </a>
+          <button type="button" class="btn-outline inline-flex rounded-lg px-4 py-2.5 text-sm font-semibold" id="btn-refresh-observability">
+            Odśwież status
+          </button>
+        </div>
+        <div id="observability-panel" class="mt-6 guide-grid" aria-live="polite">
+          <p class="text-sm themed-muted col-span-full">Ładowanie statusu usług…</p>
+        </div>
+        <p class="mt-6 text-sm themed-muted">
+          Uruchomienie: <code class="text-sm px-1 py-0.5 rounded" style="background: var(--tag-bg)">docker compose --profile langfuse up -d</code>
+          · Login domyślny: <code class="text-sm px-1 py-0.5 rounded" style="background: var(--tag-bg)">admin@nohooks.local</code>
+        </p>
+      </section>
+
+      <section id="getting-started" class="prose-section">
+        <h2>Pierwsze kroki</h2>
+        <p>
+          Upewnij się, że kontener <strong style="color: var(--text)">Backend Settings</strong> (<code class="text-sm">model-assistant</code>) i
+          <strong style="color: var(--text)">comfyui</strong> działają (<code class="text-sm">docker compose up -d</code>).
+          Otwórz ComfyUI pod adresem
+          <a href="http://localhost:8188" target="_blank" rel="noopener" class="themed-link">localhost:8188</a>.
+        </p>
+        <p>
+          Wybierz pakiet w katalogu i kliknij <strong style="color: var(--text)">Pobierz i zainstaluj</strong>.
+          Postęp odświeża się automatycznie co kilka sekund.
+        </p>
+        <a href="#bundles" class="themed-link text-sm font-medium">Przejdź do katalogu →</a>
+      </section>
+
+      <section id="add-model" class="prose-section">
+        <h2>Dodaj model z Hugging Face</h2>
+        <p>Wklej jeden lub więcej linków (po jednym w linii). Obsługiwane są URL-e <code class="text-sm">resolve</code>, <code class="text-sm">blob</code> i <code class="text-sm">tree</code>.</p>
+
+        <label class="block text-sm font-medium mt-6 mb-1 themed-muted" for="custom-name">Nazwa (opcjonalnie)</label>
+        <input id="custom-name" type="text" placeholder="np. Mój LoRA" class="themed-input block w-full px-3 py-2 text-sm" />
+
+        <label class="block text-sm font-medium mt-4 mb-1 themed-muted" for="custom-urls">Link(i)</label>
+        <textarea id="custom-urls" rows="4" placeholder="https://huggingface.co/.../resolve/main/.../model.safetensors" class="themed-input block w-full px-3 py-2 font-mono text-sm"></textarea>
+
+        <label class="block text-sm font-medium mt-4 mb-1 themed-muted" for="custom-subdir">Folder docelowy</label>
+        <select id="custom-subdir" class="themed-input block w-full px-3 py-2 text-sm">
+          <option value="">— automatycznie —</option>
+          <option value="diffusion_models">diffusion_models</option>
+          <option value="text_encoders">text_encoders</option>
+          <option value="vae">vae</option>
+          <option value="loras">loras</option>
+          <option value="checkpoints">checkpoints</option>
+          <option value="controlnet">controlnet</option>
+        </select>
+
+        <button type="button" id="btn-add-custom" class="btn-primary mt-6 rounded-lg px-4 py-2.5 text-sm font-semibold">
+          Dodaj do katalogu
+        </button>
+      </section>
+
+      <section id="bundles" class="prose-section">
+        <h2>Katalog pakietów</h2>
+        <p class="mb-4">Wszystkie presety i modele dodane ręcznie. Postęp pobierania odświeża się co sekundę.</p>
+        <div id="active-downloads" class="hidden" aria-live="polite"></div>
+        <div id="bundle-list"><p class="text-sm themed-muted">Ładowanie…</p></div>
+      </section>
+
+      <section id="storage" class="prose-section">
+        <h2>Magazyn</h2>
+        <p>Rozmiary podfolderów w zamontowanym volume modeli ComfyUI.</p>
+        <ul id="storage-subdirs" class="mt-4 space-y-1 text-sm list-none p-0"></ul>
+      </section>
+
+      <section id="appearance" class="prose-section">
+        <h2>Wygląd</h2>
+        <p>Inspiracja: szablon <strong style="color: var(--text)">Protocol</strong> (Tailwind UI). Wybierz preset lub własny kolor tła strony.</p>
+        <div class="mt-4 flex flex-wrap gap-2" id="preset-buttons"></div>
+        <div class="mt-4 flex flex-wrap items-center gap-3">
+          <label class="text-sm themed-muted" for="bg-color-picker">Kolor tła:</label>
+          <input type="color" id="bg-color-picker" class="h-9 w-12 cursor-pointer rounded border" style="border-color: var(--input-border)" />
+          <input type="text" id="bg-color-hex" class="themed-input w-28 px-2 py-1.5 text-sm font-mono" maxlength="7" />
+          <button type="button" id="btn-apply-custom" class="btn-outline rounded-lg px-3 py-1.5 text-sm font-medium">Zastosuj</button>
+        </div>
+      </section>
+    </div>
+  </div>
+  </div>
+
+  <div id="toast" class="hidden" role="status"></div>
+
+  <script type="module" src="static/app.js"></script>
+</body>
+</html>

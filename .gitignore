@@ -1,0 +1,3 @@
+.env
+.comfyui-native/
+comfyui/extra_model_paths.generated.yaml

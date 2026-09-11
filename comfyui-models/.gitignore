@@ -1,0 +1,13 @@
+# Duże pliki modeli — trzymaj lokalnie, nie w git
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+*.bin
+*.onnx
+*.gguf
+
+# Zostaw strukturę katalogów i notatki
+!.gitignore
+!WHERE.txt
+!**/.gitkeep

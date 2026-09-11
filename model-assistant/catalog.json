@@ -1,0 +1,120 @@
+{
+  "bundles": [
+    {
+      "id": "z-image-base",
+      "name": "Z-Image (Base)",
+      "description": "Z-Image 6B — text-to-image (Alibaba Tongyi). Wymaga workflow image_z_image.json.",
+      "hf_page": "https://huggingface.co/Comfy-Org/z_image",
+      "catalog_added": "2025-12-01",
+      "tags": ["z-image", "text2img"],
+      "files": [
+        {
+          "repo_id": "Comfy-Org/z_image",
+          "hf_path": "split_files/diffusion_models/z_image_bf16.safetensors",
+          "target_subdir": "diffusion_models"
+        },
+        {
+          "repo_id": "Comfy-Org/z_image",
+          "hf_path": "split_files/text_encoders/qwen_3_4b_fp8_mixed.safetensors",
+          "target_subdir": "text_encoders"
+        },
+        {
+          "repo_id": "Comfy-Org/z_image",
+          "hf_path": "split_files/vae/ae.safetensors",
+          "target_subdir": "vae"
+        }
+      ]
+    },
+    {
+      "id": "z-image-turbo",
+      "name": "Z-Image Turbo",
+      "description": "Szybsza wersja Z-Image (~9 kroków). Workflow: image_z_image_turbo.json.",
+      "hf_page": "https://huggingface.co/Comfy-Org/z_image_turbo",
+      "catalog_added": "2025-12-01",
+      "tags": ["z-image", "turbo"],
+      "files": [
+        {
+          "repo_id": "Comfy-Org/z_image_turbo",
+          "hf_path": "split_files/diffusion_models/z_image_turbo_bf16.safetensors",
+          "target_subdir": "diffusion_models"
+        },
+        {
+          "repo_id": "Comfy-Org/z_image_turbo",
+          "hf_path": "split_files/text_encoders/qwen_3_4b_fp8_mixed.safetensors",
+          "target_subdir": "text_encoders"
+        },
+        {
+          "repo_id": "Comfy-Org/z_image_turbo",
+          "hf_path": "split_files/vae/ae.safetensors",
+          "target_subdir": "vae"
+        }
+      ]
+    },
+    {
+      "id": "qwen-image-2512-fp8",
+      "name": "Qwen-Image-2512 (FP8)",
+      "description": "Qwen-Image grudniowy update — FP8, mniejszy rozmiar niż BF16.",
+      "hf_page": "https://huggingface.co/Comfy-Org/Qwen-Image_ComfyUI",
+      "catalog_added": "2025-12-15",
+      "tags": ["qwen", "text2img"],
+      "files": [
+        {
+          "repo_id": "Comfy-Org/Qwen-Image_ComfyUI",
+          "hf_path": "split_files/diffusion_models/qwen_image_2512_fp8_e4m3fn.safetensors",
+          "target_subdir": "diffusion_models"
+        },
+        {
+          "repo_id": "Comfy-Org/Qwen-Image_ComfyUI",
+          "hf_path": "split_files/text_encoders/qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "target_subdir": "text_encoders"
+        },
+        {
+          "repo_id": "Comfy-Org/Qwen-Image_ComfyUI",
+          "hf_path": "split_files/vae/qwen_image_vae.safetensors",
+          "target_subdir": "vae"
+        }
+      ]
+    },
+    {
+      "id": "qwen-image-base-fp8",
+      "name": "Qwen-Image (FP8, oryginał)",
+      "description": "Pierwsza wersja Qwen-Image w formacie ComfyUI.",
+      "hf_page": "https://huggingface.co/Comfy-Org/Qwen-Image_ComfyUI",
+      "catalog_added": "2025-08-01",
+      "tags": ["qwen", "text2img"],
+      "files": [
+        {
+          "repo_id": "Comfy-Org/Qwen-Image_ComfyUI",
+          "hf_path": "split_files/diffusion_models/qwen_image_fp8_e4m3fn.safetensors",
+          "target_subdir": "diffusion_models"
+        },
+        {
+          "repo_id": "Comfy-Org/Qwen-Image_ComfyUI",
+          "hf_path": "split_files/text_encoders/qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "target_subdir": "text_encoders"
+        },
+        {
+          "repo_id": "Comfy-Org/Qwen-Image_ComfyUI",
+          "hf_path": "split_files/vae/qwen_image_vae.safetensors",
+          "target_subdir": "vae"
+        }
+      ]
+    },
+    {
+      "id": "qwen-image-lightning-4step",
+      "name": "Qwen-Image Lightning 4-step (LoRA)",
+      "description": "LoRA przyspieszająca Qwen do ~4 kroków. Wymaga zainstalowanego Qwen-Image.",
+      "hf_page": "https://huggingface.co/lightx2v/Qwen-Image-Lightning",
+      "catalog_added": "2025-09-01",
+      "tags": ["qwen", "lora"],
+      "files": [
+        {
+          "repo_id": "lightx2v/Qwen-Image-Lightning",
+          "hf_path": "Qwen-Image-Lightning-4steps-V1.0.safetensors",
+          "target_subdir": "loras",
+          "filename": "Qwen-Image-Lightning-4steps-V1.0.safetensors"
+        }
+      ]
+    }
+  ]
+}

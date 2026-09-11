@@ -1,0 +1,161 @@
+# Projekt w Docker Desktop: grupa „nohooks”
+name: nohooks
+
+include:
+  - path: docker-compose.langfuse.yml
+
+services:
+  backend:
+    build: ./backend
+    container_name: nohooks-backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./backend:/var/www/html:cached
+      - ./comfyui/workflows:/var/www/comfyui/workflows:ro
+      # Wspólny katalog z natywnym ComfyUI (input/persona) — patrz scripts/start-comfyui-native.sh
+      - ./comfyui-exchange:/var/www/html/storage/app/comfyui-exchange
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: appdb
+      DB_USERNAME: user
+      DB_PASSWORD: password
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:8000
+      PERSONA_AI_PROVIDER: comfyui
+      # Domyślnie: ComfyUI na Macu (MPS). Docker CPU: COMFYUI_BASE_URL=http://comfyui:8188 + profile docker-comfyui
+      COMFYUI_BASE_URL: ${COMFYUI_BASE_URL:-http://host.docker.internal:8188}
+      COMFYUI_WORKFLOWS_PATH: /var/www/comfyui/workflows
+      COMFYUI_EXCHANGE_INPUT_PATH: /var/www/html/storage/app/comfyui-exchange
+      PRODUCT_PARSER_URL: http://product-parser:8080
+      LANGFUSE_TRACING_ENABLED: ${LANGFUSE_TRACING_ENABLED:-true}
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-http://langfuse-web:3000}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-pk-lf-nohooks-product-parser}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-sk-lf-nohooks-product-parser}
+      LANGFUSE_UI_URL: ${LANGFUSE_NEXTAUTH_URL:-http://localhost:3100}
+    depends_on:
+      - db
+      - product-parser
+    command: sh -c "php artisan storage:link --relative 2>/dev/null || true && php artisan serve --host=0.0.0.0 --port=8000"
+
+  # Wolne na Macu (emulacja CPU). Użyj: docker compose --profile docker-comfyui up -d comfyui
+  comfyui:
+    profiles:
+      - docker-comfyui
+    build:
+      context: ./comfyui
+      target: cpu
+    image: nohooks-comfyui:latest
+    container_name: nohooks-comfyui
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Ścieżka na hoście — montowana jako /opt/ComfyUI/models (przetrwa docker compose build)
+      COMFYUI_MODELS_HOST_PATH: ${COMFYUI_MODELS_HOST_PATH:-./comfyui-models}
+      COMFYUI_MODELS_DIR: /opt/ComfyUI/models
+      COMFYUI_USER_HOST_PATH: ${COMFYUI_USER_HOST_PATH:-./comfyui/user}
+    ports:
+      - "8188:8188"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8188/system_stats', timeout=30)\""]
+      interval: 60s
+      timeout: 45s
+      retries: 5
+      start_period: 180s
+    # Z-Image na CPU potrzebuje dużo RAM — w Docker Desktop ustaw ≥16 GB dla VM
+    volumes:
+      - ./comfyui-exchange/input/persona:/opt/ComfyUI/input/persona
+      - ./comfyui-exchange/output:/opt/ComfyUI/output
+      - ${COMFYUI_MODELS_HOST_PATH:-./comfyui-models}:/opt/ComfyUI/models
+      - ${COMFYUI_USER_HOST_PATH:-./comfyui/user}:/opt/ComfyUI/user
+      - comfyui_custom_nodes:/opt/ComfyUI/custom_nodes
+      - ./comfyui/workflows:/opt/ComfyUI/custom_workflows:ro
+
+  product-parser:
+    build: ./product-parser
+    container_name: nohooks-product-parser
+    restart: unless-stopped
+    ports:
+      - "8191:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      OLLAMA_VISION_MODEL: ${OLLAMA_VISION_MODEL:-llava}
+      PRODUCT_IMAGE_USE_OLLAMA: ${PRODUCT_IMAGE_USE_OLLAMA:-true}
+      OLLAMA_UNCERTAIN_MAX: ${OLLAMA_UNCERTAIN_MAX:-3}
+      PRODUCT_IMAGE_MAX_CANDIDATES: ${PRODUCT_IMAGE_MAX_CANDIDATES:-16}
+      PRODUCT_IMAGE_MAX_CATALOG: ${PRODUCT_IMAGE_MAX_CATALOG:-16}
+      PRODUCT_IMAGE_MAX_BYTES: ${PRODUCT_IMAGE_MAX_BYTES:-12000000}
+      LANGFUSE_TRACING_ENABLED: ${LANGFUSE_TRACING_ENABLED:-true}
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-http://langfuse-web:3000}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-pk-lf-nohooks-product-parser}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-sk-lf-nohooks-product-parser}
+
+  model-assistant:
+    build: ./model-assistant
+    container_name: nohooks-model-assistant
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "8190:8080"
+    environment:
+      MODELS_ROOT: /models
+      DATA_DIR: /data
+      LANGFUSE_UI_URL: ${LANGFUSE_NEXTAUTH_URL:-http://localhost:3100}
+      LANGFUSE_INTERNAL_URL: http://langfuse-web:3000
+      PRODUCT_PARSER_URL: http://product-parser:8080
+      # Token HF — opcjonalnie, dla modeli z licencją (plik .env, nie commituj)
+      HF_TOKEN: ${HF_TOKEN:-}
+    volumes:
+      - ${COMFYUI_MODELS_HOST_PATH:-./comfyui-models}:/models
+      - model_assistant_data:/data
+      - ./model-assistant/catalog.json:/app/catalog.json:ro
+
+  frontend:
+    build: ./frontend
+    container_name: nohooks-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app:cached
+      - node_modules:/app/node_modules
+    environment:
+      VITE_API_URL: /api
+      VITE_DEV_API_PROXY: http://backend:8000
+    depends_on:
+      - backend
+    command: npm run dev -- --host
+
+  db:
+    image: postgres:15
+    container_name: nohooks-db
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: appdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d appdb"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+
+volumes:
+  postgres_data:
+  node_modules:
+  comfyui_custom_nodes:
+  model_assistant_data:

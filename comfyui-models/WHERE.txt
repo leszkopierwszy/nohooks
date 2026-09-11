@@ -1,0 +1,13 @@
+Modele ComfyUI na Twoim Macu (poza kontenerem Docker).
+
+Domyślna ścieżka w projekcie: nohooks/comfyui-models/
+Zmiana: skopiuj .env.example → .env i ustaw COMFYUI_MODELS_HOST_PATH
+
+Przykłady wrzucania plików:
+  diffusion_models/z_image_bf16.safetensors
+  text_encoders/qwen_3_4b_fp8_mixed.safetensors
+  vae/ae.safetensors
+  loras/*.safetensors
+
+Po docker compose build / up katalog jest montowany jako /opt/ComfyUI/models w kontenerze.
+Plik HOST_PATH.txt (tworzony przy starcie) powtarza ścieżkę z .env.
