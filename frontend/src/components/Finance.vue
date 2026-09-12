@@ -78,7 +78,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import FinanceExpenseModal from './finance/FinanceExpenseModal.vue'
-import { NET_SALARY_PLN } from '../constants/finance'
+import { useNetSalary } from '../composables/useNetSalary'
 import { useFinanceAccountActions } from '../composables/useFinanceAccountActions'
 import { useI18n } from '../composables/useI18n'
 import { useTimelineStore } from '../stores/timeline'
@@ -86,10 +86,10 @@ import { useUserAssetsStore } from '../stores/userAssets'
 import { useSavingsTargetsStore } from '../stores/savingsTargets'
 import { useFinanceAccountsStore } from '../stores/financeAccounts'
 import { usePetExpenseAccountsStore } from '../stores/petExpenseAccounts'
-import { MOCK_FINANCE_ASSETS, mockFinanceAssetsTotal } from '../constants/mockFinanceAssets'
+import { MOCK_FINANCE_ASSETS } from '../constants/mockFinanceAssets'
 import { savingsTargetColorTheme } from '../constants/savingsTargetColors'
 import { formatPercentLabel } from '../utils/savingsTarget'
-import { mockFinanceAccounts } from '../utils/savingsAssets'
+import { mockFinanceAccounts, mockFinanceAssetsTotal } from '../utils/savingsAssets'
 import { saveManualExpense } from '../utils/saveManualExpense'
 import { collectManualExpenses, manualExpensesSummary } from '../utils/manualExpenses'
 
@@ -101,6 +101,7 @@ const savingsTargets = useSavingsTargetsStore()
 const financeStore = useFinanceAccountsStore()
 const petAccountsStore = usePetExpenseAccountsStore()
 const { adjustBalance } = useFinanceAccountActions()
+const { netSalaryPln, netSalaryFormatted } = useNetSalary()
 
 const expenseOpen = ref(false)
 const expenseRefreshKey = ref(0)
@@ -139,7 +140,7 @@ const plannedExpensesFormatted = computed(
 )
 
 const m2mTargetPln = computed(() =>
-  Math.max(0, NET_SALARY_PLN - timelineStore.activePlannedExpensesSubtotal),
+  Math.max(0, netSalaryPln.value - timelineStore.activePlannedExpensesSubtotal),
 )
 
 const m2mFormatted = computed(() =>
@@ -189,7 +190,7 @@ const mockCountLabel = computed(() =>
 const flowStats = computed(() => [
   {
     name: 'Salary',
-    value: '12,787.00 PLN',
+    value: netSalaryFormatted.value,
     change: 'Net Salary (FTE)',
     changeType: 'negative',
     link: true,

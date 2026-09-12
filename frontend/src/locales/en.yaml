@@ -263,6 +263,8 @@ account:
   username: Username
   email: Email
   bio: Bio
+  netSalary: Net salary (PLN)
+  netSalaryHint: Used for Salary and M2M Expected Savings on Finance.
   saveProfile: Save profile
   saved: Saved.
   saveError: Could not save profile.
@@ -362,6 +364,20 @@ souls:
     loading: Loading Prims…
     viewProfile: View profile →
     active: Active
+    new: New Prim
+    add: Add Prim
+    adding: Saving…
+    cancel: Cancel
+    empty: No Prims yet — use the button above to add the first one.
+    addError: Could not add the Prim.
+    name: Name
+    namePlaceholder: e.g. Nathalie
+    description: Description
+    descriptionPlaceholder: Style notes, sizing context…
+    gender: Gender
+    genderUnknown: Not set
+    genderFemale: Female
+    genderMale: Male
   animals:
     title: Animals
     subtitle: Souls beyond Prims — profiles for pets and companion animals.

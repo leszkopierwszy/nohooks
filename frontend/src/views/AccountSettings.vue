@@ -72,6 +72,20 @@
             class="mt-1 block w-full rounded-lg border-0 bg-gray-50 px-3 py-2 text-sm text-gray-900 ring-1 ring-inset ring-gray-200 focus:bg-white focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-900 dark:text-zinc-100 dark:ring-zinc-700"
           />
         </div>
+        <div>
+          <label for="account-net-salary" class="block text-sm font-medium text-gray-700 dark:text-zinc-300">
+            {{ t('account.netSalary') }}
+          </label>
+          <input
+            id="account-net-salary"
+            v-model="form.netSalaryPln"
+            type="number"
+            min="0"
+            step="0.01"
+            class="mt-1 block w-full rounded-lg border-0 bg-gray-50 px-3 py-2 text-sm text-gray-900 ring-1 ring-inset ring-gray-200 focus:bg-white focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-900 dark:text-zinc-100 dark:ring-zinc-700"
+          />
+          <p class="mt-1 text-xs text-gray-500 dark:text-zinc-400">{{ t('account.netSalaryHint') }}</p>
+        </div>
       </section>
 
       <div class="flex items-center gap-3">
@@ -179,6 +193,7 @@ const form = reactive({
   email: '',
   avatar: '',
   bio: '',
+  netSalaryPln: '',
 })
 
 const passwordForm = reactive({
@@ -207,6 +222,10 @@ function syncFormFromUser() {
   form.email = user.value.email ?? ''
   form.avatar = user.value.avatar ?? ''
   form.bio = user.value.bio ?? ''
+  form.netSalaryPln =
+    user.value.netSalaryPln != null && user.value.netSalaryPln !== ''
+      ? String(user.value.netSalaryPln)
+      : ''
 }
 
 watch(user, syncFormFromUser, { immediate: true })
@@ -222,6 +241,7 @@ async function saveProfile() {
       email: form.email.trim(),
       avatar: form.avatar.trim(),
       bio: form.bio.trim(),
+      netSalaryPln: form.netSalaryPln === '' ? 0 : Number(form.netSalaryPln),
     })
     savedHint.value = t('account.saved')
     window.setTimeout(() => {

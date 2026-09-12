@@ -24,6 +24,7 @@ class AuthController extends Controller
             'email' => $user->email,
             'avatar' => $user->avatar,
             'bio' => $user->bio,
+            'netSalaryPln' => $user->net_salary_pln !== null ? (float) $user->net_salary_pln : 0.0,
             'role' => 'creator',
             /** Only this account may claim pre-auth browser localStorage into its workspace. */
             'isLegacyOwner' => $legacyOwnerId !== null && (int) $user->id === (int) $legacyOwnerId,
@@ -103,6 +104,7 @@ class AuthController extends Controller
             'email' => ['required', 'email', 'max:255', 'unique:users,email,'.$user->id],
             'avatar' => ['nullable', 'string', 'max:2048'],
             'bio' => ['nullable', 'string', 'max:2000'],
+            'netSalaryPln' => ['nullable', 'numeric', 'min:0', 'max:999999999'],
         ]);
 
         $user->fill([
@@ -111,6 +113,9 @@ class AuthController extends Controller
             'email' => $data['email'],
             'avatar' => $data['avatar'] ?: null,
             'bio' => $data['bio'] ?: null,
+            'net_salary_pln' => array_key_exists('netSalaryPln', $data)
+                ? ($data['netSalaryPln'] === null ? null : (float) $data['netSalaryPln'])
+                : $user->net_salary_pln,
         ])->save();
 
         return response()->json([

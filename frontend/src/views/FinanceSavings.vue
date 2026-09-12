@@ -240,11 +240,12 @@ import ConfirmDialog from '../components/ConfirmDialog.vue'
 import SavingsTargetAchievementChart from '../components/savings/SavingsTargetAchievementChart.vue'
 import SavingsTargetAssetsModal from '../components/savings/SavingsTargetAssetsModal.vue'
 import SavingsTargetModal from '../components/savings/SavingsTargetModal.vue'
-import { M2M_SAVINGS_TARGET_ID, NET_SALARY_PLN } from '../constants/finance'
+import { M2M_SAVINGS_TARGET_ID } from '../constants/finance'
 import {
   SAVINGS_TARGET_COLORS,
   savingsTargetColorTheme,
 } from '../constants/savingsTargetColors'
+import { useNetSalary } from '../composables/useNetSalary'
 import { useSavingsTargetsStore } from '../stores/savingsTargets'
 import { useTimelineStore } from '../stores/timeline'
 import { useUserAssetsStore } from '../stores/userAssets'
@@ -259,6 +260,7 @@ import { sumTargetIncludedSelection } from '../utils/savingsAssets'
 const savingsStore = useSavingsTargetsStore()
 const timelineStore = useTimelineStore()
 const userAssets = useUserAssetsStore()
+const { netSalaryPln } = useNetSalary()
 
 const modalOpen = ref(false)
 const editingId = ref(null)
@@ -278,7 +280,7 @@ onMounted(async () => {
 })
 
 const m2mPln = computed(() =>
-  Math.max(0, NET_SALARY_PLN - timelineStore.activePlannedExpensesSubtotal),
+  Math.max(0, netSalaryPln.value - timelineStore.activePlannedExpensesSubtotal),
 )
 
 const primaryTarget = computed(() => savingsStore.primaryTarget)

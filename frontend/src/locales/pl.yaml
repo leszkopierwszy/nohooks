@@ -263,6 +263,8 @@ account:
   username: Nazwa użytkownika
   email: E-mail
   bio: Bio
+  netSalary: Pensja netto (PLN)
+  netSalaryHint: Używane w Salary i M2M Expected Savings na Finance.
   saveProfile: Zapisz profil
   saved: Zapisano.
   saveError: Nie udało się zapisać profilu.
@@ -362,6 +364,20 @@ souls:
     loading: Ładowanie Primów…
     viewProfile: Zobacz profil →
     active: Aktywna
+    new: Nowy Prim
+    add: Dodaj Prim
+    adding: Zapisywanie…
+    cancel: Anuluj
+    empty: Brak Primów — użyj przycisku powyżej, aby dodać pierwszego.
+    addError: Nie udało się dodać Prima.
+    name: Imię
+    namePlaceholder: np. Nathalie
+    description: Opis
+    descriptionPlaceholder: Notatki o stylu, rozmiarach…
+    gender: Płeć
+    genderUnknown: Nie ustawiono
+    genderFemale: Kobieta
+    genderMale: Mężczyzna
   animals:
     title: Zwierzęta
     subtitle: Souls poza Primami — profile pupili i zwierząt domowych.
