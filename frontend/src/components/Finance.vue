@@ -91,6 +91,7 @@ import { savingsTargetColorTheme } from '../constants/savingsTargetColors'
 import { formatPercentLabel } from '../utils/savingsTarget'
 import { mockFinanceAccounts } from '../utils/savingsAssets'
 import { saveManualExpense } from '../utils/saveManualExpense'
+import { collectManualExpenses, manualExpensesSummary } from '../utils/manualExpenses'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -102,6 +103,7 @@ const petAccountsStore = usePetExpenseAccountsStore()
 const { adjustBalance } = useFinanceAccountActions()
 
 const expenseOpen = ref(false)
+const expenseRefreshKey = ref(0)
 const accounts = computed(() => mockFinanceAccounts())
 
 onMounted(() => {
@@ -168,6 +170,11 @@ const mockAssetsFormatted = computed(() =>
   }) + ' PLN',
 )
 
+const expensesSummary = computed(() => {
+  expenseRefreshKey.value
+  return manualExpensesSummary(collectManualExpenses())
+})
+
 const portfolioCountLabel = computed(() => {
   const n = userAssets.assets.length
   if (n === 0) return t('finance.portfolioEmpty')
@@ -230,6 +237,14 @@ const assetStats = computed(() => [
     link: true,
     route: { name: 'FinanceMockAssets' },
   },
+  {
+    name: t('finance.expenses.tileTitle'),
+    value: expensesSummary.value.month_total_formatted,
+    change: expensesSummary.value.count_label,
+    changeType: 'negative',
+    link: true,
+    route: { name: 'FinanceExpenses' },
+  },
 ])
 
 const assetStatsPadded = computed(() => padStatsRow(assetStats.value, 'assets'))
@@ -259,5 +274,6 @@ function onStatClick(stat) {
 function onSaveExpense(payload) {
   saveManualExpense(adjustBalance, payload)
   expenseOpen.value = false
+  expenseRefreshKey.value += 1
 }
 </script>

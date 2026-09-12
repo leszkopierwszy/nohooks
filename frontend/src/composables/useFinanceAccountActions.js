@@ -33,6 +33,18 @@ export function useFinanceAccountActions() {
     return store.adjustBalance(account.id, payload)
   }
 
+  function updateExpenseEntry(account, entryId, patch) {
+    const store = storeFor(account)
+    if (!store?.updateExpenseEntry) return null
+    return store.updateExpenseEntry(account.id ?? account, entryId, patch)
+  }
+
+  function removeExpenseEntry(account, entryId) {
+    const store = storeFor(account)
+    if (!store?.removeExpenseEntry) return null
+    return store.removeExpenseEntry(account.id ?? account, entryId)
+  }
+
   function createAccount(payload) {
     return financeStore.createAccount(payload)
   }
@@ -50,6 +62,8 @@ export function useFinanceAccountActions() {
     getHistory,
     updateAccount,
     adjustBalance,
+    updateExpenseEntry,
+    removeExpenseEntry,
     createAccount,
     deleteAccount,
     isPetAccount: isPetExpenseAccount,

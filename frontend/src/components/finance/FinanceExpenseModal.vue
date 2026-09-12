@@ -1,8 +1,8 @@
 <template>
   <FinanceAccountModalShell
     :open="open"
-    :title="t('finance.accounts.expense.title')"
-    :subtitle="t('finance.accounts.expense.subtitle')"
+    :title="modalTitle"
+    :subtitle="modalSubtitle"
     @close="$emit('close')"
   >
     <form id="finance-expense-form" class="space-y-4" @submit.prevent="submit">
@@ -14,7 +14,8 @@
           id="exp-account"
           v-model="accountId"
           required
-          :class="inputClass"
+          :disabled="isReadOnly"
+          :class="fieldClass"
           :aria-describedby="'exp-account-hint'"
         >
           <option disabled value="">{{ t('finance.accounts.expense.accountPlaceholder') }}</option>
@@ -22,7 +23,7 @@
             {{ accountOptionLabel(acc) }}
           </option>
         </select>
-        <p id="exp-account-hint" class="mt-1 text-[10px] leading-relaxed text-gray-500">
+        <p v-if="!isReadOnly" id="exp-account-hint" class="mt-1 text-[10px] leading-relaxed text-gray-500">
           {{ t('finance.accounts.expense.accountHint') }}
         </p>
       </div>
@@ -39,10 +40,11 @@
           min="0.01"
           required
           inputmode="decimal"
-          :class="inputClass"
+          :disabled="isReadOnly"
+          :class="fieldClass"
           :aria-describedby="'exp-amount-hint'"
         />
-        <p id="exp-amount-hint" class="mt-1 text-[10px] leading-relaxed text-gray-500">
+        <p v-if="!isReadOnly" id="exp-amount-hint" class="mt-1 text-[10px] leading-relaxed text-gray-500">
           {{ t('finance.accounts.expense.amountHint') }}
         </p>
       </div>
@@ -55,16 +57,17 @@
           v-model="expenseDate"
           input-id="exp-date"
           described-by="exp-date-hint"
+          :disabled="isReadOnly"
           :placeholder="t('finance.accounts.expense.datePlaceholder')"
           :calendar-label="t('finance.accounts.expense.dateCalendar')"
           :prev-month-label="t('finance.accounts.expense.datePrevMonth')"
           :next-month-label="t('finance.accounts.expense.dateNextMonth')"
           :today-label="t('finance.accounts.expense.dateToday')"
           :close-label="t('finance.accounts.history.close')"
-          :input-class="inputClass"
+          :input-class="fieldClass"
           @validity="dateValid = $event"
         />
-        <p id="exp-date-hint" class="mt-1 text-[10px] leading-relaxed text-gray-500">
+        <p v-if="!isReadOnly" id="exp-date-hint" class="mt-1 text-[10px] leading-relaxed text-gray-500">
           {{ t('finance.accounts.expense.dateHint') }}
         </p>
       </div>
@@ -76,19 +79,19 @@
         <select
           id="exp-category"
           v-model="category"
-          :class="inputClass"
+          :class="fieldClass"
           :aria-describedby="'exp-category-hint'"
-          :disabled="categoriesStore.loading && !categoryOptions.length"
+          :disabled="isReadOnly || (categoriesStore.loading && !categoryOptions.length)"
         >
           <option value="">{{ t('finance.accounts.expense.categoryNone') }}</option>
           <option v-for="cat in categoryOptions" :key="cat.value" :value="cat.value">
             {{ cat.label }}
           </option>
-          <option :value="NEW_CATEGORY_VALUE">
+          <option v-if="!isReadOnly" :value="NEW_CATEGORY_VALUE">
             {{ t('finance.accounts.expense.categoryAddOption') }}
           </option>
         </select>
-        <div v-if="isCreatingCategory" class="mt-2 flex gap-2">
+        <div v-if="isCreatingCategory && !isReadOnly" class="mt-2 flex gap-2">
           <input
             id="exp-category-new"
             ref="newCategoryInput"
@@ -121,7 +124,11 @@
         >
           {{ categoryError }}
         </p>
-        <p id="exp-category-hint" class="mt-1 text-[10px] leading-relaxed text-gray-500">
+        <p
+          v-if="!isReadOnly"
+          id="exp-category-hint"
+          class="mt-1 text-[10px] leading-relaxed text-gray-500"
+        >
           {{
             isCreatingCategory
               ? t('finance.accounts.expense.categoryNewHint')
@@ -130,7 +137,10 @@
         </p>
       </div>
 
-      <div v-if="isLotteryCategory" class="space-y-3 rounded-lg bg-amber-50/60 p-3 ring-1 ring-inset ring-amber-100">
+      <div
+        v-if="isLotteryCategory"
+        class="space-y-3 rounded-lg bg-amber-50/60 p-3 ring-1 ring-inset ring-amber-100"
+      >
         <div>
           <label class="block text-xs font-medium text-gray-700" for="exp-lottery-system">
             {{ t('finance.accounts.expense.lotterySystem') }}
@@ -138,7 +148,8 @@
           <select
             id="exp-lottery-system"
             v-model="lotterySystemId"
-            :class="inputClass"
+            :disabled="isReadOnly"
+            :class="fieldClass"
             :aria-describedby="'exp-lottery-system-hint'"
           >
             <option v-for="sys in LOTTERY_SYSTEMS" :key="sys.id" :value="sys.id">
@@ -156,6 +167,7 @@
               {{ t('finance.accounts.expense.lotteryBets') }}
             </p>
             <button
+              v-if="!isReadOnly"
               type="button"
               class="rounded-md border border-amber-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-amber-900 shadow-sm hover:bg-amber-50"
               @click="addLotteryBet"
@@ -174,7 +186,7 @@
                 {{ t('finance.accounts.expense.lotteryBetLabel', { n: betIndex + 1 }) }}
               </p>
               <button
-                v-if="lotteryBets.length > 1"
+                v-if="!isReadOnly && lotteryBets.length > 1"
                 type="button"
                 class="text-[10px] font-semibold text-rose-700 hover:text-rose-800"
                 @click="removeLotteryBet(betIndex)"
@@ -191,6 +203,7 @@
                 type="text"
                 inputmode="numeric"
                 maxlength="2"
+                :disabled="isReadOnly"
                 :aria-label="
                   t('finance.accounts.expense.lotteryMainSlot', {
                     bet: betIndex + 1,
@@ -198,7 +211,7 @@
                   })
                 "
                 :placeholder="String(slotIndex + 1)"
-                class="h-8 w-8 rounded-md border-0 text-center text-xs font-semibold tabular-nums text-gray-900 ring-1 ring-inset ring-amber-200 placeholder:text-amber-200 focus:ring-2 focus:ring-inset focus:ring-amber-500"
+                class="h-8 w-8 rounded-md border-0 text-center text-xs font-semibold tabular-nums text-gray-900 ring-1 ring-inset ring-amber-200 placeholder:text-amber-200 focus:ring-2 focus:ring-inset focus:ring-amber-500 disabled:cursor-default disabled:bg-gray-50"
                 @input="onLotterySlotInput(bet, 'main', slotIndex, $event)"
               />
 
@@ -211,6 +224,7 @@
                   type="text"
                   inputmode="numeric"
                   maxlength="2"
+                  :disabled="isReadOnly"
                   :aria-label="
                     t('finance.accounts.expense.lotteryBonusSlot', {
                       bet: betIndex + 1,
@@ -218,14 +232,14 @@
                     })
                   "
                   :placeholder="String(slotIndex + 1)"
-                  class="h-8 w-8 rounded-md border-0 bg-indigo-50 text-center text-xs font-semibold tabular-nums text-indigo-950 ring-1 ring-inset ring-indigo-200 placeholder:text-indigo-200 focus:ring-2 focus:ring-inset focus:ring-indigo-500"
+                  class="h-8 w-8 rounded-md border-0 bg-indigo-50 text-center text-xs font-semibold tabular-nums text-indigo-950 ring-1 ring-inset ring-indigo-200 placeholder:text-indigo-200 focus:ring-2 focus:ring-inset focus:ring-indigo-500 disabled:cursor-default disabled:opacity-80"
                   @input="onLotterySlotInput(bet, 'bonus', slotIndex, $event)"
                 />
               </template>
             </div>
           </div>
 
-          <p class="text-[10px] leading-relaxed text-gray-500">
+          <p v-if="!isReadOnly" class="text-[10px] leading-relaxed text-gray-500">
             {{
               t('finance.accounts.expense.lotteryBetsHint', {
                 count: selectedLotterySystem.mainCount,
@@ -244,11 +258,16 @@
             v-model="lotteryDrawUrl"
             type="url"
             inputmode="url"
+            :disabled="isReadOnly"
             :placeholder="t('finance.accounts.expense.lotteryDrawUrlPlaceholder')"
-            :class="inputClass"
+            :class="fieldClass"
             :aria-describedby="'exp-lottery-url-hint'"
           />
-          <p id="exp-lottery-url-hint" class="mt-1 text-[10px] leading-relaxed text-gray-500">
+          <p
+            v-if="!isReadOnly"
+            id="exp-lottery-url-hint"
+            class="mt-1 text-[10px] leading-relaxed text-gray-500"
+          >
             {{ t('finance.accounts.expense.lotteryDrawUrlHint') }}
           </p>
         </div>
@@ -261,16 +280,21 @@
             id="exp-lottery-jackpot"
             v-model="lotteryJackpot"
             type="text"
+            :disabled="isReadOnly"
             :placeholder="t('finance.accounts.expense.lotteryJackpotPlaceholder')"
-            :class="inputClass"
+            :class="fieldClass"
             :aria-describedby="'exp-lottery-jackpot-hint'"
           />
-          <p id="exp-lottery-jackpot-hint" class="mt-1 text-[10px] leading-relaxed text-gray-500">
+          <p
+            v-if="!isReadOnly"
+            id="exp-lottery-jackpot-hint"
+            class="mt-1 text-[10px] leading-relaxed text-gray-500"
+          >
             {{ t('finance.accounts.expense.lotteryJackpotHint') }}
           </p>
         </div>
 
-        <label class="flex cursor-pointer items-start gap-2">
+        <label v-if="!isDetailMode" class="flex cursor-pointer items-start gap-2">
           <input
             v-model="lotteryTrack"
             type="checkbox"
@@ -294,7 +318,8 @@
         <select
           id="exp-purchase-type"
           v-model="purchaseType"
-          :class="inputClass"
+          :disabled="isReadOnly"
+          :class="fieldClass"
           :aria-describedby="'exp-purchase-type-hint'"
         >
           <option value="">{{ t('finance.accounts.expense.purchaseTypeNone') }}</option>
@@ -302,7 +327,11 @@
             {{ t(pt.labelKey) }}
           </option>
         </select>
-        <p id="exp-purchase-type-hint" class="mt-1 text-[10px] leading-relaxed text-gray-500">
+        <p
+          v-if="!isReadOnly"
+          id="exp-purchase-type-hint"
+          class="mt-1 text-[10px] leading-relaxed text-gray-500"
+        >
           {{ t('finance.accounts.expense.purchaseTypeHint') }}
         </p>
       </div>
@@ -315,32 +344,68 @@
           id="exp-note"
           v-model="note"
           rows="3"
+          :disabled="isReadOnly"
           :placeholder="t('finance.accounts.expense.notePlaceholder')"
           :aria-describedby="'exp-note-hint'"
-          class="mt-1 block w-full rounded-md border-0 py-1.5 pl-3 text-xs text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600"
+          class="mt-1 block w-full rounded-md border-0 py-1.5 pl-3 text-xs text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 disabled:cursor-default disabled:bg-gray-50"
         />
-        <p id="exp-note-hint" class="mt-1 text-[10px] leading-relaxed text-gray-500">
+        <p v-if="!isReadOnly" id="exp-note-hint" class="mt-1 text-[10px] leading-relaxed text-gray-500">
           {{ t('finance.accounts.expense.noteHint') }}
         </p>
       </div>
     </form>
 
     <template #footer>
-      <button
-        type="button"
-        class="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
-        @click="$emit('close')"
-      >
-        {{ t('finance.accounts.edit.cancel') }}
-      </button>
-      <button
-        type="submit"
-        form="finance-expense-form"
-        class="rounded-md bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-50"
-        :disabled="!canSubmit || categoriesStore.saving"
-      >
-        {{ t('finance.accounts.expense.submit') }}
-      </button>
+      <template v-if="isDetailMode && isReadOnly">
+        <button
+          type="button"
+          class="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
+          @click="$emit('close')"
+        >
+          {{ t('finance.accounts.history.close') }}
+        </button>
+        <button
+          type="button"
+          class="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-500"
+          @click="startEditing"
+        >
+          {{ t('finance.accounts.expense.edit') }}
+        </button>
+      </template>
+      <template v-else-if="isDetailMode">
+        <button
+          type="button"
+          class="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
+          @click="cancelEditing"
+        >
+          {{ t('finance.accounts.edit.cancel') }}
+        </button>
+        <button
+          type="submit"
+          form="finance-expense-form"
+          class="rounded-md bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-50"
+          :disabled="!canSubmit || categoriesStore.saving"
+        >
+          {{ t('finance.accounts.expense.saveChanges') }}
+        </button>
+      </template>
+      <template v-else>
+        <button
+          type="button"
+          class="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
+          @click="$emit('close')"
+        >
+          {{ t('finance.accounts.edit.cancel') }}
+        </button>
+        <button
+          type="submit"
+          form="finance-expense-form"
+          class="rounded-md bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-50"
+          :disabled="!canSubmit || categoriesStore.saving"
+        >
+          {{ t('finance.accounts.expense.submit') }}
+        </button>
+      </template>
     </template>
   </FinanceAccountModalShell>
 </template>
@@ -354,6 +419,7 @@ import {
   DEFAULT_LOTTERY_SYSTEM_ID,
   LOTTERY_SYSTEMS,
   createEmptyLotteryBet,
+  lotteryBetFromResolved,
   lotterySystemById,
   lotterySystemRuleLabel,
   resizeLotteryBet,
@@ -372,15 +438,20 @@ const props = defineProps({
   accounts: { type: Array, default: () => [] },
   /** Preselect account when opened from a row action. */
   account: { type: Object, default: null },
+  /** Existing expense row — opens in view mode with optional edit. */
+  expense: { type: Object, default: null },
 })
 
-const emit = defineEmits(['close', 'save'])
+const emit = defineEmits(['close', 'save', 'update'])
 
 const { t } = useI18n()
 const categoriesStore = useExpenseCategoriesStore()
 
 const inputClass =
   'mt-1 block w-full rounded-md border-0 py-1.5 pl-3 text-xs tabular-nums text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600'
+
+const editing = ref(false)
+const hydrating = ref(false)
 
 const accountId = ref('')
 const amount = ref('')
@@ -397,6 +468,28 @@ const lotteryBets = ref([createEmptyLotteryBet(lotterySystemById(DEFAULT_LOTTERY
 const lotteryDrawUrl = ref('')
 const lotteryJackpot = ref('')
 const lotteryTrack = ref(true)
+
+const isDetailMode = computed(() => Boolean(props.expense?.entry_id))
+const isReadOnly = computed(() => isDetailMode.value && !editing.value)
+const fieldClass = computed(() =>
+  isReadOnly.value
+    ? `${inputClass} cursor-default bg-gray-50 text-gray-700`
+    : inputClass,
+)
+
+const modalTitle = computed(() => {
+  if (!isDetailMode.value) return t('finance.accounts.expense.title')
+  return editing.value
+    ? t('finance.accounts.expense.editTitle')
+    : t('finance.accounts.expense.viewTitle')
+})
+
+const modalSubtitle = computed(() => {
+  if (!isDetailMode.value) return t('finance.accounts.expense.subtitle')
+  return editing.value
+    ? t('finance.accounts.expense.editSubtitle')
+    : t('finance.accounts.expense.viewSubtitle')
+})
 
 const categoryOptions = computed(() => categoriesStore.options)
 const isCreatingCategory = computed(() => category.value === NEW_CATEGORY_VALUE)
@@ -422,6 +515,7 @@ const selectedAccount = computed(() => {
 const isSelectedPet = computed(() => isPetExpenseAccount(selectedAccount.value))
 
 const canSubmit = computed(() => {
+  if (isReadOnly.value) return false
   if (!selectedAccount.value || parseBalancePln(amount.value) <= 0) return false
   if (!expenseDate.value || !dateValid.value) return false
   if (isCreatingCategory.value && !newCategory.value.trim()) return false
@@ -436,6 +530,74 @@ function accountOptionLabel(acc) {
   const bal = acc.balance ?? ''
   const pet = isPetExpenseAccount(acc) ? ' · pet' : ''
   return `${acc.name}${pet} (${bal})`
+}
+
+function lotteryBetsFromExpense(expense) {
+  const sys =
+    lotterySystemById(expense?.lottery_system) ?? lotterySystemById(DEFAULT_LOTTERY_SYSTEM_ID)
+  const bets = Array.isArray(expense?.lottery_bets) ? expense.lottery_bets : null
+  if (bets?.length) {
+    return bets.map((bet) => lotteryBetFromResolved(bet, sys))
+  }
+  if (Array.isArray(expense?.lottery_numbers) && expense.lottery_numbers.length) {
+    return [
+      lotteryBetFromResolved(
+        {
+          numbers: expense.lottery_numbers,
+          bonus_numbers: expense.lottery_bonus_numbers ?? [],
+        },
+        sys,
+      ),
+    ]
+  }
+  return [createEmptyLotteryBet(sys)]
+}
+
+function fillFromExpense(expense) {
+  hydrating.value = true
+  accountId.value = expense?.account_id != null ? String(expense.account_id) : ''
+  amount.value = expense?.amount != null ? String(expense.amount) : ''
+  expenseDate.value = expense?.date_key || toIsoDateKey()
+  dateValid.value = true
+  category.value = expense?.category ?? ''
+  newCategory.value = ''
+  categoryError.value = ''
+  purchaseType.value = expense?.purchase_type ?? ''
+  note.value = expense?.note ?? ''
+  lotterySystemId.value = expense?.lottery_system || DEFAULT_LOTTERY_SYSTEM_ID
+  lotteryBets.value = lotteryBetsFromExpense(expense)
+  lotteryDrawUrl.value = expense?.lottery_draw_url ?? ''
+  lotteryJackpot.value = expense?.lottery_jackpot ?? ''
+  lotteryTrack.value = Boolean(expense?.lottery_track)
+  nextTick(() => {
+    hydrating.value = false
+  })
+}
+
+function resetCreateForm() {
+  hydrating.value = true
+  accountId.value = props.account?.id != null ? String(props.account.id) : ''
+  amount.value = ''
+  expenseDate.value = toIsoDateKey()
+  dateValid.value = true
+  category.value = ''
+  newCategory.value = ''
+  categoryError.value = ''
+  purchaseType.value = ''
+  note.value = ''
+  resetLotteryFields()
+  nextTick(() => {
+    hydrating.value = false
+  })
+}
+
+function startEditing() {
+  editing.value = true
+}
+
+function cancelEditing() {
+  if (props.expense) fillFromExpense(props.expense)
+  editing.value = false
 }
 
 async function addCategoryFromInput() {
@@ -471,6 +633,7 @@ function removeLotteryBet(index) {
 }
 
 function onLotterySlotInput(bet, pool, slotIndex, event) {
+  if (isReadOnly.value) return
   const max = pool === 'bonus' ? selectedLotterySystem.value.bonusMax : selectedLotterySystem.value.mainMax
   let digits = String(event.target.value ?? '').replace(/\D/g, '')
   if (max >= 10) digits = digits.slice(0, 2)
@@ -479,9 +642,9 @@ function onLotterySlotInput(bet, pool, slotIndex, event) {
   if (pool === 'bonus') bet.bonus[slotIndex] = digits
   else bet.main[slotIndex] = digits
 
-  // Auto-advance when a complete number for this max is typed.
   const n = Number(digits)
-  const complete = digits.length > 0 && Number.isFinite(n) && (max < 10 || digits.length === 2 || n * 10 > max)
+  const complete =
+    digits.length > 0 && Number.isFinite(n) && (max < 10 || digits.length === 2 || n * 10 > max)
   if (!complete) return
 
   nextTick(() => {
@@ -493,20 +656,38 @@ function onLotterySlotInput(bet, pool, slotIndex, event) {
   })
 }
 
+function buildPayload() {
+  const resolvedCategory =
+    category.value && category.value !== NEW_CATEGORY_VALUE ? category.value : null
+  const isLottery = resolvedCategory === LOTTERY_EXPENSE_CATEGORY_SLUG
+  const bets = isLottery ? resolvedLotteryBets.value : []
+  const firstBet = bets[0] ?? null
+
+  return {
+    account: selectedAccount.value,
+    kind: 'expense',
+    amount: amount.value,
+    note: note.value,
+    category: resolvedCategory,
+    purchase_type: isSelectedPet.value && purchaseType.value ? purchaseType.value : null,
+    date: expenseDate.value,
+    lottery_system: isLottery ? lotterySystemId.value : null,
+    lottery_bets: bets.length ? bets : null,
+    lottery_numbers: firstBet?.numbers ?? null,
+    lottery_bonus_numbers: firstBet?.bonus_numbers ?? null,
+    lottery_draw_url: isLottery && lotteryDrawUrl.value.trim() ? lotteryDrawUrl.value.trim() : null,
+    lottery_jackpot: isLottery && lotteryJackpot.value.trim() ? lotteryJackpot.value.trim() : null,
+    lottery_track: isDetailMode.value ? false : isLottery ? lotteryTrack.value : false,
+  }
+}
+
 watch(
-  () => props.open,
-  (isOpen) => {
+  () => [props.open, props.expense?.id],
+  ([isOpen]) => {
     if (!isOpen) return
-    accountId.value = props.account?.id != null ? String(props.account.id) : ''
-    amount.value = ''
-    expenseDate.value = toIsoDateKey()
-    dateValid.value = true
-    category.value = ''
-    newCategory.value = ''
-    categoryError.value = ''
-    purchaseType.value = ''
-    note.value = ''
-    resetLotteryFields()
+    editing.value = false
+    if (props.expense?.entry_id) fillFromExpense(props.expense)
+    else resetCreateForm()
     categoriesStore.fetchCategories().catch(() => {})
   },
 )
@@ -522,6 +703,7 @@ watch(isCreatingCategory, async (creating) => {
 })
 
 watch(isLotteryCategory, (lottery) => {
+  if (hydrating.value) return
   if (!lottery) resetLotteryFields()
   else if (!lotteryBets.value.length) {
     lotteryBets.value = [createEmptyLotteryBet(selectedLotterySystem.value)]
@@ -529,6 +711,7 @@ watch(isLotteryCategory, (lottery) => {
 })
 
 watch(lotterySystemId, () => {
+  if (hydrating.value) return
   const sys = selectedLotterySystem.value
   lotteryBets.value = lotteryBets.value.map((bet) => resizeLotteryBet(bet, sys))
   if (!lotteryBets.value.length) {
@@ -537,6 +720,7 @@ watch(lotterySystemId, () => {
 })
 
 watch(isSelectedPet, (pet) => {
+  if (hydrating.value) return
   if (!pet) purchaseType.value = ''
 })
 
@@ -556,28 +740,15 @@ async function submit() {
     }
   }
 
-  const resolvedCategory =
-    category.value && category.value !== NEW_CATEGORY_VALUE ? category.value : null
-
-  const isLottery = resolvedCategory === LOTTERY_EXPENSE_CATEGORY_SLUG
-  const bets = isLottery ? resolvedLotteryBets.value : []
-  const firstBet = bets[0] ?? null
-
-  emit('save', {
-    account: selectedAccount.value,
-    kind: 'expense',
-    amount: amount.value,
-    note: note.value,
-    category: resolvedCategory,
-    purchase_type: isSelectedPet.value && purchaseType.value ? purchaseType.value : null,
-    date: expenseDate.value,
-    lottery_system: isLottery ? lotterySystemId.value : null,
-    lottery_bets: bets.length ? bets : null,
-    lottery_numbers: firstBet?.numbers ?? null,
-    lottery_bonus_numbers: firstBet?.bonus_numbers ?? null,
-    lottery_draw_url: isLottery && lotteryDrawUrl.value.trim() ? lotteryDrawUrl.value.trim() : null,
-    lottery_jackpot: isLottery && lotteryJackpot.value.trim() ? lotteryJackpot.value.trim() : null,
-    lottery_track: isLottery ? lotteryTrack.value : false,
-  })
+  const payload = buildPayload()
+  if (isDetailMode.value) {
+    emit('update', {
+      ...payload,
+      entry_id: props.expense.entry_id,
+      from_account_id: props.expense.account_id,
+    })
+    return
+  }
+  emit('save', payload)
 }
 </script>

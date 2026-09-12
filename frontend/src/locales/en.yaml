@@ -55,6 +55,32 @@ finance:
   mockAccountsCount: "{n} demo accounts"
   plannedChange: Active subscriptions
   m2mChange: Salary − active subscriptions (est. / mo.)
+  expenses:
+    tileTitle: Expenses
+    countEmpty: No expenses yet
+    count: "{n} expenses"
+    pageTitle: Expenses
+    pageSubtitle: Manual expenses from your accounts — filter by account, category, or note.
+    totalLabel: All time
+    monthTotal: "This month: {amount}"
+    filters: Filters
+    filterAccount: Account
+    filterCategory: Category
+    filterSearch: Search
+    searchPlaceholder: Note, account, category…
+    allAccounts: All accounts
+    allCategories: All categories
+    uncategorized: Uncategorized
+    empty: No expenses match these filters.
+    countAll: "{n} expenses · {amount}"
+    countFiltered: "{n} of {total} · {amount}"
+    lotteryBetsShort: "{n} lottery bets"
+    cols:
+      date: Date
+      account: Account
+      category: Category
+      note: Note
+      amount: Amount
   accounts:
     pageTitle: Accounts
     pageSubtitle: Demo balances you can adjust locally.
@@ -117,6 +143,12 @@ finance:
     expense:
       title: Add expense
       subtitle: Debit an account for a one-off spend. Saved in that account’s history.
+      viewTitle: Expense details
+      viewSubtitle: Review this expense. Switch to edit to change amount, category, or note.
+      editTitle: Edit expense
+      editSubtitle: Changes update the account history and adjust the balance if the amount changes.
+      edit: Edit
+      saveChanges: Save changes
       account: Account
       accountPlaceholder: Select account…
       accountHint: Choose which account to charge. The amount is subtracted from its balance.

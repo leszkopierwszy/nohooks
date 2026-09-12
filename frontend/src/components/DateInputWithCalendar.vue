@@ -12,16 +12,18 @@
         :placeholder="placeholder"
         :aria-describedby="describedBy"
         :aria-invalid="touched && !isValid ? 'true' : undefined"
-        :class="inputClass"
+        :disabled="disabled"
+        :class="[inputClass, disabled ? 'cursor-default bg-gray-50 text-gray-700' : '']"
         @input="onTextInput"
         @blur="onBlur"
         @keydown.enter.prevent="commitText"
       />
       <button
         type="button"
-        class="mt-1 inline-flex shrink-0 items-center justify-center rounded-md border-0 bg-white px-2.5 text-gray-500 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 hover:text-gray-700"
+        class="mt-1 inline-flex shrink-0 items-center justify-center rounded-md border-0 bg-white px-2.5 text-gray-500 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 hover:text-gray-700 disabled:cursor-default disabled:bg-gray-50 disabled:text-gray-400"
         :aria-expanded="calendarOpen ? 'true' : 'false'"
         :aria-label="calendarLabel"
+        :disabled="disabled"
         @click="toggleCalendar"
       >
         <CalendarDaysIcon class="size-4" aria-hidden="true" />
@@ -134,6 +136,7 @@ const props = defineProps({
     default:
       'mt-1 block w-full rounded-md border-0 py-1.5 pl-3 text-xs tabular-nums text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600',
   },
+  disabled: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['update:modelValue', 'validity'])
@@ -199,6 +202,7 @@ function onBlur() {
 }
 
 function toggleCalendar() {
+  if (props.disabled) return
   calendarOpen.value = !calendarOpen.value
   if (!calendarOpen.value) return
   const base = props.modelValue ? parseDateKey(props.modelValue) : new Date()

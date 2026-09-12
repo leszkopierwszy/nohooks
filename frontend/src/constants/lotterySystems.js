@@ -55,6 +55,19 @@ export function resizeLotteryBet(bet, system) {
   return { ...bet, main: nextMain, bonus: nextBonus }
 }
 
+/** Prefill bet input slots from resolved number arrays. */
+export function lotteryBetFromResolved(resolved, system) {
+  const empty = createEmptyLotteryBet(system)
+  const nums = Array.isArray(resolved?.numbers) ? resolved.numbers : []
+  const bonus = Array.isArray(resolved?.bonus_numbers) ? resolved.bonus_numbers : []
+  return {
+    ...empty,
+    main: empty.main.map((_, i) => (nums[i] != null ? String(nums[i]) : '')),
+    bonus: empty.bonus.map((_, i) => (bonus[i] != null ? String(bonus[i]) : '')),
+  }
+}
+
+
 function parseSlot(value, max) {
   const raw = String(value ?? '').trim()
   if (!raw) return null
