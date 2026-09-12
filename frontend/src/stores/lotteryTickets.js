@@ -1,11 +1,12 @@
 import { defineStore } from 'pinia'
 import { newHistoryId } from '../utils/financeAccountBalance'
+import { readUserStorage, writeUserStorage } from '../utils/userScopedStorage'
 
 const STORAGE_KEY = 'nohooks.lotteryTickets.v1'
 
 function readAll() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = readUserStorage(STORAGE_KEY)
     if (!raw) return []
     const parsed = JSON.parse(raw)
     return Array.isArray(parsed) ? parsed : []
@@ -15,7 +16,7 @@ function readAll() {
 }
 
 function writeAll(tickets) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(tickets))
+  writeUserStorage(STORAGE_KEY, JSON.stringify(tickets))
 }
 
 function normalizeTicket(raw) {

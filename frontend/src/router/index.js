@@ -30,12 +30,25 @@ import GroupOverview from '../components/GroupOverview.vue'
 import Wardrobe from '../components/wardrobe.vue'
 import AccountSettings from '../views/AccountSettings.vue'
 import AccountModelAssistant from '../views/AccountModelAssistant.vue'
+import Login from '../views/Login.vue'
+import { useAuthStore } from '../stores/auth'
 
 const routes = [
   {
+    path: '/login',
+    name: 'Login',
+    component: Login,
+    meta: { public: true, guestOnly: true },
+  },
+  {
     path: '/',
     component: MainLayout,
+    meta: { requiresAuth: true },
     children: [
+        {
+            path: '',
+            redirect: '/home',
+        },
         {
             path: '/home',
             name: 'Home',
@@ -241,6 +254,29 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
+})
+
+router.beforeEach(async (to) => {
+  const authStore = useAuthStore()
+  if (!authStore.bootstrapped) {
+    await authStore.bootstrap()
+  }
+
+  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth)
+  const guestOnly = to.matched.some((record) => record.meta.guestOnly)
+
+  if (requiresAuth && !authStore.isAuthenticated) {
+    return {
+      name: 'Login',
+      query: { redirect: to.fullPath },
+    }
+  }
+
+  if (guestOnly && authStore.isAuthenticated) {
+    return { path: '/home' }
+  }
+
+  return true
 })
 
 export default router

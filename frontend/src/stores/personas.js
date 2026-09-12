@@ -2,6 +2,8 @@ import { defineStore } from 'pinia'
 import { apiRequest } from '../api/client'
 import { isAnimalSoul, isPrimSoul, SOUL_TYPE_ANIMAL, SOUL_TYPE_PRIM } from '../constants/soulTypes'
 
+import { readUserStorage, removeUserStorage, writeUserStorage } from '../utils/userScopedStorage'
+
 const STORAGE_KEY = 'nohooks.activePersonaId'
 
 const AVATAR_BY_NAME = {
@@ -77,10 +79,14 @@ export const usePersonasStore = defineStore('personas', {
     setActivePersona(id) {
       this.activePersonaId = id ? Number(id) : null
       if (this.activePersonaId) {
-        localStorage.setItem(STORAGE_KEY, String(this.activePersonaId))
+        writeUserStorage(STORAGE_KEY, String(this.activePersonaId))
       } else {
-        localStorage.removeItem(STORAGE_KEY)
+        removeUserStorage(STORAGE_KEY)
       }
+    },
+
+    reload() {
+      this.activePersonaId = readStoredActiveId()
     },
 
     async fetchPersona(id) {
@@ -200,7 +206,7 @@ export const usePersonasStore = defineStore('personas', {
 
 function readStoredActiveId() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = readUserStorage(STORAGE_KEY)
     if (!raw) return null
     const parsed = Number(raw)
     return Number.isFinite(parsed) ? parsed : null

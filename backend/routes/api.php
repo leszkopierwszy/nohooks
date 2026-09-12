@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 
+use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\EntityController;
 use App\Http\Controllers\Api\EntityBodySnapshotController;
 use App\Http\Controllers\Api\CharacterController;
@@ -16,6 +17,16 @@ use App\Http\Controllers\Api\ExchangeRateController;
 use App\Http\Controllers\Api\PersonaImageController;
 use App\Http\Controllers\Api\SavingsTargetController;
 use App\Http\Controllers\Api\TimelineEventController;
+
+Route::post('auth/register', [AuthController::class, 'register']);
+Route::post('auth/login', [AuthController::class, 'login']);
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('auth/logout', [AuthController::class, 'logout']);
+    Route::get('auth/me', [AuthController::class, 'me']);
+    Route::put('auth/profile', [AuthController::class, 'updateProfile']);
+    Route::put('auth/password', [AuthController::class, 'updatePassword']);
+});
 
 Route::post('media/import-url', [MediaController::class, 'importFromUrl']);
 Route::post('product-import/parse', [ProductImportController::class, 'parseFromUrl']);

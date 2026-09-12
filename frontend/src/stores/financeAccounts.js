@@ -11,6 +11,7 @@ import {
   buildExpenseMeta,
   removeExpenseHistoryEntry,
 } from '../utils/expenseHistory'
+import { readUserStorage, writeUserStorage } from '../utils/userScopedStorage'
 
 const STORAGE_KEY = 'nohooks.financeAccounts.v1'
 
@@ -18,7 +19,7 @@ const EDITABLE_FIELDS = ['name', 'account_number', 'account_name', 'category']
 
 function readAll() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = readUserStorage(STORAGE_KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw)
     return Array.isArray(parsed) ? parsed : null
@@ -28,7 +29,7 @@ function readAll() {
 }
 
 function writeAll(accounts) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(accounts))
+  writeUserStorage(STORAGE_KEY, JSON.stringify(accounts))
 }
 
 function seedFromMock() {
@@ -83,7 +84,7 @@ function toFinanceListRow(account) {
 
 export const useFinanceAccountsStore = defineStore('financeAccounts', {
   state: () => ({
-    accounts: readAll() ?? seedFromMock(),
+    accounts: readAll() ?? [],
   }),
 
   getters: {
@@ -97,8 +98,13 @@ export const useFinanceAccountsStore = defineStore('financeAccounts', {
   actions: {
     reload() {
       const stored = readAll()
-      this.accounts = stored ?? seedFromMock()
-      if (!stored) writeAll(this.accounts)
+      this.accounts = stored ?? []
+    },
+
+    seedDemoIfEmpty() {
+      if (this.accounts.length) return
+      this.accounts = seedFromMock()
+      writeAll(this.accounts)
     },
 
     persist() {

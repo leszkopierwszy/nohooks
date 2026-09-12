@@ -283,6 +283,17 @@
     "bio": "Bio",
     "saveProfile": "Save profile",
     "saved": "Saved.",
+    "saveError": "Could not save profile.",
+    "password": {
+      "title": "Password",
+      "subtitle": "Change the password used to sign in to the panel.",
+      "current": "Current password",
+      "new": "New password",
+      "confirm": "Confirm new password",
+      "save": "Update password",
+      "saved": "Password updated.",
+      "error": "Could not update password."
+    },
     "nav": {
       "settings": "User settings",
       "backend": "Backend"
@@ -304,6 +315,19 @@
         "langfuseGuideHint": "Overview and service status in Backend Settings."
       }
     }
+  },
+  "auth": {
+    "loginTitle": "Sign in",
+    "loginSubtitle": "Sign in to open the panel.",
+    "registerTitle": "Create account",
+    "registerSubtitle": "Register a new panel account.",
+    "password": "Password",
+    "passwordConfirm": "Confirm password",
+    "loginSubmit": "Sign in",
+    "registerSubmit": "Create account",
+    "switchToRegister": "Need an account? Register",
+    "switchToLogin": "Already have an account? Sign in",
+    "errorGeneric": "Something went wrong. Try again."
   },
   "display": {
     "theme": {
@@ -680,7 +704,8 @@
     "displaySection": "Display",
     "accountSettings": "Account settings",
     "displaySettings": "Display",
-    "zoom": "Zoom {label}"
+    "zoom": "Zoom {label}",
+    "logout": "Sign out"
   },
   "common": {
     "loading": "Loading…"

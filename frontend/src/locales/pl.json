@@ -283,6 +283,17 @@
     "bio": "Bio",
     "saveProfile": "Zapisz profil",
     "saved": "Zapisano.",
+    "saveError": "Nie udało się zapisać profilu.",
+    "password": {
+      "title": "Hasło",
+      "subtitle": "Zmień hasło używane do logowania do panelu.",
+      "current": "Obecne hasło",
+      "new": "Nowe hasło",
+      "confirm": "Potwierdź nowe hasło",
+      "save": "Zmień hasło",
+      "saved": "Hasło zostało zmienione.",
+      "error": "Nie udało się zmienić hasła."
+    },
     "nav": {
       "settings": "Ustawienia użytkownika",
       "backend": "Backend"
@@ -304,6 +315,19 @@
         "langfuseGuideHint": "Opis i status usług w Backend Settings."
       }
     }
+  },
+  "auth": {
+    "loginTitle": "Logowanie",
+    "loginSubtitle": "Zaloguj się, aby otworzyć panel.",
+    "registerTitle": "Utwórz konto",
+    "registerSubtitle": "Zarejestruj nowe konto do panelu.",
+    "password": "Hasło",
+    "passwordConfirm": "Potwierdź hasło",
+    "loginSubmit": "Zaloguj się",
+    "registerSubmit": "Utwórz konto",
+    "switchToRegister": "Nie masz konta? Zarejestruj się",
+    "switchToLogin": "Masz już konto? Zaloguj się",
+    "errorGeneric": "Coś poszło nie tak. Spróbuj ponownie."
   },
   "display": {
     "theme": {
@@ -680,7 +704,8 @@
     "displaySection": "Wyświetlanie",
     "accountSettings": "Ustawienia konta",
     "displaySettings": "Wyświetlanie",
-    "zoom": "Powiększenie {label}"
+    "zoom": "Powiększenie {label}",
+    "logout": "Wyloguj się"
   },
   "common": {
     "loading": "Ładowanie…"

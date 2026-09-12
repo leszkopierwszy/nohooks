@@ -15,6 +15,7 @@ import {
 } from '../utils/savingsAssets'
 import { percentOfTarget, resolveTargetAmount } from '../utils/savingsTarget'
 import { useUserAssetsStore } from './userAssets'
+import { readUserStorage } from '../utils/userScopedStorage'
 
 const LEGACY_STORAGE_KEY = 'nohooks_savings_targets_v1'
 
@@ -89,7 +90,7 @@ function todayLocalDateKey() {
 
 function loadLegacyLocal() {
   try {
-    const raw = localStorage.getItem(LEGACY_STORAGE_KEY)
+    const raw = readUserStorage(LEGACY_STORAGE_KEY)
     if (!raw) return null
     return JSON.parse(raw)
   } catch {
