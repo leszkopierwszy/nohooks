@@ -55,6 +55,13 @@ finance:
   mockAccountsCount: "{n} demo accounts"
   plannedChange: Active subscriptions
   m2mChange: Salary − active subscriptions (est. / mo.)
+  nav:
+    label: Finance sections
+    overview: Overview
+    portfolio: Portfolio
+    savings: Savings
+    accounts: Accounts
+    expenses: Expenses
   expenses:
     tileTitle: Expenses
     countEmpty: No expenses yet

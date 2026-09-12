@@ -60,6 +60,14 @@
     "mockAccountsCount": "{n} kont demonstracyjnych",
     "plannedChange": "Aktywne subskrypcje",
     "m2mChange": "Wynagrodzenie − aktywne subskrypcje (szac. / mies.)",
+    "nav": {
+      "label": "Sekcje finansów",
+      "overview": "Przegląd",
+      "portfolio": "Portfel",
+      "savings": "Oszczędności",
+      "accounts": "Konta",
+      "expenses": "Wydatki"
+    },
     "expenses": {
       "tileTitle": "Wydatki",
       "countEmpty": "Brak wydatków",

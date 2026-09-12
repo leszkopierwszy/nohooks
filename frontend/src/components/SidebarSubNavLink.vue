@@ -1,15 +1,15 @@
 <template>
-  <router-link :to="item.href" custom v-slot="{ isActive, href, navigate }">
+  <router-link :to="item.href" custom v-slot="{ href, navigate }">
     <a
       :href="href"
       :class="[
         sidebarClasses.navLinkBase,
         'min-h-9 py-2 pl-9 text-[12px]',
-        isActive || active
+        active
           ? sidebarClasses.navLinkActive
           : sidebarClasses.navLinkInactive,
       ]"
-      :aria-current="isActive || active ? 'page' : undefined"
+      :aria-current="active ? 'page' : undefined"
       @click="onClick($event, navigate)"
     >
       {{ t(item.labelKey) }}
