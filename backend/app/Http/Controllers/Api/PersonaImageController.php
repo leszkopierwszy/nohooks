@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Entity;
 use App\Services\PersonaVision\PersonaImageProcessingService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 /**
  * API warstwy HTTP dla modułu Persona Vision.
@@ -78,7 +79,10 @@ class PersonaImageController extends Controller
     {
         $data = $request->validate([
             'garment_image_url' => 'required|url|max:2048',
-            'item_id' => 'nullable|exists:items,id',
+            'item_id' => [
+                'nullable',
+                Rule::exists('items', 'id')->where(fn ($q) => $q->where('user_id', auth()->id())),
+            ],
             'avatar_image_url' => 'nullable|url|max:2048',
         ]);
 

@@ -2,15 +2,22 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToUser;
 use Illuminate\Database\Eloquent\Model;
 
 class SavingsTarget extends Model
 {
-    public $incrementing = false;
+    use BelongsToUser;
 
-    protected $keyType = 'string';
+    /** Surrogate primary key (pk); logical business id stays in `id`. */
+    protected $primaryKey = 'pk';
+
+    public $incrementing = true;
+
+    protected $keyType = 'int';
 
     protected $fillable = [
+        'user_id',
         'id',
         'name',
         'type',
@@ -31,5 +38,10 @@ class SavingsTarget extends Model
             'progress_snapshots' => 'array',
             'sort_order' => 'integer',
         ];
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'id';
     }
 }

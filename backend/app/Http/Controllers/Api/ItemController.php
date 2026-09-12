@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class ItemController extends Controller
@@ -188,12 +189,16 @@ class ItemController extends Controller
         $this->preparePersonaFitInput($request);
         $this->assertValidUploadedImages($request);
 
+        $userId = auth()->id();
+        $entityOwned = Rule::exists('entities', 'id')->where(fn ($q) => $q->where('user_id', $userId));
+        $categoryOwned = Rule::exists('categories', 'id')->where(fn ($q) => $q->where('user_id', $userId));
+
         $rules = [
-            'entity_id' => 'nullable|exists:entities,id',
+            'entity_id' => ['nullable', $entityOwned],
             'fits_all_personas' => 'sometimes|boolean',
             'fits_persona_ids' => 'nullable|array',
-            'fits_persona_ids.*' => 'integer|exists:entities,id',
-            'default_persona_id' => 'nullable|exists:entities,id',
+            'fits_persona_ids.*' => ['integer', $entityOwned],
+            'default_persona_id' => ['nullable', $entityOwned],
             'character_id' => 'nullable|exists:characters,id',
             'name' => ($creating ? 'required' : 'sometimes').'|string|max:255',
             'rarity' => 'nullable|string|in:common,uncommon,rare,epic,legendary',
@@ -205,7 +210,7 @@ class ItemController extends Controller
             'season' => 'nullable|string|max:32',
             'size' => 'nullable|string|max:16',
             'size_system' => 'nullable|in:eu,us',
-            'category_id' => 'nullable|exists:categories,id',
+            'category_id' => ['nullable', $categoryOwned],
             'gift' => 'sometimes|boolean',
             'purchase_price' => 'nullable|numeric|min:0',
             'purchase_currency' => 'nullable|string|in:PLN,EUR,USD,GBP,CHF,CZK',

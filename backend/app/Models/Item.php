@@ -2,11 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToUser;
 use Illuminate\Database\Eloquent\Model;
 
 class Item extends Model
 {
+    use BelongsToUser;
+
     protected $fillable = [
+        'user_id',
         'entity_id',
         'fits_all_personas',
         'fits_persona_ids',

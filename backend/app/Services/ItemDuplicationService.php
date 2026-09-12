@@ -11,6 +11,7 @@ class ItemDuplicationService
 {
     /** @var list<string> */
     private const COPY_ATTRIBUTES = [
+        'user_id',
         'entity_id',
         'fits_all_personas',
         'fits_persona_ids',

@@ -26,40 +26,40 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('auth/me', [AuthController::class, 'me']);
     Route::put('auth/profile', [AuthController::class, 'updateProfile']);
     Route::put('auth/password', [AuthController::class, 'updatePassword']);
+
+    Route::post('media/import-url', [MediaController::class, 'importFromUrl']);
+    Route::post('product-import/parse', [ProductImportController::class, 'parseFromUrl']);
+    Route::post('product-import/selection', [ProductImportTraceController::class, 'reportSelection']);
+
+    Route::get('exchange-rates', [ExchangeRateController::class, 'index']);
+    Route::get('category', [CategoryController::class, 'index']);
+    Route::post('category', [CategoryController::class, 'store']);
+    Route::get('expense-category', [ExpenseCategoryController::class, 'index']);
+    Route::post('expense-category', [ExpenseCategoryController::class, 'store']);
+    Route::apiResource('entity', EntityController::class);
+    Route::get('entity/{entity}/body-snapshots', [EntityBodySnapshotController::class, 'index']);
+    Route::get('entity/{entity}/body-snapshots/prompt-snippet', [EntityBodySnapshotController::class, 'promptSnippet']);
+    Route::post('entity/{entity}/body-snapshots', [EntityBodySnapshotController::class, 'store']);
+    Route::put('entity/{entity}/body-snapshots/{bodySnapshot}', [EntityBodySnapshotController::class, 'update']);
+    Route::delete('entity/{entity}/body-snapshots/{bodySnapshot}', [EntityBodySnapshotController::class, 'destroy']);
+
+    Route::get('persona-vision/status', [PersonaImageController::class, 'status']);
+    Route::post('entity/{entity}/avatar/generate', [PersonaImageController::class, 'generateAvatar']);
+    Route::post('entity/{entity}/try-on', [PersonaImageController::class, 'tryOn']);
+    Route::get('entity/{entity}/try-ons', [PersonaImageController::class, 'tryOnHistory']);
+    Route::apiResource('character', CharacterController::class)->except(['index']);
+    Route::post('item/{item}/duplicate', [ItemController::class, 'duplicate']);
+    Route::apiResource('item', ItemController::class);
+    Route::apiResource('timeline-event', TimelineEventController::class);
+    Route::get('savings-target', [SavingsTargetController::class, 'index']);
+    Route::post('savings-target', [SavingsTargetController::class, 'store']);
+    Route::put('savings-target/{savingsTarget}', [SavingsTargetController::class, 'update']);
+    Route::delete('savings-target/{savingsTarget}', [SavingsTargetController::class, 'destroy']);
+    Route::put('savings-target/{savingsTarget}/included-assets', [SavingsTargetController::class, 'updateIncludedAssets']);
+    Route::post('savings-target/{savingsTarget}/record-progress', [SavingsTargetController::class, 'recordProgress']);
+    Route::put('savings-target/{savingsTarget}/progress-snapshots', [SavingsTargetController::class, 'updateProgressSnapshots']);
+    Route::post('savings-target/{savingsTarget}/set-primary', [SavingsTargetController::class, 'setPrimary']);
+    Route::get('item/{item}/images/{itemImage}/facing', [ItemImageController::class, 'detectFacing']);
+    Route::post('item/{item}/images/{itemImage}/orient-right', [ItemImageController::class, 'orientToRight']);
+    Route::get('/test', fn () => 'ok');
 });
-
-Route::post('media/import-url', [MediaController::class, 'importFromUrl']);
-Route::post('product-import/parse', [ProductImportController::class, 'parseFromUrl']);
-Route::post('product-import/selection', [ProductImportTraceController::class, 'reportSelection']);
-
-Route::get('exchange-rates', [ExchangeRateController::class, 'index']);
-Route::get('category', [CategoryController::class, 'index']);
-Route::post('category', [CategoryController::class, 'store']);
-Route::get('expense-category', [ExpenseCategoryController::class, 'index']);
-Route::post('expense-category', [ExpenseCategoryController::class, 'store']);
-Route::apiResource('entity', EntityController::class);
-Route::get('entity/{entity}/body-snapshots', [EntityBodySnapshotController::class, 'index']);
-Route::get('entity/{entity}/body-snapshots/prompt-snippet', [EntityBodySnapshotController::class, 'promptSnippet']);
-Route::post('entity/{entity}/body-snapshots', [EntityBodySnapshotController::class, 'store']);
-Route::put('entity/{entity}/body-snapshots/{bodySnapshot}', [EntityBodySnapshotController::class, 'update']);
-Route::delete('entity/{entity}/body-snapshots/{bodySnapshot}', [EntityBodySnapshotController::class, 'destroy']);
-
-Route::get('persona-vision/status', [PersonaImageController::class, 'status']);
-Route::post('entity/{entity}/avatar/generate', [PersonaImageController::class, 'generateAvatar']);
-Route::post('entity/{entity}/try-on', [PersonaImageController::class, 'tryOn']);
-Route::get('entity/{entity}/try-ons', [PersonaImageController::class, 'tryOnHistory']);
-Route::apiResource('character', CharacterController::class)->except(['index']);
-Route::post('item/{item}/duplicate', [ItemController::class, 'duplicate']);
-Route::apiResource('item', ItemController::class);
-Route::apiResource('timeline-event', TimelineEventController::class);
-Route::get('savings-target', [SavingsTargetController::class, 'index']);
-Route::post('savings-target', [SavingsTargetController::class, 'store']);
-Route::put('savings-target/{savingsTarget}', [SavingsTargetController::class, 'update']);
-Route::delete('savings-target/{savingsTarget}', [SavingsTargetController::class, 'destroy']);
-Route::put('savings-target/{savingsTarget}/included-assets', [SavingsTargetController::class, 'updateIncludedAssets']);
-Route::post('savings-target/{savingsTarget}/record-progress', [SavingsTargetController::class, 'recordProgress']);
-Route::put('savings-target/{savingsTarget}/progress-snapshots', [SavingsTargetController::class, 'updateProgressSnapshots']);
-Route::post('savings-target/{savingsTarget}/set-primary', [SavingsTargetController::class, 'setPrimary']);
-Route::get('item/{item}/images/{itemImage}/facing', [ItemImageController::class, 'detectFacing']);
-Route::post('item/{item}/images/{itemImage}/orient-right', [ItemImageController::class, 'orientToRight']);
-Route::get('/test', fn() => 'ok');
