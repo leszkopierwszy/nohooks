@@ -382,7 +382,7 @@
     },
     "zoom": {
       "title": "Content zoom",
-      "hint": "Applies to the right column only (sidebar unchanged). 100% is the default density."
+      "hint": "80%–120%. Applies to the right column only (sidebar unchanged). 100% is the default density."
     },
     "dialog": {
       "title": "Display settings",

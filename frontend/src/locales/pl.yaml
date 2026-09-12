@@ -354,7 +354,7 @@ display:
     hint: Etykiety interfejsu i główne teksty stron. Domyślnie angielski.
   zoom:
     title: Powiększenie treści
-    hint: Dotyczy kolumny po prawej (sidebar bez zmian). 100% to domyślna gęstość.
+    hint: 80%–120%. Dotyczy kolumny po prawej (sidebar bez zmian). 100% to domyślna gęstość.
   dialog:
     title: Ustawienia wyświetlania
     subtitle: Motyw, język i powiększenie treści.
