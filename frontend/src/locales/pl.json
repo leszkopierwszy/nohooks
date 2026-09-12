@@ -308,6 +308,21 @@
     "saveProfile": "Zapisz profil",
     "saved": "Zapisano.",
     "saveError": "Nie udało się zapisać profilu.",
+    "tabs": {
+      "profile": "Profil",
+      "security": "Hasło i e-mail",
+      "notifications": "Powiadomienia",
+      "payments": "Płatności"
+    },
+    "emailSection": {
+      "title": "E-mail",
+      "subtitle": "Adres używany do logowania na to konto.",
+      "save": "Zapisz e-mail"
+    },
+    "placeholders": {
+      "notifications": "Preferencje powiadomień pojawią się tutaj.",
+      "payments": "Metody płatności i rozliczenia pojawią się tutaj."
+    },
     "password": {
       "title": "Hasło",
       "subtitle": "Zmień hasło używane do logowania do panelu.",
@@ -370,7 +385,7 @@
       "hint": "Dotyczy kolumny po prawej (sidebar bez zmian). 100% to domyślna gęstość."
     },
     "dialog": {
-      "title": "Wyświetlanie",
+      "title": "Ustawienia wyświetlania",
       "subtitle": "Motyw, język i powiększenie treści.",
       "accountLink": "Ustawienia konta",
       "done": "Gotowe"
@@ -756,9 +771,9 @@
     "openMenu": "Otwórz menu",
     "closeMenu": "Zamknij menu",
     "displayNameFallback": "Konto",
-    "displaySection": "Wyświetlanie",
+    "displaySection": "Ustawienia",
     "accountSettings": "Ustawienia konta",
-    "displaySettings": "Wyświetlanie",
+    "displaySettings": "Ustawienia wyświetlania",
     "zoom": "Powiększenie {label}",
     "logout": "Wyloguj się"
   },

@@ -289,6 +289,18 @@ account:
   saveProfile: Save profile
   saved: Saved.
   saveError: Could not save profile.
+  tabs:
+    profile: Profile
+    security: Password & email
+    notifications: Notifications
+    payments: Payments
+  emailSection:
+    title: Email
+    subtitle: Sign-in address for this account.
+    save: Save email
+  placeholders:
+    notifications: Notification preferences will appear here.
+    payments: Payment methods and billing will appear here.
   password:
     title: Password
     subtitle: Change the password used to sign in to the panel.
@@ -344,7 +356,7 @@ display:
     title: Content zoom
     hint: Applies to the right column only (sidebar unchanged). 100% is the default density.
   dialog:
-    title: Display
+    title: Display settings
     subtitle: Theme, language, and content zoom.
     accountLink: Account settings
     done: Done
@@ -698,9 +710,9 @@ userMenu:
   openMenu: Open menu
   closeMenu: Close menu
   displayNameFallback: Account
-  displaySection: Display
+  displaySection: Settings
   accountSettings: Account settings
-  displaySettings: Display
+  displaySettings: Display settings
   zoom: Zoom {label}
   logout: Sign out
 
