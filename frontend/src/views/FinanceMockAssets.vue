@@ -22,6 +22,19 @@
         </p>
         <button
           type="button"
+          class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900 hover:bg-amber-100"
+          @click="lotteryTrackOpen = true"
+        >
+          {{ t('finance.accounts.lotteryTrack.open') }}
+          <span
+            v-if="lotteryTickets.trackedCount"
+            class="ml-1 tabular-nums text-amber-700"
+          >
+            ({{ lotteryTickets.trackedCount }})
+          </span>
+        </button>
+        <button
+          type="button"
           class="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-800 hover:bg-rose-100"
           @click="openExpense()"
         >
@@ -195,6 +208,7 @@
       @close="closeModals"
       @save="onSaveExpense"
     />
+    <FinanceLotteryTrackModal :open="lotteryTrackOpen" @close="lotteryTrackOpen = false" />
     <FinanceAccountAdjustModal
       :open="adjustOpen"
       :account="activeAccount"
@@ -212,17 +226,21 @@ import FinanceAccountAdjustModal from '../components/finance/FinanceAccountAdjus
 import FinanceAccountEditModal from '../components/finance/FinanceAccountEditModal.vue'
 import FinanceAccountHistoryModal from '../components/finance/FinanceAccountHistoryModal.vue'
 import FinanceExpenseModal from '../components/finance/FinanceExpenseModal.vue'
+import FinanceLotteryTrackModal from '../components/finance/FinanceLotteryTrackModal.vue'
 import FinanceCloseLink from '../components/finance/FinanceCloseLink.vue'
 import { useFinanceAccountActions } from '../composables/useFinanceAccountActions'
 import { useI18n } from '../composables/useI18n'
 import { useFinanceAccountsStore } from '../stores/financeAccounts'
+import { useLotteryTicketsStore } from '../stores/lotteryTickets'
 import { usePetExpenseAccountsStore } from '../stores/petExpenseAccounts'
 import { formatBalancePln, parseBalancePln } from '../utils/financeAccountBalance'
 import { mockFinanceAccounts } from '../utils/savingsAssets'
+import { saveManualExpense } from '../utils/saveManualExpense'
 
 const { t } = useI18n()
 const financeStore = useFinanceAccountsStore()
 const petAccountsStore = usePetExpenseAccountsStore()
+const lotteryTickets = useLotteryTicketsStore()
 const { createAccount, updateAccount, adjustBalance, deleteAccount, isPetAccount } =
   useFinanceAccountActions()
 
@@ -231,6 +249,7 @@ const assets = computed(() => mockFinanceAccounts())
 onMounted(() => {
   financeStore.reload()
   petAccountsStore.reload()
+  lotteryTickets.reload()
 })
 
 const nameFilter = ref('')
@@ -238,6 +257,7 @@ const categoryFilter = ref('')
 
 const editOpen = ref(false)
 const expenseOpen = ref(false)
+const lotteryTrackOpen = ref(false)
 const adjustOpen = ref(false)
 const historyOpen = ref(false)
 const creatingNew = ref(false)
@@ -328,15 +348,7 @@ function onSaveEdit(payload) {
 }
 
 function onSaveExpense(payload) {
-  if (payload.account) {
-    adjustBalance(payload.account, {
-      kind: 'expense',
-      amount: payload.amount,
-      note: payload.note,
-      category: payload.category,
-      purchase_type: payload.purchase_type,
-    })
-  }
+  saveManualExpense(adjustBalance, payload)
   closeModals()
 }
 

@@ -1,4 +1,5 @@
 import { formatBalancePln } from './financeAccountBalance'
+import { expenseCategoryDisplayLabel } from '../stores/expenseCategories'
 import { translate } from '../i18n'
 
 const FIELD_LABELS = {
@@ -10,10 +11,7 @@ const FIELD_LABELS = {
 }
 
 function expenseCategoryLabel(category) {
-  if (!category) return ''
-  const key = `finance.accounts.expense.categories.${category}`
-  const label = translate(key)
-  return label === key ? category : label
+  return expenseCategoryDisplayLabel(category)
 }
 
 function purchaseTypeLabel(value) {
@@ -54,6 +52,56 @@ export function historyEntryMetaLines(entry) {
     if (purchase) {
       lines.push(
         translate('finance.accounts.history.expensePurchaseType', { type: purchase }),
+      )
+    }
+    const lotteryBets = entry.meta?.lottery_bets
+    const lottery = entry.meta?.lottery_numbers
+    const lotteryBonus = entry.meta?.lottery_bonus_numbers
+    if (entry.meta?.lottery_system) {
+      const sysKey = `finance.accounts.expense.lotterySystems.${entry.meta.lottery_system}`
+      const sysLabel = translate(sysKey)
+      lines.push(
+        translate('finance.accounts.history.expenseLotterySystem', {
+          system: sysLabel === sysKey ? entry.meta.lottery_system : sysLabel,
+        }),
+      )
+    }
+    if (Array.isArray(lotteryBets) && lotteryBets.length) {
+      lotteryBets.forEach((bet, index) => {
+        const nums = Array.isArray(bet?.numbers) ? bet.numbers : []
+        const bonus = Array.isArray(bet?.bonus_numbers) ? bet.bonus_numbers : []
+        if (!nums.length) return
+        const numbers = bonus.length ? `${nums.join(', ')} + ${bonus.join(', ')}` : nums.join(', ')
+        lines.push(
+          translate('finance.accounts.history.expenseLotteryBet', {
+            n: index + 1,
+            numbers,
+          }),
+        )
+      })
+    } else if (Array.isArray(lottery) && lottery.length) {
+      const numbers =
+        Array.isArray(lotteryBonus) && lotteryBonus.length
+          ? `${lottery.join(', ')} + ${lotteryBonus.join(', ')}`
+          : lottery.join(', ')
+      lines.push(
+        translate('finance.accounts.history.expenseLotteryNumbers', {
+          numbers,
+        }),
+      )
+    }
+    if (entry.meta?.lottery_jackpot) {
+      lines.push(
+        translate('finance.accounts.history.expenseLotteryJackpot', {
+          value: entry.meta.lottery_jackpot,
+        }),
+      )
+    }
+    if (entry.meta?.lottery_draw_url) {
+      lines.push(
+        translate('finance.accounts.history.expenseLotteryDrawUrl', {
+          url: entry.meta.lottery_draw_url,
+        }),
       )
     }
   }

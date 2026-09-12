@@ -6,6 +6,7 @@ import {
   newHistoryId,
   parseBalancePln,
 } from '../utils/financeAccountBalance'
+import { isoTimestampFromDateKey } from '../utils/dateDmY'
 
 const STORAGE_KEY = 'nohooks.petExpenseAccounts'
 const ID_BASE = 10_000
@@ -161,7 +162,21 @@ export const usePetExpenseAccountsStore = defineStore('petExpenseAccounts', {
       return account
     },
 
-    adjustBalance(id, { kind, amount, note, category, purchase_type }) {
+    adjustBalance(id, {
+      kind,
+      amount,
+      note,
+      category,
+      purchase_type,
+      date,
+      lottery_numbers,
+      lottery_bonus_numbers,
+      lottery_bets,
+      lottery_system,
+      lottery_draw_url,
+      lottery_jackpot,
+      lottery_track,
+    }) {
       const idx = this.accounts.findIndex((a) => Number(a.id) === Number(id))
       if (idx === -1) return null
 
@@ -177,14 +192,52 @@ export const usePetExpenseAccountsStore = defineStore('petExpenseAccounts', {
 
       const cat = category ? String(category).trim() : ''
       const purchaseType = purchase_type ? String(purchase_type).trim() : ''
+      const lotteryNums = Array.isArray(lottery_numbers)
+        ? lottery_numbers.map((n) => Number(n)).filter((n) => Number.isFinite(n))
+        : []
+      const lotteryBonus = Array.isArray(lottery_bonus_numbers)
+        ? lottery_bonus_numbers.map((n) => Number(n)).filter((n) => Number.isFinite(n))
+        : []
+      const lotteryBets = Array.isArray(lottery_bets)
+        ? lottery_bets
+            .map((bet) => ({
+              numbers: Array.isArray(bet?.numbers)
+                ? bet.numbers.map(Number).filter(Number.isFinite)
+                : [],
+              bonus_numbers: Array.isArray(bet?.bonus_numbers)
+                ? bet.bonus_numbers.map(Number).filter(Number.isFinite)
+                : [],
+            }))
+            .filter((bet) => bet.numbers.length)
+        : []
+      const lotterySystem = lottery_system ? String(lottery_system).trim() : ''
+      const lotteryUrl = lottery_draw_url ? String(lottery_draw_url).trim() : ''
+      const lotteryJackpot = lottery_jackpot ? String(lottery_jackpot).trim() : ''
       const meta =
-        isExpense || cat || purchaseType
+        isExpense ||
+        cat ||
+        purchaseType ||
+        lotteryNums.length ||
+        lotteryBonus.length ||
+        lotteryBets.length ||
+        lotterySystem ||
+        lotteryUrl ||
+        lotteryJackpot
           ? {
               ...(isExpense ? { expense: true } : {}),
               ...(cat ? { category: cat } : {}),
               ...(purchaseType ? { purchase_type: purchaseType } : {}),
+              ...(lotterySystem ? { lottery_system: lotterySystem } : {}),
+              ...(lotteryBets.length ? { lottery_bets: lotteryBets } : {}),
+              ...(lotteryNums.length ? { lottery_numbers: lotteryNums } : {}),
+              ...(lotteryBonus.length ? { lottery_bonus_numbers: lotteryBonus } : {}),
+              ...(lotteryUrl ? { lottery_draw_url: lotteryUrl } : {}),
+              ...(lotteryJackpot ? { lottery_jackpot: lotteryJackpot } : {}),
+              ...(lottery_track ? { lottery_track: true } : {}),
             }
           : undefined
+
+      const created_at = date ? isoTimestampFromDateKey(date) : new Date().toISOString()
 
       const entry = {
         id: newHistoryId(),
@@ -194,7 +247,7 @@ export const usePetExpenseAccountsStore = defineStore('petExpenseAccounts', {
         balance_after,
         note: note ? String(note).trim() : null,
         ...(meta ? { meta } : {}),
-        created_at: new Date().toISOString(),
+        created_at,
       }
 
       account.balance = balance_after

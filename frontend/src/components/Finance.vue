@@ -90,6 +90,7 @@ import { MOCK_FINANCE_ASSETS, mockFinanceAssetsTotal } from '../constants/mockFi
 import { savingsTargetColorTheme } from '../constants/savingsTargetColors'
 import { formatPercentLabel } from '../utils/savingsTarget'
 import { mockFinanceAccounts } from '../utils/savingsAssets'
+import { saveManualExpense } from '../utils/saveManualExpense'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -256,15 +257,7 @@ function onStatClick(stat) {
 }
 
 function onSaveExpense(payload) {
-  if (payload.account) {
-    adjustBalance(payload.account, {
-      kind: 'expense',
-      amount: payload.amount,
-      note: payload.note,
-      category: payload.category,
-      purchase_type: payload.purchase_type,
-    })
-  }
+  saveManualExpense(adjustBalance, payload)
   expenseOpen.value = false
 }
 </script>

@@ -1,13 +1,8 @@
-/** Suggested categories for one-off manual expenses (labels via i18n). */
-export const MANUAL_EXPENSE_CATEGORIES = [
-  'groceries',
-  'transport',
-  'dining',
-  'housing',
-  'health',
-  'entertainment',
-  'shopping',
-  'subscriptions',
-  'pets',
-  'other',
-]
+/**
+ * Built-in expense category slugs (labels via i18n).
+ * Custom categories live in the API (`expense_categories` table).
+ */
+export {
+  BUILTIN_EXPENSE_CATEGORY_SLUGS as MANUAL_EXPENSE_CATEGORIES,
+  expenseCategoryDisplayLabel,
+} from '../stores/expenseCategories'
