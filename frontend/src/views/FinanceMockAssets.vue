@@ -22,6 +22,13 @@
         </p>
         <button
           type="button"
+          class="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-800 hover:bg-rose-100"
+          @click="openExpense()"
+        >
+          {{ t('finance.accounts.addExpense') }}
+        </button>
+        <button
+          type="button"
           class="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500"
           @click="openCreate"
         >
@@ -130,6 +137,14 @@
                 </button>
                 <button
                   type="button"
+                  class="rounded-md px-2 py-1 text-rose-700 hover:bg-rose-50"
+                  :title="t('finance.accounts.expense.title')"
+                  @click="openExpense(asset)"
+                >
+                  {{ t('finance.accounts.btnExpense') }}
+                </button>
+                <button
+                  type="button"
                   class="rounded-md px-2 py-1 text-emerald-700 hover:bg-emerald-50"
                   :title="t('finance.accounts.adjust.credit')"
                   @click="openAdjust(asset)"
@@ -173,6 +188,13 @@
       @close="closeModals"
       @save="onSaveEdit"
     />
+    <FinanceExpenseModal
+      :open="expenseOpen"
+      :accounts="assets"
+      :account="activeAccount"
+      @close="closeModals"
+      @save="onSaveExpense"
+    />
     <FinanceAccountAdjustModal
       :open="adjustOpen"
       :account="activeAccount"
@@ -189,6 +211,7 @@ import AnimalSpeciesIcon from '../components/AnimalSpeciesIcon.vue'
 import FinanceAccountAdjustModal from '../components/finance/FinanceAccountAdjustModal.vue'
 import FinanceAccountEditModal from '../components/finance/FinanceAccountEditModal.vue'
 import FinanceAccountHistoryModal from '../components/finance/FinanceAccountHistoryModal.vue'
+import FinanceExpenseModal from '../components/finance/FinanceExpenseModal.vue'
 import FinanceCloseLink from '../components/finance/FinanceCloseLink.vue'
 import { useFinanceAccountActions } from '../composables/useFinanceAccountActions'
 import { useI18n } from '../composables/useI18n'
@@ -214,6 +237,7 @@ const nameFilter = ref('')
 const categoryFilter = ref('')
 
 const editOpen = ref(false)
+const expenseOpen = ref(false)
 const adjustOpen = ref(false)
 const historyOpen = ref(false)
 const creatingNew = ref(false)
@@ -260,6 +284,7 @@ const filteredCountLabel = computed(() => {
 
 function closeModals() {
   editOpen.value = false
+  expenseOpen.value = false
   adjustOpen.value = false
   historyOpen.value = false
   creatingNew.value = false
@@ -278,6 +303,11 @@ function openEdit(asset) {
   editOpen.value = true
 }
 
+function openExpense(asset = null) {
+  activeAccount.value = asset
+  expenseOpen.value = true
+}
+
 function openAdjust(asset) {
   activeAccount.value = asset
   adjustOpen.value = true
@@ -293,6 +323,19 @@ function onSaveEdit(payload) {
     createAccount(payload)
   } else if (activeAccount.value) {
     updateAccount(activeAccount.value, payload)
+  }
+  closeModals()
+}
+
+function onSaveExpense(payload) {
+  if (payload.account) {
+    adjustBalance(payload.account, {
+      kind: 'expense',
+      amount: payload.amount,
+      note: payload.note,
+      category: payload.category,
+      purchase_type: payload.purchase_type,
+    })
   }
   closeModals()
 }

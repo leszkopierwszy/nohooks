@@ -161,25 +161,39 @@ export const usePetExpenseAccountsStore = defineStore('petExpenseAccounts', {
       return account
     },
 
-    adjustBalance(id, { kind, amount, note }) {
+    adjustBalance(id, { kind, amount, note, category, purchase_type }) {
       const idx = this.accounts.findIndex((a) => Number(a.id) === Number(id))
       if (idx === -1) return null
 
       const delta = Math.abs(parseBalancePln(amount))
       if (delta <= 0) return null
 
+      const isExpense = kind === 'expense'
+      const isDebit = kind === 'debit' || isExpense
       const account = { ...this.accounts[idx] }
       const balance_before = parseBalancePln(account.balance)
-      const signed = kind === 'debit' ? -delta : delta
+      const signed = isDebit ? -delta : delta
       const balance_after = Math.round((balance_before + signed) * 100) / 100
+
+      const cat = category ? String(category).trim() : ''
+      const purchaseType = purchase_type ? String(purchase_type).trim() : ''
+      const meta =
+        isExpense || cat || purchaseType
+          ? {
+              ...(isExpense ? { expense: true } : {}),
+              ...(cat ? { category: cat } : {}),
+              ...(purchaseType ? { purchase_type: purchaseType } : {}),
+            }
+          : undefined
 
       const entry = {
         id: newHistoryId(),
-        kind: kind === 'debit' ? 'debit' : 'credit',
+        kind: isExpense ? 'expense' : isDebit ? 'debit' : 'credit',
         amount: delta,
         balance_before,
         balance_after,
         note: note ? String(note).trim() : null,
+        ...(meta ? { meta } : {}),
         created_at: new Date().toISOString(),
       }
 

@@ -9,16 +9,31 @@ const FIELD_LABELS = {
   default_frequency: 'finance.accounts.fields.frequency',
 }
 
+function expenseCategoryLabel(category) {
+  if (!category) return ''
+  const key = `finance.accounts.expense.categories.${category}`
+  const label = translate(key)
+  return label === key ? category : label
+}
+
+function purchaseTypeLabel(value) {
+  if (!value) return ''
+  const key = `souls.animals.purchaseTypes.${value}`
+  const label = translate(key)
+  return label === key ? value : label
+}
+
 export function historyEntryTitle(entry) {
   if (!entry) return ''
   if (entry.kind === 'credit') return translate('finance.accounts.history.credit')
   if (entry.kind === 'debit') return translate('finance.accounts.history.debit')
+  if (entry.kind === 'expense') return translate('finance.accounts.history.expense')
   if (entry.kind === 'meta') return translate('finance.accounts.history.meta')
   return entry.kind
 }
 
 export function historyEntryAmountLine(entry) {
-  if (entry.kind === 'credit' || entry.kind === 'debit') {
+  if (entry.kind === 'credit' || entry.kind === 'debit' || entry.kind === 'expense') {
     const sign = entry.kind === 'credit' ? '+' : '−'
     return `${sign}${formatBalancePln(entry.amount)}`
   }
@@ -26,17 +41,39 @@ export function historyEntryAmountLine(entry) {
 }
 
 export function historyEntryMetaLines(entry) {
+  const lines = []
+
+  if (entry.kind === 'expense' || entry.meta?.expense) {
+    const cat = expenseCategoryLabel(entry.meta?.category)
+    if (cat) {
+      lines.push(
+        translate('finance.accounts.history.expenseCategory', { category: cat }),
+      )
+    }
+    const purchase = purchaseTypeLabel(entry.meta?.purchase_type)
+    if (purchase) {
+      lines.push(
+        translate('finance.accounts.history.expensePurchaseType', { type: purchase }),
+      )
+    }
+  }
+
   const changes = entry.meta?.changes
-  if (!Array.isArray(changes)) return []
-  return changes.map((c) => {
-    const labelKey = FIELD_LABELS[c.field]
-    const label = labelKey ? translate(labelKey) : c.field
-    return translate('finance.accounts.history.metaLine', {
-      field: label,
-      from: c.from || '—',
-      to: c.to || '—',
-    })
-  })
+  if (Array.isArray(changes)) {
+    for (const c of changes) {
+      const labelKey = FIELD_LABELS[c.field]
+      const label = labelKey ? translate(labelKey) : c.field
+      lines.push(
+        translate('finance.accounts.history.metaLine', {
+          field: label,
+          from: c.from || '—',
+          to: c.to || '—',
+        }),
+      )
+    }
+  }
+
+  return lines
 }
 
 export function historyEntryBalanceLine(entry) {
