@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Entity;
 use App\Services\PersonaVision\PersonaImageProcessingService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 /**
@@ -28,6 +29,48 @@ class PersonaImageController extends Controller
             'provider' => $this->vision->providerName(),
             'configured' => $this->vision->isConfigured(),
             'comfyui_url' => $comfyuiUrl,
+        ]);
+    }
+
+    /**
+     * POST /api/entity/{entity}/avatar
+     * Multipart photo — stores source image without requiring AI generation.
+     */
+    public function uploadAvatar(Request $request, Entity $entity)
+    {
+        $request->validate([
+            'photo' => 'required|image|max:10240',
+        ]);
+
+        $stored = Storage::disk('public')->putFile(
+            'persona-ai/sources/'.date('Y/m'),
+            $request->file('photo')
+        );
+
+        $entity->avatar_source_url = Storage::disk('public')->url($stored);
+        $entity->save();
+
+        return response()->json([
+            'entity_id' => $entity->id,
+            'avatar_source_url' => $entity->avatar_source_url,
+            'avatar_doll_url' => $entity->avatar_doll_url,
+        ]);
+    }
+
+    /**
+     * DELETE /api/entity/{entity}/avatar — clear source + generated doll.
+     */
+    public function clearAvatar(Entity $entity)
+    {
+        $entity->avatar_source_url = null;
+        $entity->avatar_doll_url = null;
+        $entity->avatar_generated_at = null;
+        $entity->save();
+
+        return response()->json([
+            'entity_id' => $entity->id,
+            'avatar_source_url' => null,
+            'avatar_doll_url' => null,
         ]);
     }
 

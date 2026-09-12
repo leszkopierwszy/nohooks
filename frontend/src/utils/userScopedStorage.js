@@ -42,6 +42,7 @@ export const USER_DATA_STORAGE_KEYS = [
   'nohooks.growthHealth.v1',
   'nohooks.activePersonaId',
   'nohooks_savings_targets_v1',
+  'nohooks.salaryJobs.v1',
 ]
 
 /**

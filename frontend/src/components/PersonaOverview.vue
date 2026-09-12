@@ -62,19 +62,134 @@
           >
             {{ initials(persona.name) }}
           </div>
+
+          <div class="mt-4 flex flex-wrap items-center gap-2">
+            <label
+              class="inline-flex cursor-pointer items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+            >
+              <input
+                ref="photoInputRef"
+                type="file"
+                accept="image/*"
+                class="sr-only"
+                :disabled="photoBusy"
+                @change="onPhotoSelected"
+              />
+              {{ photoBusy ? t('souls.prims.photoUploading') : t('souls.prims.uploadPhoto') }}
+            </label>
+            <button
+              v-if="persona.avatar_source_url || persona.avatar_doll_url"
+              type="button"
+              class="rounded-md bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100 disabled:opacity-60"
+              :disabled="photoBusy || !persona.avatar_source_url"
+              @click="onGenerateAvatar"
+            >
+              {{ photoBusy ? t('souls.prims.generating') : t('souls.prims.generateAvatar') }}
+            </button>
+            <button
+              v-if="persona.avatar_source_url || persona.avatar_doll_url"
+              type="button"
+              class="rounded-md px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50 disabled:opacity-60"
+              :disabled="photoBusy"
+              @click="onClearAvatar"
+            >
+              {{ t('souls.prims.clearPhoto') }}
+            </button>
+          </div>
+          <p v-if="photoError" class="mt-2 text-sm text-red-600">{{ photoError }}</p>
+          <p v-else-if="photoHint" class="mt-2 text-sm text-emerald-700">{{ photoHint }}</p>
         </div>
 
         <div class="mx-auto mt-10 max-w-2xl sm:mt-14 lg:col-span-3 lg:row-span-2 lg:row-end-2 lg:mt-0 lg:max-w-none">
-          <div>
-            <h1 class="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
-              {{ persona.name }}
-            </h1>
-            <p v-if="personaMeta" class="mt-2 text-sm text-gray-500">
-              {{ personaMeta }}
-            </p>
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h1 class="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+                {{ persona.name }}
+              </h1>
+              <p v-if="personaMeta" class="mt-2 text-sm text-gray-500">
+                {{ personaMeta }}
+              </p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button
+                type="button"
+                class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                @click="openEdit"
+              >
+                {{ t('souls.prims.edit') }}
+              </button>
+              <button
+                type="button"
+                class="rounded-md px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50"
+                @click="confirmDelete"
+              >
+                {{ t('souls.prims.delete') }}
+              </button>
+            </div>
           </div>
 
-          <p v-if="persona.description" class="mt-6 text-gray-500">
+          <form
+            v-if="editOpen"
+            class="mt-6 space-y-4 rounded-xl border border-gray-200 bg-gray-50/80 p-4"
+            @submit.prevent="saveEdit"
+          >
+            <div>
+              <label for="prim-edit-name" class="block text-sm font-medium text-gray-700">
+                {{ t('souls.prims.name') }}
+              </label>
+              <input
+                id="prim-edit-name"
+                v-model="editForm.name"
+                type="text"
+                required
+                class="mt-1 block w-full rounded-lg border-0 bg-white px-3 py-2 text-sm ring-1 ring-inset ring-gray-200 focus:ring-2 focus:ring-indigo-600"
+              />
+            </div>
+            <div>
+              <label for="prim-edit-gender" class="block text-sm font-medium text-gray-700">
+                {{ t('souls.prims.gender') }}
+              </label>
+              <select
+                id="prim-edit-gender"
+                v-model="editForm.gender"
+                class="mt-1 block w-full rounded-lg border-0 bg-white px-3 py-2 text-sm ring-1 ring-inset ring-gray-200 focus:ring-2 focus:ring-indigo-600"
+              >
+                <option value="">{{ t('souls.prims.genderUnknown') }}</option>
+                <option value="female">{{ t('souls.prims.genderFemale') }}</option>
+                <option value="male">{{ t('souls.prims.genderMale') }}</option>
+              </select>
+            </div>
+            <div>
+              <label for="prim-edit-description" class="block text-sm font-medium text-gray-700">
+                {{ t('souls.prims.description') }}
+              </label>
+              <textarea
+                id="prim-edit-description"
+                v-model="editForm.description"
+                rows="3"
+                class="mt-1 block w-full rounded-lg border-0 bg-white px-3 py-2 text-sm ring-1 ring-inset ring-gray-200 focus:ring-2 focus:ring-indigo-600"
+              />
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button
+                type="submit"
+                class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-60"
+                :disabled="editSaving"
+              >
+                {{ editSaving ? t('souls.prims.saving') : t('souls.prims.save') }}
+              </button>
+              <button
+                type="button"
+                class="rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100"
+                @click="editOpen = false"
+              >
+                {{ t('souls.prims.cancel') }}
+              </button>
+            </div>
+            <p v-if="editError" class="text-sm text-red-600">{{ editError }}</p>
+          </form>
+
+          <p v-else-if="persona.description" class="mt-6 text-gray-500">
             {{ persona.description }}
           </p>
 
@@ -310,18 +425,36 @@
         </div>
       </div>
     </div>
+
+    <ConfirmDialog
+      :open="deleteOpen"
+      :title="t('souls.prims.deleteConfirmTitle')"
+      :message="t('souls.prims.deleteConfirmBody', { name: persona?.name ?? '' })"
+      :confirm-label="t('souls.prims.delete')"
+      variant="danger"
+      :loading="deleteBusy"
+      @close="deleteOpen = false"
+      @confirm="onDeleteConfirm"
+    />
   </div>
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/vue'
 import PersonaSwitcher from './PersonaSwitcher.vue'
 import PersonaBodyProfile from './PersonaBodyProfile.vue'
 import ItemImage from './ItemImage.vue'
+import ConfirmDialog from './ConfirmDialog.vue'
 import { resolveStorageUrl } from '../api/media'
+import { useI18n } from '../composables/useI18n'
 import { isDefaultPersonaFit } from '../constants/itemPersonaFit'
+import {
+  clearPersonaAvatar,
+  generatePersonaAvatar,
+  uploadPersonaPhoto,
+} from '../services/personaImageProcessing'
 import { usePersonasStore } from '../stores/personas'
 
 const props = defineProps({
@@ -331,6 +464,7 @@ const props = defineProps({
   },
 })
 
+const { t } = useI18n()
 const router = useRouter()
 const personasStore = usePersonasStore()
 
@@ -340,10 +474,27 @@ const error = ref(null)
 const selectedPersonaId = ref(null)
 const collectionFilter = ref('')
 
+const editOpen = ref(false)
+const editSaving = ref(false)
+const editError = ref('')
+const editForm = reactive({
+  name: '',
+  gender: '',
+  description: '',
+})
+
+const photoInputRef = ref(null)
+const photoBusy = ref(false)
+const photoError = ref('')
+const photoHint = ref('')
+const deleteOpen = ref(false)
+const deleteBusy = ref(false)
+
 const avatarUrl = computed(() => {
   if (!persona.value) return null
   return (
     persona.value.avatar_doll_url ??
+    persona.value.avatar_source_url ??
     persona.value.avatar_url ??
     personasStore.personas.find((p) => p.id === persona.value.id)?.imageUrl ??
     null
@@ -491,9 +642,121 @@ function itemLink(item) {
 }
 
 function genderLabel(gender) {
-  if (gender === 'female') return 'Kobieta'
-  if (gender === 'male') return 'Mężczyzna'
+  if (gender === 'female') return t('souls.prims.genderFemale')
+  if (gender === 'male') return t('souls.prims.genderMale')
   return gender
+}
+
+function openEdit() {
+  if (!persona.value) return
+  editForm.name = persona.value.name ?? ''
+  editForm.gender = persona.value.gender ?? ''
+  editForm.description = persona.value.description ?? ''
+  editError.value = ''
+  editOpen.value = true
+}
+
+async function saveEdit() {
+  if (!persona.value) return
+  editSaving.value = true
+  editError.value = ''
+  try {
+    await personasStore.updateSoul(persona.value.id, {
+      name: editForm.name,
+      gender: editForm.gender || null,
+      description: editForm.description,
+    })
+    editOpen.value = false
+    await loadPersona(props.id)
+  } catch (err) {
+    editError.value = err?.message || t('souls.prims.saveError')
+  } finally {
+    editSaving.value = false
+  }
+}
+
+function confirmDelete() {
+  deleteOpen.value = true
+}
+
+async function onDeleteConfirm() {
+  if (!persona.value) return
+  deleteBusy.value = true
+  try {
+    await personasStore.deleteSoul(persona.value.id)
+    deleteOpen.value = false
+    router.push({ name: 'SoulsPrims' })
+  } catch (err) {
+    error.value = err?.message || t('souls.prims.deleteError')
+    deleteOpen.value = false
+  } finally {
+    deleteBusy.value = false
+  }
+}
+
+async function onPhotoSelected(event) {
+  const file = event.target?.files?.[0]
+  if (photoInputRef.value) photoInputRef.value.value = ''
+  if (!file || !persona.value) return
+
+  photoBusy.value = true
+  photoError.value = ''
+  photoHint.value = ''
+  try {
+    const result = await uploadPersonaPhoto(persona.value.id, file)
+    persona.value = {
+      ...persona.value,
+      avatar_source_url: result.avatar_source_url,
+      avatar_doll_url: result.avatar_doll_url ?? persona.value.avatar_doll_url,
+    }
+    await personasStore.fetchPersonas()
+    photoHint.value = t('souls.prims.photoUploaded')
+  } catch (err) {
+    photoError.value = err?.message || t('souls.prims.photoError')
+  } finally {
+    photoBusy.value = false
+  }
+}
+
+async function onGenerateAvatar() {
+  if (!persona.value?.avatar_source_url) return
+  photoBusy.value = true
+  photoError.value = ''
+  photoHint.value = ''
+  try {
+    const result = await generatePersonaAvatar(persona.value.id, persona.value.avatar_source_url)
+    persona.value = {
+      ...persona.value,
+      avatar_source_url: result.avatar_source_url ?? persona.value.avatar_source_url,
+      avatar_doll_url: result.avatar_doll_url ?? result.output_url ?? persona.value.avatar_doll_url,
+    }
+    await personasStore.fetchPersonas()
+    photoHint.value = t('souls.prims.avatarGenerated')
+  } catch (err) {
+    photoError.value = err?.message || t('souls.prims.generateError')
+  } finally {
+    photoBusy.value = false
+  }
+}
+
+async function onClearAvatar() {
+  if (!persona.value) return
+  photoBusy.value = true
+  photoError.value = ''
+  photoHint.value = ''
+  try {
+    await clearPersonaAvatar(persona.value.id)
+    persona.value = {
+      ...persona.value,
+      avatar_source_url: null,
+      avatar_doll_url: null,
+    }
+    await personasStore.fetchPersonas()
+  } catch (err) {
+    photoError.value = err?.message || t('souls.prims.photoError')
+  } finally {
+    photoBusy.value = false
+  }
 }
 
 async function loadPersona(id) {

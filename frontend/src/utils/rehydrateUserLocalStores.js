@@ -7,6 +7,7 @@ import { useGrowthWellbeingStore } from '../stores/growthWellbeing'
 import { useGrowthSleepStore } from '../stores/growthSleep'
 import { useGrowthHealthStore } from '../stores/growthHealth'
 import { usePersonasStore } from '../stores/personas'
+import { useSalaryJobsStore } from '../stores/salaryJobs'
 
 /**
  * Reload client-side stores after switching authenticated user.
@@ -23,6 +24,7 @@ export function rehydrateUserLocalStores() {
     useGrowthSleepStore,
     useGrowthHealthStore,
     usePersonasStore,
+    useSalaryJobsStore,
   ]
 
   for (const useStore of stores) {

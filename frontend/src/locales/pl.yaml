@@ -55,6 +55,27 @@ finance:
   mockAccountsCount: "{n} kont demonstracyjnych"
   plannedChange: Aktywne subskrypcje
   m2mChange: Wynagrodzenie − aktywne subskrypcje (szac. / mies.)
+  salary:
+    jobsTitle: Historia zatrudnienia
+    jobsSubtitle: Pracodawcy i role tylko dla tego konta — bez dzielenia między użytkownikami.
+    addEmployer: Dodaj pracodawcę
+    newEmployer: Nowy pracodawca
+    editEmployer: Edytuj pracodawcę
+    employerName: Pracodawca
+    addRole: Dodaj rolę
+    newRole: Nowa rola
+    editRole: Edytuj rolę
+    roleTitle: Stanowisko
+    roleLabel: Rola
+    years: Lata
+    msGross: MS Gross
+    actions: Akcje
+    edit: Edytuj
+    delete: Usuń
+    save: Zapisz
+    cancel: Anuluj
+    empty: Brak historii zatrudnienia — dodaj pracodawcę, aby zacząć.
+    noRoles: Brak ról u tego pracodawcy.
   nav:
     label: Sekcje finansów
     overview: Przegląd
@@ -378,6 +399,23 @@ souls:
     genderUnknown: Nie ustawiono
     genderFemale: Kobieta
     genderMale: Mężczyzna
+    edit: Edytuj
+    delete: Usuń
+    save: Zapisz
+    saving: Zapisywanie…
+    saveError: Nie udało się zapisać Prima.
+    deleteError: Nie udało się usunąć Prima.
+    deleteConfirmTitle: Usunąć Prima?
+    deleteConfirmBody: „{name}” zostanie usunięty z Twojego konta.
+    uploadPhoto: Dodaj zdjęcie
+    photoUploading: Wgrywanie…
+    photoUploaded: Zdjęcie zapisane.
+    photoError: Nie udało się zaktualizować zdjęcia.
+    clearPhoto: Usuń zdjęcie
+    generateAvatar: Generuj awatar 3D
+    generating: Generowanie…
+    avatarGenerated: Awatar 3D gotowy.
+    generateError: Nie udało się wygenerować awatara — sprawdź ComfyUI / konfigurację AI.
   animals:
     title: Zwierzęta
     subtitle: Souls poza Primami — profile pupili i zwierząt domowych.

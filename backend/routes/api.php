@@ -49,6 +49,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('entity/{entity}/body-snapshots/{bodySnapshot}', [EntityBodySnapshotController::class, 'destroy']);
 
     Route::get('persona-vision/status', [PersonaImageController::class, 'status']);
+    Route::post('entity/{entity}/avatar', [PersonaImageController::class, 'uploadAvatar']);
+    Route::delete('entity/{entity}/avatar', [PersonaImageController::class, 'clearAvatar']);
     Route::post('entity/{entity}/avatar/generate', [PersonaImageController::class, 'generateAvatar']);
     Route::post('entity/{entity}/try-on', [PersonaImageController::class, 'tryOn']);
     Route::get('entity/{entity}/try-ons', [PersonaImageController::class, 'tryOnHistory']);

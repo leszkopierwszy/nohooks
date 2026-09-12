@@ -51,7 +51,12 @@ export const usePersonasStore = defineStore('personas', {
         const entities = await apiRequest('/entity')
         this.personas = entities.map((entity) => ({
           ...entity,
-          imageUrl: entity.avatar_url ?? AVATAR_BY_NAME[entity.name] ?? null,
+          imageUrl:
+            entity.avatar_doll_url ??
+            entity.avatar_source_url ??
+            entity.avatar_url ??
+            AVATAR_BY_NAME[entity.name] ??
+            null,
         }))
 
         const prims = this.prims
@@ -106,6 +111,28 @@ export const usePersonasStore = defineStore('personas', {
       })
       await this.fetchPersonas()
       return entity
+    },
+
+    async updateSoul(id, { name, description = '', gender = null }) {
+      const body = {
+        name: String(name).trim(),
+        description: description?.trim() || null,
+        gender: gender || null,
+      }
+      const entity = await apiRequest(`/entity/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(body),
+      })
+      await this.fetchPersonas()
+      return entity
+    },
+
+    async deleteSoul(id) {
+      await apiRequest(`/entity/${id}`, { method: 'DELETE' })
+      if (Number(this.activePersonaId) === Number(id)) {
+        this.setActivePersona(null)
+      }
+      await this.fetchPersonas()
     },
 
     async createAnimal({

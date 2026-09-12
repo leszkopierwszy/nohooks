@@ -29,6 +29,28 @@ export async function getPersonaVisionStatus() {
 }
 
 /**
+ * Upload source photo for a Prim (no AI required).
+ * @param {number|string} entityId
+ * @param {File} photo
+ */
+export async function uploadPersonaPhoto(entityId, photo) {
+  if (!(photo instanceof File)) {
+    throw new Error('Wymagany plik zdjęcia.')
+  }
+  const formData = new FormData()
+  formData.append('photo', photo)
+  return apiFormRequest(`/entity/${entityId}/avatar`, formData)
+}
+
+/**
+ * Clear Prim avatar source + generated doll.
+ * @param {number|string} entityId
+ */
+export async function clearPersonaAvatar(entityId) {
+  return apiRequest(`/entity/${entityId}/avatar`, { method: 'DELETE' })
+}
+
+/**
  * (1)+(2) Generuje awatar „lalka 3D” ze zdjęcia użytkownika.
  *
  * @param {number|string} entityId - ID persony (Entity)
