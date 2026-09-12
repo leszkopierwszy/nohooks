@@ -1,9 +1,17 @@
-/** Active authenticated user id for scoping localStorage. */
+/** Active authenticated user id for scoping localStorage cache. */
 let activeUserId = null
+let apiSyncEnabled = false
 
 /** @returns {string|null} */
 export function getActiveStorageUserId() {
   return activeUserId
+}
+
+/**
+ * @param {boolean} enabled
+ */
+export function setWorkspaceApiSyncEnabled(enabled) {
+  apiSyncEnabled = Boolean(enabled)
 }
 
 /**
@@ -13,6 +21,9 @@ export function getActiveStorageUserId() {
 export function setActiveStorageUserId(userId, options = {}) {
   const next = userId == null || userId === '' ? null : String(userId)
   activeUserId = next
+  if (!next) {
+    apiSyncEnabled = false
+  }
   if (next && options.claimLegacy) {
     claimLegacyKeysForUser(next)
   }
@@ -44,7 +55,6 @@ export function userStorageKey(baseKey) {
 
 /**
  * Copy unscoped legacy keys into this user's bucket once (first login after auth).
- * New registrations should not claim legacy — they get a fresh workspace.
  * @param {string} userId
  */
 function claimLegacyKeysForUser(userId) {
@@ -77,14 +87,28 @@ export function readUserStorage(baseKey) {
 }
 
 /**
+ * Write local cache only (no API). Used when applying remote documents.
  * @param {string} baseKey
  * @param {string} value
  */
-export function writeUserStorage(baseKey, value) {
+export function writeUserStorageLocal(baseKey, value) {
   try {
     localStorage.setItem(userStorageKey(baseKey), value)
   } catch {
     /* ignore quota */
+  }
+}
+
+/**
+ * @param {string} baseKey
+ * @param {string} value
+ */
+export function writeUserStorage(baseKey, value) {
+  writeUserStorageLocal(baseKey, value)
+  if (apiSyncEnabled && activeUserId) {
+    import('./workspaceSync')
+      .then(({ queueWorkspaceUpsert }) => queueWorkspaceUpsert(baseKey, value))
+      .catch(() => {})
   }
 }
 
@@ -101,6 +125,14 @@ export function readUserJson(baseKey, fallback = null) {
   } catch {
     return fallback
   }
+}
+
+/**
+ * @param {string} baseKey
+ * @param {unknown} value
+ */
+export function writeUserJson(baseKey, value) {
+  writeUserStorage(baseKey, JSON.stringify(value))
 }
 
 /**

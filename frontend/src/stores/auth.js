@@ -8,7 +8,11 @@ import {
   updateProfileRequest,
 } from '../api/auth'
 import { rehydrateUserLocalStores } from '../utils/rehydrateUserLocalStores'
-import { setActiveStorageUserId } from '../utils/userScopedStorage'
+import {
+  setActiveStorageUserId,
+  setWorkspaceApiSyncEnabled,
+} from '../utils/userScopedStorage'
+import { syncWorkspaceWithApi } from '../utils/workspaceSync'
 import { useUserStore } from './user'
 
 const TOKEN_KEY = 'nohooks_auth_token'
@@ -47,29 +51,34 @@ export const useAuthStore = defineStore('auth', {
       return this.token
     },
 
-    applyWorkspace(user, { claimLegacy = false } = {}) {
+    async applyWorkspace(user, { claimLegacy = false } = {}) {
+      setWorkspaceApiSyncEnabled(false)
       setActiveStorageUserId(user?.id ?? null, { claimLegacy })
+      if (user?.id && this.token) {
+        await syncWorkspaceWithApi({ claimLegacy })
+        setWorkspaceApiSyncEnabled(true)
+      }
       rehydrateUserLocalStores()
     },
 
-    setSession({ token, user }, { claimLegacy = false } = {}) {
+    async setSession({ token, user }, { claimLegacy = false } = {}) {
       this.token = token || ''
       writeToken(this.token)
       const userStore = useUserStore()
       if (user) {
         userStore.login({ ...user })
-        this.applyWorkspace(user, { claimLegacy })
+        await this.applyWorkspace(user, { claimLegacy })
       } else if (!this.token) {
         userStore.logout()
-        this.applyWorkspace(null)
+        await this.applyWorkspace(null)
       }
     },
 
-    clearSession() {
+    async clearSession() {
       this.token = ''
       writeToken('')
       useUserStore().logout()
-      this.applyWorkspace(null)
+      await this.applyWorkspace(null)
     },
 
     async bootstrap() {
@@ -77,19 +86,19 @@ export const useAuthStore = defineStore('auth', {
       this.bootstrapped = true
       if (!this.token) {
         useUserStore().logout()
-        this.applyWorkspace(null)
+        await this.applyWorkspace(null)
         return
       }
       try {
         const data = await meRequest()
         if (data?.user) {
           useUserStore().login({ ...data.user })
-          this.applyWorkspace(data.user, { claimLegacy: true })
+          await this.applyWorkspace(data.user, { claimLegacy: true })
         } else {
-          this.clearSession()
+          await this.clearSession()
         }
       } catch {
-        this.clearSession()
+        await this.clearSession()
       }
     },
 
@@ -98,7 +107,7 @@ export const useAuthStore = defineStore('auth', {
       this.error = ''
       try {
         const data = await loginRequest({ email, password })
-        this.setSession(data, { claimLegacy: true })
+        await this.setSession(data, { claimLegacy: true })
         return data
       } catch (err) {
         this.error = err?.message || 'Login failed'
@@ -113,8 +122,7 @@ export const useAuthStore = defineStore('auth', {
       this.error = ''
       try {
         const data = await registerRequest(payload)
-        // New account gets a fresh local workspace — do not claim previous user's data.
-        this.setSession(data, { claimLegacy: false })
+        await this.setSession(data, { claimLegacy: false })
         return data
       } catch (err) {
         this.error = err?.message || 'Registration failed'
@@ -130,7 +138,7 @@ export const useAuthStore = defineStore('auth', {
       } catch {
         /* ignore network errors on logout */
       } finally {
-        this.clearSession()
+        await this.clearSession()
       }
     },
 

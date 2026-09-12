@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\ExchangeRateController;
 use App\Http\Controllers\Api\PersonaImageController;
 use App\Http\Controllers\Api\SavingsTargetController;
 use App\Http\Controllers\Api\TimelineEventController;
+use App\Http\Controllers\Api\WorkspaceDocumentController;
 
 Route::post('auth/register', [AuthController::class, 'register']);
 Route::post('auth/login', [AuthController::class, 'login']);
@@ -26,6 +27,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('auth/me', [AuthController::class, 'me']);
     Route::put('auth/profile', [AuthController::class, 'updateProfile']);
     Route::put('auth/password', [AuthController::class, 'updatePassword']);
+
+    Route::get('workspace', [WorkspaceDocumentController::class, 'index']);
+    Route::put('workspace', [WorkspaceDocumentController::class, 'upsert']);
+    Route::post('workspace/import', [WorkspaceDocumentController::class, 'import']);
 
     Route::post('media/import-url', [MediaController::class, 'importFromUrl']);
     Route::post('product-import/parse', [ProductImportController::class, 'parseFromUrl']);

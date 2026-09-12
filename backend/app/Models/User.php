@@ -56,4 +56,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(SavingsTarget::class);
     }
+
+    public function workspaceDocuments(): HasMany
+    {
+        return $this->hasMany(UserWorkspaceDocument::class);
+    }
 }
