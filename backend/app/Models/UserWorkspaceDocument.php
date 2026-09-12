@@ -5,17 +5,20 @@ namespace App\Models;
 use App\Models\Concerns\BelongsToUser;
 use Illuminate\Database\Eloquent\Model;
 
-class Category extends Model
+class UserWorkspaceDocument extends Model
 {
     use BelongsToUser;
 
     protected $fillable = [
         'user_id',
-        'name',
+        'document_key',
+        'payload',
     ];
 
-    public function items()
+    protected function casts(): array
     {
-        return $this->hasMany(Item::class);
+        return [
+            'payload' => 'array',
+        ];
     }
 }

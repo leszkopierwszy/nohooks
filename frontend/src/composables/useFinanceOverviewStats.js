@@ -1,5 +1,5 @@
 import { computed } from 'vue'
-import { NET_SALARY_PLN } from '../constants/finance'
+import { useNetSalary } from './useNetSalary'
 import { mockFinanceAccounts, mockFinanceAssetsTotal } from '../utils/savingsAssets'
 import { savingsTargetColorTheme } from '../constants/savingsTargetColors'
 import { formatPercentLabel } from '../utils/savingsTarget'
@@ -12,6 +12,7 @@ export function useFinanceOverviewStats() {
   const timelineStore = useTimelineStore()
   const userAssets = useUserAssetsStore()
   const savingsTargets = useSavingsTargetsStore()
+  const { netSalaryPln, netSalaryFormatted } = useNetSalary()
 
   const plannedExpensesFormatted = computed(
     () =>
@@ -22,14 +23,15 @@ export function useFinanceOverviewStats() {
   )
 
   const m2mTargetPln = computed(() =>
-    Math.max(0, NET_SALARY_PLN - timelineStore.activePlannedExpensesSubtotal),
+    Math.max(0, netSalaryPln.value - timelineStore.activePlannedExpensesSubtotal),
   )
 
-  const m2mFormatted = computed(() =>
-    m2mTargetPln.value.toLocaleString('pl-PL', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }) + ' PLN',
+  const m2mFormatted = computed(
+    () =>
+      m2mTargetPln.value.toLocaleString('pl-PL', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }) + ' PLN',
   )
 
   const savingsTargetPercentLabel = computed(() => {
@@ -44,7 +46,7 @@ export function useFinanceOverviewStats() {
     {
       key: 'salary',
       name: 'Salary',
-      value: '12,787.00 PLN',
+      value: netSalaryFormatted.value,
       hint: 'Net Salary (FTE)',
       route: { name: 'Finance' },
     },

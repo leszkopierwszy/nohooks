@@ -38,17 +38,18 @@ import FinanceCloseLink from '../components/finance/FinanceCloseLink.vue'
 import PortfolioAssetsTable from '../components/portfolio/PortfolioAssetsTable.vue'
 import { useUserAssetsStore } from '../stores/userAssets'
 import { useSavingsTargetsStore } from '../stores/savingsTargets'
-import { NET_SALARY_PLN } from '../constants/finance'
+import { useNetSalary } from '../composables/useNetSalary'
 import { useTimelineStore } from '../stores/timeline'
 import PortfolioValueChart from '../components/PortfolioValueChart.vue'
 
 const store = useUserAssetsStore()
 const savingsStore = useSavingsTargetsStore()
 const timelineStore = useTimelineStore()
+const { netSalaryPln } = useNetSalary()
 
 async function snapshot() {
   store.recordSnapshot()
-  const m2m = Math.max(0, NET_SALARY_PLN - timelineStore.activePlannedExpensesSubtotal)
+  const m2m = Math.max(0, netSalaryPln.value - timelineStore.activePlannedExpensesSubtotal)
   await savingsStore.recordPrimaryProgress(m2m).catch(() => {})
 }
 </script>

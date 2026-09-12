@@ -14,12 +14,13 @@ import {
   removeGrowthGoalCalendarEvent,
   syncGrowthGoalCalendarEvent,
 } from '../utils/growthGoalCalendarSync'
+import { readUserStorage, writeUserStorage } from '../utils/userScopedStorage'
 
 const STORAGE_KEY = 'nohooks.growthGoals.v1'
 
 function readAll() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = readUserStorage(STORAGE_KEY)
     if (!raw) return []
     const parsed = JSON.parse(raw)
     if (!Array.isArray(parsed?.items)) return []
@@ -30,7 +31,7 @@ function readAll() {
 }
 
 function writeAll(items) {
-  localStorage.setItem(
+  writeUserStorage(
     STORAGE_KEY,
     JSON.stringify({ version: GROWTH_STORAGE_VERSION, items }),
   )

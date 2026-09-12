@@ -55,6 +55,27 @@ finance:
   mockAccountsCount: "{n} kont demonstracyjnych"
   plannedChange: Aktywne subskrypcje
   m2mChange: Wynagrodzenie − aktywne subskrypcje (szac. / mies.)
+  salary:
+    jobsTitle: Historia zatrudnienia
+    jobsSubtitle: Pracodawcy i role tylko dla tego konta — bez dzielenia między użytkownikami.
+    addEmployer: Dodaj pracodawcę
+    newEmployer: Nowy pracodawca
+    editEmployer: Edytuj pracodawcę
+    employerName: Pracodawca
+    addRole: Dodaj rolę
+    newRole: Nowa rola
+    editRole: Edytuj rolę
+    roleTitle: Stanowisko
+    roleLabel: Rola
+    years: Lata
+    msGross: MS Gross
+    actions: Akcje
+    edit: Edytuj
+    delete: Usuń
+    save: Zapisz
+    cancel: Anuluj
+    empty: Brak historii zatrudnienia — dodaj pracodawcę, aby zacząć.
+    noRoles: Brak ról u tego pracodawcy.
   nav:
     label: Sekcje finansów
     overview: Przegląd
@@ -263,8 +284,20 @@ account:
   username: Nazwa użytkownika
   email: E-mail
   bio: Bio
+  netSalary: Pensja netto (PLN)
+  netSalaryHint: Używane w Salary i M2M Expected Savings na Finance.
   saveProfile: Zapisz profil
   saved: Zapisano.
+  saveError: Nie udało się zapisać profilu.
+  password:
+    title: Hasło
+    subtitle: Zmień hasło używane do logowania do panelu.
+    current: Obecne hasło
+    new: Nowe hasło
+    confirm: Potwierdź nowe hasło
+    save: Zmień hasło
+    saved: Hasło zostało zmienione.
+    error: Nie udało się zmienić hasła.
   nav:
     settings: Ustawienia użytkownika
     backend: Backend
@@ -283,6 +316,19 @@ account:
       langfuseHint: UI observability — trace’y product-parser i Ollama.
       langfuseGuide: Langfuse w przewodniku
       langfuseGuideHint: Opis i status usług w Backend Settings.
+
+auth:
+  loginTitle: Logowanie
+  loginSubtitle: Zaloguj się, aby otworzyć panel.
+  registerTitle: Utwórz konto
+  registerSubtitle: Zarejestruj nowe konto do panelu.
+  password: Hasło
+  passwordConfirm: Potwierdź hasło
+  loginSubmit: Zaloguj się
+  registerSubmit: Utwórz konto
+  switchToRegister: Nie masz konta? Zarejestruj się
+  switchToLogin: Masz już konto? Zaloguj się
+  errorGeneric: Coś poszło nie tak. Spróbuj ponownie.
 
 display:
   theme:
@@ -339,6 +385,37 @@ souls:
     loading: Ładowanie Primów…
     viewProfile: Zobacz profil →
     active: Aktywna
+    new: Nowy Prim
+    add: Dodaj Prim
+    adding: Zapisywanie…
+    cancel: Anuluj
+    empty: Brak Primów — użyj przycisku powyżej, aby dodać pierwszego.
+    addError: Nie udało się dodać Prima.
+    name: Imię
+    namePlaceholder: np. Nathalie
+    description: Opis
+    descriptionPlaceholder: Notatki o stylu, rozmiarach…
+    gender: Płeć
+    genderUnknown: Nie ustawiono
+    genderFemale: Kobieta
+    genderMale: Mężczyzna
+    edit: Edytuj
+    delete: Usuń
+    save: Zapisz
+    saving: Zapisywanie…
+    saveError: Nie udało się zapisać Prima.
+    deleteError: Nie udało się usunąć Prima.
+    deleteConfirmTitle: Usunąć Prima?
+    deleteConfirmBody: „{name}” zostanie usunięty z Twojego konta.
+    uploadPhoto: Dodaj zdjęcie
+    photoUploading: Wgrywanie…
+    photoUploaded: Zdjęcie zapisane.
+    photoError: Nie udało się zaktualizować zdjęcia.
+    clearPhoto: Usuń zdjęcie
+    generateAvatar: Generuj awatar 3D
+    generating: Generowanie…
+    avatarGenerated: Awatar 3D gotowy.
+    generateError: Nie udało się wygenerować awatara — sprawdź ComfyUI / konfigurację AI.
   animals:
     title: Zwierzęta
     subtitle: Souls poza Primami — profile pupili i zwierząt domowych.
@@ -625,6 +702,7 @@ userMenu:
   accountSettings: Ustawienia konta
   displaySettings: Wyświetlanie
   zoom: Powiększenie {label}
+  logout: Wyloguj się
 
 common:
   loading: Ładowanie…

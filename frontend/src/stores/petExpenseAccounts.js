@@ -12,13 +12,14 @@ import {
   buildExpenseMeta,
   removeExpenseHistoryEntry,
 } from '../utils/expenseHistory'
+import { readUserStorage, writeUserStorage } from '../utils/userScopedStorage'
 
 const STORAGE_KEY = 'nohooks.petExpenseAccounts'
 const ID_BASE = 10_000
 
 function readAll() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = readUserStorage(STORAGE_KEY)
     if (!raw) return []
     const parsed = JSON.parse(raw)
     return Array.isArray(parsed) ? parsed : []
@@ -28,7 +29,7 @@ function readAll() {
 }
 
 function writeAll(accounts) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(accounts))
+  writeUserStorage(STORAGE_KEY, JSON.stringify(accounts))
 }
 
 function accountIdForEntity(entityId) {

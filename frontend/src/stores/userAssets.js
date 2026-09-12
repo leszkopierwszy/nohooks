@@ -1,7 +1,9 @@
 import { defineStore } from 'pinia'
 import { computeAssetValue } from '../utils/portfolioAsset'
+import { readUserStorage, writeUserStorage } from '../utils/userScopedStorage'
 
 const STORAGE_KEY = 'nohooks_user_assets_v2'
+const LEGACY_STORAGE_KEY = 'nohooks_user_assets_v1'
 
 function todayLocalDateKey() {
   const d = new Date()
@@ -48,9 +50,9 @@ export function normalizeAsset(raw) {
 
 function loadParsed() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = readUserStorage(STORAGE_KEY)
     if (!raw) {
-      const legacy = localStorage.getItem('nohooks_user_assets_v1')
+      const legacy = readUserStorage(LEGACY_STORAGE_KEY)
       if (legacy) {
         const data = JSON.parse(legacy)
         return {
@@ -73,7 +75,7 @@ function loadParsed() {
 
 function saveState(assets, snapshots) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ assets, snapshots }))
+    writeUserStorage(STORAGE_KEY, JSON.stringify({ assets, snapshots }))
   } catch {
     /* ignore quota */
   }
@@ -110,6 +112,12 @@ export const useUserAssetsStore = defineStore('userAssets', {
   },
 
   actions: {
+    reload() {
+      const parsed = loadParsed()
+      this.assets = parsed?.assets ?? []
+      this.snapshots = parsed?.snapshots ?? []
+    },
+
     persist() {
       saveState(this.assets, this.snapshots)
     },

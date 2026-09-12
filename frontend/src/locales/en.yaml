@@ -55,6 +55,27 @@ finance:
   mockAccountsCount: "{n} demo accounts"
   plannedChange: Active subscriptions
   m2mChange: Salary − active subscriptions (est. / mo.)
+  salary:
+    jobsTitle: Employment history
+    jobsSubtitle: Employers and roles for this account only — not shared with other users.
+    addEmployer: Add employer
+    newEmployer: New employer
+    editEmployer: Edit employer
+    employerName: Employer
+    addRole: Add role
+    newRole: New role
+    editRole: Edit role
+    roleTitle: Title
+    roleLabel: Role
+    years: Years
+    msGross: MS Gross
+    actions: Actions
+    edit: Edit
+    delete: Delete
+    save: Save
+    cancel: Cancel
+    empty: No employment history yet — add an employer to start.
+    noRoles: No roles yet for this employer.
   nav:
     label: Finance sections
     overview: Overview
@@ -263,8 +284,20 @@ account:
   username: Username
   email: Email
   bio: Bio
+  netSalary: Net salary (PLN)
+  netSalaryHint: Used for Salary and M2M Expected Savings on Finance.
   saveProfile: Save profile
   saved: Saved.
+  saveError: Could not save profile.
+  password:
+    title: Password
+    subtitle: Change the password used to sign in to the panel.
+    current: Current password
+    new: New password
+    confirm: Confirm new password
+    save: Update password
+    saved: Password updated.
+    error: Could not update password.
   nav:
     settings: User settings
     backend: Backend
@@ -283,6 +316,19 @@ account:
       langfuseHint: Observability UI — product-parser and Ollama traces.
       langfuseGuide: Langfuse guide
       langfuseGuideHint: Overview and service status in Backend Settings.
+
+auth:
+  loginTitle: Sign in
+  loginSubtitle: Sign in to open the panel.
+  registerTitle: Create account
+  registerSubtitle: Register a new panel account.
+  password: Password
+  passwordConfirm: Confirm password
+  loginSubmit: Sign in
+  registerSubmit: Create account
+  switchToRegister: Need an account? Register
+  switchToLogin: Already have an account? Sign in
+  errorGeneric: Something went wrong. Try again.
 
 display:
   theme:
@@ -339,6 +385,37 @@ souls:
     loading: Loading Prims…
     viewProfile: View profile →
     active: Active
+    new: New Prim
+    add: Add Prim
+    adding: Saving…
+    cancel: Cancel
+    empty: No Prims yet — use the button above to add the first one.
+    addError: Could not add the Prim.
+    name: Name
+    namePlaceholder: e.g. Nathalie
+    description: Description
+    descriptionPlaceholder: Style notes, sizing context…
+    gender: Gender
+    genderUnknown: Not set
+    genderFemale: Female
+    genderMale: Male
+    edit: Edit
+    delete: Delete
+    save: Save
+    saving: Saving…
+    saveError: Could not save Prim.
+    deleteError: Could not delete Prim.
+    deleteConfirmTitle: Delete this Prim?
+    deleteConfirmBody: “{name}” will be removed from your account.
+    uploadPhoto: Upload photo
+    photoUploading: Uploading…
+    photoUploaded: Photo saved.
+    photoError: Could not update photo.
+    clearPhoto: Remove photo
+    generateAvatar: Generate 3D avatar
+    generating: Generating…
+    avatarGenerated: 3D avatar ready.
+    generateError: Could not generate avatar — check ComfyUI / AI config.
   animals:
     title: Animals
     subtitle: Souls beyond Prims — profiles for pets and companion animals.
@@ -625,6 +702,7 @@ userMenu:
   accountSettings: Account settings
   displaySettings: Display
   zoom: Zoom {label}
+  logout: Sign out
 
 common:
   loading: Loading…
