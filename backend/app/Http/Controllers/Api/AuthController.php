@@ -14,6 +14,9 @@ class AuthController extends Controller
 {
     private function toApi(User $user): array
     {
+        static $legacyOwnerId = null;
+        $legacyOwnerId ??= User::query()->orderBy('id')->value('id');
+
         return [
             'id' => $user->id,
             'username' => $user->username,
@@ -22,6 +25,8 @@ class AuthController extends Controller
             'avatar' => $user->avatar,
             'bio' => $user->bio,
             'role' => 'creator',
+            /** Only this account may claim pre-auth browser localStorage into its workspace. */
+            'isLegacyOwner' => $legacyOwnerId !== null && (int) $user->id === (int) $legacyOwnerId,
         ];
     }
 

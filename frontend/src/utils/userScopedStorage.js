@@ -54,13 +54,20 @@ export function userStorageKey(baseKey) {
 }
 
 /**
- * Copy unscoped legacy keys into this user's bucket once (first login after auth).
+ * Copy unscoped legacy keys into this user's bucket once.
+ * Only the legacy owner account should call this (pre-auth shared browser data).
  * @param {string} userId
  */
 function claimLegacyKeysForUser(userId) {
   const marker = 'nohooks.userData.legacyClaimedBy'
   try {
-    if (localStorage.getItem(marker)) return
+    const claimedBy = localStorage.getItem(marker)
+    // If a non-owner previously claimed by bug, allow the real owner to reclaim.
+    if (claimedBy && claimedBy !== String(userId)) {
+      // Leave their scoped keys alone; just don't block the true owner forever.
+    }
+    if (claimedBy === String(userId)) return
+
     for (const baseKey of USER_DATA_STORAGE_KEYS) {
       const scoped = `${baseKey}::u${userId}`
       if (localStorage.getItem(scoped) != null) continue
@@ -69,6 +76,21 @@ function claimLegacyKeysForUser(userId) {
       localStorage.setItem(scoped, legacy)
     }
     localStorage.setItem(marker, userId)
+  } catch {
+    /* ignore */
+  }
+}
+
+/**
+ * Wipe this user's scoped local cache (used when remote workspace is empty
+ * so another tenant's leftover browser data is not re-imported).
+ */
+export function clearActiveUserLocalWorkspace() {
+  if (!activeUserId) return
+  try {
+    for (const baseKey of USER_DATA_STORAGE_KEYS) {
+      localStorage.removeItem(`${baseKey}::u${activeUserId}`)
+    }
   } catch {
     /* ignore */
   }

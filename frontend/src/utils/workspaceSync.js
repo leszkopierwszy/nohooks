@@ -1,5 +1,10 @@
 import { apiRequest } from '../api/client'
-import { USER_DATA_STORAGE_KEYS, readUserStorage, userStorageKey, writeUserStorageLocal } from './userScopedStorage'
+import {
+  USER_DATA_STORAGE_KEYS,
+  clearActiveUserLocalWorkspace,
+  readUserStorage,
+  writeUserStorageLocal,
+} from './userScopedStorage'
 
 /**
  * Decode localStorage raw value into API payload.
@@ -50,9 +55,14 @@ export function applyWorkspaceDocumentsLocally(documents) {
 }
 
 /**
- * Pull DB workspace into local cache; if DB empty, push local (only_missing).
+ * Pull DB workspace into local cache.
+ * - If DB has docs → use them (source of truth).
+ * - If DB empty and isLegacyOwner → import local once (pre-auth data for first user).
+ * - If DB empty and not legacy owner → clear local cache (do not steal another user's data).
+ *
+ * @param {{ isLegacyOwner?: boolean }} [options]
  */
-export async function syncWorkspaceWithApi({ claimLegacy = false } = {}) {
+export async function syncWorkspaceWithApi({ isLegacyOwner = false } = {}) {
   try {
     const remote = await apiRequest('/workspace')
     const docs = remote?.documents && typeof remote.documents === 'object' ? remote.documents : {}
@@ -63,10 +73,14 @@ export async function syncWorkspaceWithApi({ claimLegacy = false } = {}) {
       return docs
     }
 
+    if (!isLegacyOwner) {
+      clearActiveUserLocalWorkspace()
+      return {}
+    }
+
     const localDocs = collectLocalWorkspaceDocuments()
     if (Object.keys(localDocs).length === 0) return {}
 
-    // First login for this user: upload browser data into DB (does not overwrite existing).
     const imported = await apiRequest('/workspace/import', {
       method: 'POST',
       body: JSON.stringify({
@@ -80,11 +94,8 @@ export async function syncWorkspaceWithApi({ claimLegacy = false } = {}) {
     }
     return localDocs
   } catch (err) {
-    // Offline / API down — keep local cache.
     console.warn('[workspace] sync failed, using local cache', err)
     return collectLocalWorkspaceDocuments()
-  } finally {
-    void claimLegacy
   }
 }
 

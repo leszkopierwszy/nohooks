@@ -51,23 +51,24 @@ export const useAuthStore = defineStore('auth', {
       return this.token
     },
 
-    async applyWorkspace(user, { claimLegacy = false } = {}) {
+    async applyWorkspace(user) {
+      const isLegacyOwner = Boolean(user?.isLegacyOwner)
       setWorkspaceApiSyncEnabled(false)
-      setActiveStorageUserId(user?.id ?? null, { claimLegacy })
+      setActiveStorageUserId(user?.id ?? null, { claimLegacy: isLegacyOwner })
       if (user?.id && this.token) {
-        await syncWorkspaceWithApi({ claimLegacy })
+        await syncWorkspaceWithApi({ isLegacyOwner })
         setWorkspaceApiSyncEnabled(true)
       }
       rehydrateUserLocalStores()
     },
 
-    async setSession({ token, user }, { claimLegacy = false } = {}) {
+    async setSession({ token, user }) {
       this.token = token || ''
       writeToken(this.token)
       const userStore = useUserStore()
       if (user) {
         userStore.login({ ...user })
-        await this.applyWorkspace(user, { claimLegacy })
+        await this.applyWorkspace(user)
       } else if (!this.token) {
         userStore.logout()
         await this.applyWorkspace(null)
@@ -93,7 +94,7 @@ export const useAuthStore = defineStore('auth', {
         const data = await meRequest()
         if (data?.user) {
           useUserStore().login({ ...data.user })
-          await this.applyWorkspace(data.user, { claimLegacy: true })
+          await this.applyWorkspace(data.user)
         } else {
           await this.clearSession()
         }
@@ -107,7 +108,7 @@ export const useAuthStore = defineStore('auth', {
       this.error = ''
       try {
         const data = await loginRequest({ email, password })
-        await this.setSession(data, { claimLegacy: true })
+        await this.setSession(data)
         return data
       } catch (err) {
         this.error = err?.message || 'Login failed'
@@ -122,7 +123,7 @@ export const useAuthStore = defineStore('auth', {
       this.error = ''
       try {
         const data = await registerRequest(payload)
-        await this.setSession(data, { claimLegacy: false })
+        await this.setSession(data)
         return data
       } catch (err) {
         this.error = err?.message || 'Registration failed'
