@@ -35,7 +35,18 @@ export const sidebarNavigation = [
     ],
   },
   { labelKey: 'nav.collection', href: '/collection', icon: RectangleGroupIcon },
-  { labelKey: 'nav.finance', href: '/finance', icon: BanknotesIcon },
+  {
+    labelKey: 'nav.finance',
+    href: '/finance',
+    icon: BanknotesIcon,
+    subItems: [
+      { labelKey: 'finance.nav.overview', href: '/finance', activeMatch: 'exact' },
+      { labelKey: 'finance.nav.portfolio', href: '/finance/portfolio', activeMatch: 'exact' },
+      { labelKey: 'finance.nav.savings', href: '/finance/savings', activeMatch: 'exact' },
+      { labelKey: 'finance.nav.accounts', href: '/finance/demo-assets', activeMatch: 'exact' },
+      { labelKey: 'finance.nav.expenses', href: '/finance/expenses', activeMatch: 'exact' },
+    ],
+  },
   {
     labelKey: 'nav.growth',
     href: '/growth/goals',
@@ -170,11 +181,18 @@ export function isGrowthSectionActive(path) {
   return path.startsWith('/growth')
 }
 
-/** Czy aktualna trasa należy do grupy z podmenu (Souls, Rozwój, …). */
+export function isFinanceSectionActive(path) {
+  return path.startsWith('/finance')
+}
+
+/** Czy aktualna trasa należy do grupy z podmenu (Souls, Finanse, Rozwój, …). */
 export function isNavGroupActive(item, path) {
   if (!item?.subItems?.length) return false
   if (item.href?.startsWith('/growth')) {
     return isGrowthSectionActive(path)
+  }
+  if (item.href?.startsWith('/finance')) {
+    return isFinanceSectionActive(path)
   }
   if (item.href?.startsWith('/souls')) {
     return isSoulsSectionActive(path)
@@ -196,13 +214,13 @@ export function isSidebarNavItemActive(item, path) {
   }
   if (item.subItems) {
     if (item.href?.startsWith('/growth')) return path.startsWith('/growth')
+    if (item.href?.startsWith('/finance')) return path.startsWith('/finance')
     return isSoulsSectionActive(path)
   }
   if (item.activeMatch === 'growth-goals') {
     return path === '/growth' || path.startsWith('/growth/goals')
   }
   if (item.href === '/home') return path === '/home' || path === '/'
-  if (item.href === '/finance') return path.startsWith('/finance')
   if (item.href === '/collection') return path.startsWith('/collection')
   return path === item.href || path.startsWith(`${item.href}/`)
 }
