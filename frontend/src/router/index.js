@@ -14,6 +14,7 @@ import Finance from '../components/Finance.vue'
 import FinanceMockAssets from '../views/FinanceMockAssets.vue'
 import FinancePortfolio from '../views/FinancePortfolio.vue'
 import FinanceSavings from '../views/FinanceSavings.vue'
+import FinanceExpenses from '../views/FinanceExpenses.vue'
 import GrowthLayout from '../views/growth/GrowthLayout.vue'
 import GrowthGoals from '../views/growth/GrowthGoals.vue'
 import GrowthWellbeing from '../views/growth/GrowthWellbeing.vue'
@@ -167,6 +168,11 @@ const routes = [
                     path: 'demo-assets',
                     name: 'FinanceMockAssets',
                     component: FinanceMockAssets,
+                },
+                {
+                    path: 'expenses',
+                    name: 'FinanceExpenses',
+                    component: FinanceExpenses,
                 },
                 {
                     path: ':grouplink',

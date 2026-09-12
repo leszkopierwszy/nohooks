@@ -20,7 +20,7 @@
                 'mt-0.5 text-xs font-semibold tabular-nums',
                 entry.kind === 'credit'
                   ? 'text-emerald-700'
-                  : entry.kind === 'debit'
+                  : entry.kind === 'debit' || entry.kind === 'expense'
                     ? 'text-rose-700'
                     : 'text-gray-700',
               ]"

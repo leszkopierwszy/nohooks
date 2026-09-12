@@ -42,6 +42,211 @@ nav:
   calendar: Kalendarz
   items: Itemy
 
+finance:
+  pageTitle: Finanse
+  pageSubtitle: Przegląd finansów i skróty do portfela
+  assetsHeading: Aktywa
+  assetsSubtitle: Portfel i lista demonstracyjna kont
+  myAssets: Moje aktywa
+  mockAccounts: Lista kont (mock)
+  portfolioEmpty: Brak pozycji — dodaj w portfelu
+  portfolioOne: 1 pozycja w portfelu
+  portfolioMany: "{n} pozycje w portfelu"
+  mockAccountsCount: "{n} kont demonstracyjnych"
+  plannedChange: Aktywne subskrypcje
+  m2mChange: Wynagrodzenie − aktywne subskrypcje (szac. / mies.)
+  expenses:
+    tileTitle: Wydatki
+    countEmpty: Brak wydatków
+    count: "{n} wydatków"
+    pageTitle: Wydatki
+    pageSubtitle: Ręczne wydatki z kont — filtruj po koncie, kategorii lub opisie.
+    totalLabel: Razem
+    monthTotal: "W tym miesiącu: {amount}"
+    filters: Filtry
+    filterAccount: Konto
+    filterCategory: Kategoria
+    filterSearch: Szukaj
+    searchPlaceholder: Opis, konto, kategoria…
+    allAccounts: Wszystkie konta
+    allCategories: Wszystkie kategorie
+    uncategorized: Bez kategorii
+    empty: Brak wydatków dla tych filtrów.
+    countAll: "{n} wydatków · {amount}"
+    countFiltered: "{n} z {total} · {amount}"
+    lotteryBetsShort: "{n} zakładów loterii"
+    cols:
+      date: Data
+      account: Konto
+      category: Kategoria
+      note: Opis
+      amount: Kwota
+  accounts:
+    pageTitle: Konta
+    pageSubtitle: Demonstracyjne salda, które możesz lokalnie korygować.
+    portfolioLink: Otwórz portfel
+    addAccount: Dodaj konto
+    addExpense: Dodaj wydatek
+    btnExpense: Wydatek
+    btnEdit: Edytuj
+    btnAdjust: Korekta
+    btnHistory: Historia
+    btnDelete: Usuń
+    delete: Usuń konto
+    deleteConfirm: Usunąć „{name}”? Tej operacji nie cofniesz.
+    filters: Filtry
+    nameFilterPlaceholder: Szukaj po nazwie…
+    allCategories: Wszystkie kategorie
+    emptyFiltered: Brak kont pasujących do filtrów.
+    countAll: "{n} kont"
+    countFiltered: "{n} z {total} kont"
+    actions: Akcje
+    fields:
+      name: Nazwa
+      accountNumber: Numer konta
+      accountName: Etykieta konta
+      category: Kategoria
+      balance: Saldo
+      frequency: Częstotliwość
+      initialBalance: Saldo początkowe
+    categories:
+      fiat: Gotówka / fiat
+      investment: Inwestycje
+      pet_expense: Wydatki na zwierzęta
+    edit:
+      title: Edytuj konto
+      createTitle: Nowe konto
+      createSubtitle: Utwórz lokalne konto demonstracyjne z saldem początkowym.
+      editSubtitle: Zmień dane konta. Saldo zmienisz przez Korektę lub Wydatek.
+      petSubtitle: Powiązane konto wydatków zwierzęcia — nazwa synchronizuje się z profilem.
+      cancel: Anuluj
+      save: Zapisz
+      submit: Zapisz
+      createSubmit: Utwórz
+      nameRequired: Nazwa jest wymagana.
+      petHint: Konta wydatków zwierząt pozostają powiązane z profilem zwierzęcia.
+      accountNumberPlaceholder: IBAN lub numer
+      accountNamePlaceholder: Opcjonalna etykieta
+      balanceHint: Saldo zmienisz przez Korektę lub Dodaj wydatek.
+      initialBalance: Saldo początkowe
+      initialBalanceHint: Opcjonalne saldo początkowe zapisane jako pierwsze uznanie.
+    adjust:
+      title: Korekta salda
+      kindLegend: Typ ruchu
+      credit: Uznanie
+      debit: Obciążenie
+      amount: Kwota
+      note: Notatka
+      notePlaceholder: Opcjonalna notatka…
+      submit: Zastosuj
+      accountLine: "{name} · saldo {balance}"
+    expense:
+      title: Dodaj wydatek
+      subtitle: Obciąż konto jednorazowym wydatkiem. Zapis trafi do historii konta.
+      viewTitle: Szczegóły wydatku
+      viewSubtitle: Podgląd wpisu. Przejdź do edycji, aby zmienić kwotę, kategorię lub opis.
+      editTitle: Edytuj wydatek
+      editSubtitle: Zmiany aktualizują historię konta i korygują saldo, jeśli zmieni się kwota.
+      edit: Edytuj
+      saveChanges: Zapisz zmiany
+      account: Konto
+      accountPlaceholder: Wybierz konto…
+      accountHint: Wybierz konto do obciążenia. Kwota zostanie odjęta od jego salda.
+      amount: Kwota
+      amountHint: Podaj wydaną kwotę w PLN. Musi być większa od zera.
+      date: Data
+      datePlaceholder: dd-mm-rrrr
+      dateHint: Wpisz datę w formacie dd-mm-rrrr albo wybierz dzień w kalendarzu.
+      dateCalendar: Otwórz kalendarz
+      datePrevMonth: Poprzedni miesiąc
+      dateNextMonth: Następny miesiąc
+      dateToday: Dziś
+      category: Kategoria
+      categoryNone: Bez kategorii
+      categoryHint: Opcjonalne. Wybierz istniejącą kategorię albo „Dodaj…”, żeby utworzyć nową.
+      categoryAddOption: Dodaj…
+      categoryNewPlaceholder: Nowa kategoria, np. prezenty
+      categoryNewHint: Wpisz nazwę i zatwierdź — kategoria trafi do bazy i na listę.
+      categoryAdd: Dodaj
+      categoryAdding: Zapisywanie…
+      categoryAddError: Nie udało się zapisać kategorii.
+      purchaseType: Typ zakupu
+      purchaseTypeNone: Nieokreślony
+      purchaseTypeHint: Dla kont zwierząt — na co poszły pieniądze (karma, weterynarz, pielęgnacja itd.).
+      lotterySystem: System gry
+      lotterySystemRule: "{main} liczb z zakresu 1–{mainMax}"
+      lotterySystemRuleWithBonus: "{main} z 1–{mainMax} + {bonus} z 1–{bonusMax}"
+      lotterySystems:
+        "6of49": Lotto — 6 z 49
+        "5of42": Mini Lotto — 5 z 42
+        "5of50_1of12": 5 z 50 + 1 z 12
+        "5of50_2of12": 5 z 50 + 2 z 12
+      lotteryBets: Zakłady
+      lotteryAddBet: Dodaj zakład
+      lotteryRemoveBet: Usuń
+      lotteryBetLabel: Zakład {n}
+      lotteryMainSlot: "Zakład {bet}, liczba {n}"
+      lotteryBonusSlot: "Zakład {bet}, dodatkowa {n}"
+      lotteryBetsHint: "{count} okienek w rzędzie (1–{max}). Kolejne zakłady dodaj poniżej."
+      lotteryNumbers: Liczby główne
+      lotteryNumbersPlaceholder: "1–{max}, np. 3 12 28"
+      lotteryNumbersAdd: Dodaj
+      lotteryNumbersRemove: Usuń {n}
+      lotteryNumbersHint: Podaj dokładnie {count} unikalnych liczb z zakresu 1–{max}.
+      lotteryBonusNumbers: Liczby dodatkowe
+      lotteryBonusPlaceholder: "1–{max}"
+      lotteryBonusHint: Podaj dokładnie {count} unikalnych liczb dodatkowych z zakresu 1–{max}.
+      lotteryDrawUrl: Link do losowania
+      lotteryDrawUrlPlaceholder: https://…
+      lotteryDrawUrlHint: Link do oficjalnego losowania lub wyników dla tego kuponu.
+      lotteryJackpot: Kumulacja / jackpot
+      lotteryJackpotPlaceholder: np. 12 000 000 PLN
+      lotteryJackpotHint: Aktualna kumulacja lub jackpot ogłoszony dla tego losowania.
+      lotteryTrack: Śledź te liczby
+      lotteryTrackHint: Zapisz kupon na liście śledzonych, żeby sprawdzić go po losowaniu.
+      note: Opis
+      notePlaceholder: Na co poszły pieniądze?
+      noteHint: Krótki opis widoczny w historii, żeby później łatwo rozpoznać wydatek.
+      submit: Dodaj wydatek
+      categories:
+        groceries: Zakupy spożywcze
+        transport: Transport
+        dining: Jedzenie poza domem
+        housing: Mieszkanie
+        health: Zdrowie
+        entertainment: Rozrywka
+        shopping: Zakupy
+        subscriptions: Subskrypcje
+        pets: Zwierzęta
+        loterie: Loterie
+        other: Inne
+    lotteryTrack:
+      open: Śledzone kupony
+      title: Śledzone kupony loterii
+      subtitle: "{n} kuponów"
+      empty: Brak śledzonych kuponów — dodaj wydatek loterii z włączonym śledzeniem.
+      jackpot: "Kumulacja: {value}"
+      drawDate: "Data losowania: {date}"
+      openDraw: Otwórz losowanie
+      remove: Usuń
+    history:
+      title: Historia konta
+      empty: Brak ruchów.
+      close: Zamknij
+      credit: Uznanie
+      debit: Obciążenie
+      expense: Wydatek
+      meta: Aktualizacja konta
+      metaLine: "{field}: {from} → {to}"
+      balanceLine: "{before} → {after}"
+      expenseCategory: "Kategoria: {category}"
+      expensePurchaseType: "Typ: {type}"
+      expenseLotterySystem: "System: {system}"
+      expenseLotteryNumbers: "Liczby: {numbers}"
+      expenseLotteryBet: "Zakład {n}: {numbers}"
+      expenseLotteryJackpot: "Kumulacja: {value}"
+      expenseLotteryDrawUrl: "Losowanie: {url}"
+
 account:
   section: Konto
   title: Ustawienia konta

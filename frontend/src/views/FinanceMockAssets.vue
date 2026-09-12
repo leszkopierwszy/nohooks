@@ -22,6 +22,26 @@
         </p>
         <button
           type="button"
+          class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900 hover:bg-amber-100"
+          @click="lotteryTrackOpen = true"
+        >
+          {{ t('finance.accounts.lotteryTrack.open') }}
+          <span
+            v-if="lotteryTickets.trackedCount"
+            class="ml-1 tabular-nums text-amber-700"
+          >
+            ({{ lotteryTickets.trackedCount }})
+          </span>
+        </button>
+        <button
+          type="button"
+          class="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-800 hover:bg-rose-100"
+          @click="openExpense()"
+        >
+          {{ t('finance.accounts.addExpense') }}
+        </button>
+        <button
+          type="button"
           class="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500"
           @click="openCreate"
         >
@@ -130,6 +150,14 @@
                 </button>
                 <button
                   type="button"
+                  class="rounded-md px-2 py-1 text-rose-700 hover:bg-rose-50"
+                  :title="t('finance.accounts.expense.title')"
+                  @click="openExpense(asset)"
+                >
+                  {{ t('finance.accounts.btnExpense') }}
+                </button>
+                <button
+                  type="button"
                   class="rounded-md px-2 py-1 text-emerald-700 hover:bg-emerald-50"
                   :title="t('finance.accounts.adjust.credit')"
                   @click="openAdjust(asset)"
@@ -173,6 +201,14 @@
       @close="closeModals"
       @save="onSaveEdit"
     />
+    <FinanceExpenseModal
+      :open="expenseOpen"
+      :accounts="assets"
+      :account="activeAccount"
+      @close="closeModals"
+      @save="onSaveExpense"
+    />
+    <FinanceLotteryTrackModal :open="lotteryTrackOpen" @close="lotteryTrackOpen = false" />
     <FinanceAccountAdjustModal
       :open="adjustOpen"
       :account="activeAccount"
@@ -189,17 +225,22 @@ import AnimalSpeciesIcon from '../components/AnimalSpeciesIcon.vue'
 import FinanceAccountAdjustModal from '../components/finance/FinanceAccountAdjustModal.vue'
 import FinanceAccountEditModal from '../components/finance/FinanceAccountEditModal.vue'
 import FinanceAccountHistoryModal from '../components/finance/FinanceAccountHistoryModal.vue'
+import FinanceExpenseModal from '../components/finance/FinanceExpenseModal.vue'
+import FinanceLotteryTrackModal from '../components/finance/FinanceLotteryTrackModal.vue'
 import FinanceCloseLink from '../components/finance/FinanceCloseLink.vue'
 import { useFinanceAccountActions } from '../composables/useFinanceAccountActions'
 import { useI18n } from '../composables/useI18n'
 import { useFinanceAccountsStore } from '../stores/financeAccounts'
+import { useLotteryTicketsStore } from '../stores/lotteryTickets'
 import { usePetExpenseAccountsStore } from '../stores/petExpenseAccounts'
 import { formatBalancePln, parseBalancePln } from '../utils/financeAccountBalance'
 import { mockFinanceAccounts } from '../utils/savingsAssets'
+import { saveManualExpense } from '../utils/saveManualExpense'
 
 const { t } = useI18n()
 const financeStore = useFinanceAccountsStore()
 const petAccountsStore = usePetExpenseAccountsStore()
+const lotteryTickets = useLotteryTicketsStore()
 const { createAccount, updateAccount, adjustBalance, deleteAccount, isPetAccount } =
   useFinanceAccountActions()
 
@@ -208,12 +249,15 @@ const assets = computed(() => mockFinanceAccounts())
 onMounted(() => {
   financeStore.reload()
   petAccountsStore.reload()
+  lotteryTickets.reload()
 })
 
 const nameFilter = ref('')
 const categoryFilter = ref('')
 
 const editOpen = ref(false)
+const expenseOpen = ref(false)
+const lotteryTrackOpen = ref(false)
 const adjustOpen = ref(false)
 const historyOpen = ref(false)
 const creatingNew = ref(false)
@@ -260,6 +304,7 @@ const filteredCountLabel = computed(() => {
 
 function closeModals() {
   editOpen.value = false
+  expenseOpen.value = false
   adjustOpen.value = false
   historyOpen.value = false
   creatingNew.value = false
@@ -278,6 +323,11 @@ function openEdit(asset) {
   editOpen.value = true
 }
 
+function openExpense(asset = null) {
+  activeAccount.value = asset
+  expenseOpen.value = true
+}
+
 function openAdjust(asset) {
   activeAccount.value = asset
   adjustOpen.value = true
@@ -294,6 +344,11 @@ function onSaveEdit(payload) {
   } else if (activeAccount.value) {
     updateAccount(activeAccount.value, payload)
   }
+  closeModals()
+}
+
+function onSaveExpense(payload) {
+  saveManualExpense(adjustBalance, payload)
   closeModals()
 }
 

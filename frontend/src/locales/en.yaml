@@ -42,6 +42,211 @@ nav:
   calendar: Calendar
   items: Items
 
+finance:
+  pageTitle: Finance
+  pageSubtitle: Money overview and shortcuts to your portfolio
+  assetsHeading: Assets
+  assetsSubtitle: Portfolio and demo account list
+  myAssets: My assets
+  mockAccounts: Account list (mock)
+  portfolioEmpty: No positions — add in portfolio
+  portfolioOne: 1 portfolio position
+  portfolioMany: "{n} portfolio positions"
+  mockAccountsCount: "{n} demo accounts"
+  plannedChange: Active subscriptions
+  m2mChange: Salary − active subscriptions (est. / mo.)
+  expenses:
+    tileTitle: Expenses
+    countEmpty: No expenses yet
+    count: "{n} expenses"
+    pageTitle: Expenses
+    pageSubtitle: Manual expenses from your accounts — filter by account, category, or note.
+    totalLabel: All time
+    monthTotal: "This month: {amount}"
+    filters: Filters
+    filterAccount: Account
+    filterCategory: Category
+    filterSearch: Search
+    searchPlaceholder: Note, account, category…
+    allAccounts: All accounts
+    allCategories: All categories
+    uncategorized: Uncategorized
+    empty: No expenses match these filters.
+    countAll: "{n} expenses · {amount}"
+    countFiltered: "{n} of {total} · {amount}"
+    lotteryBetsShort: "{n} lottery bets"
+    cols:
+      date: Date
+      account: Account
+      category: Category
+      note: Note
+      amount: Amount
+  accounts:
+    pageTitle: Accounts
+    pageSubtitle: Demo balances you can adjust locally.
+    portfolioLink: Open portfolio
+    addAccount: Add account
+    addExpense: Add expense
+    btnExpense: Expense
+    btnEdit: Edit
+    btnAdjust: Adjust
+    btnHistory: History
+    btnDelete: Delete
+    delete: Delete account
+    deleteConfirm: Delete “{name}”? This cannot be undone.
+    filters: Filters
+    nameFilterPlaceholder: Search by name…
+    allCategories: All categories
+    emptyFiltered: No accounts match these filters.
+    countAll: "{n} accounts"
+    countFiltered: "{n} of {total} accounts"
+    actions: Actions
+    fields:
+      name: Name
+      accountNumber: Account number
+      accountName: Account label
+      category: Category
+      balance: Balance
+      frequency: Frequency
+      initialBalance: Opening balance
+    categories:
+      fiat: Cash / fiat
+      investment: Investment
+      pet_expense: Pet expenses
+    edit:
+      title: Edit account
+      createTitle: New account
+      createSubtitle: Create a local demo account with an opening balance.
+      editSubtitle: Update account details. Balance changes go through Adjust or Expense.
+      petSubtitle: Linked pet expense account — name syncs from the animal profile.
+      cancel: Cancel
+      save: Save
+      submit: Save
+      createSubmit: Create
+      nameRequired: Name is required.
+      petHint: Pet expense accounts stay linked to the animal profile.
+      accountNumberPlaceholder: IBAN or number
+      accountNamePlaceholder: Optional label
+      balanceHint: Use Adjust or Add expense to change the balance.
+      initialBalance: Opening balance
+      initialBalanceHint: Optional opening balance recorded as the first credit.
+    adjust:
+      title: Adjust balance
+      kindLegend: Movement type
+      credit: Credit
+      debit: Debit
+      amount: Amount
+      note: Note
+      notePlaceholder: Optional note…
+      submit: Apply
+      accountLine: "{name} · balance {balance}"
+    expense:
+      title: Add expense
+      subtitle: Debit an account for a one-off spend. Saved in that account’s history.
+      viewTitle: Expense details
+      viewSubtitle: Review this expense. Switch to edit to change amount, category, or note.
+      editTitle: Edit expense
+      editSubtitle: Changes update the account history and adjust the balance if the amount changes.
+      edit: Edit
+      saveChanges: Save changes
+      account: Account
+      accountPlaceholder: Select account…
+      accountHint: Choose which account to charge. The amount is subtracted from its balance.
+      amount: Amount
+      amountHint: Enter the spent amount in PLN. It must be greater than zero.
+      date: Date
+      datePlaceholder: dd-mm-yyyy
+      dateHint: Type the date as dd-mm-yyyy, or open the calendar to pick a day.
+      dateCalendar: Open calendar
+      datePrevMonth: Previous month
+      dateNextMonth: Next month
+      dateToday: Today
+      category: Category
+      categoryNone: No category
+      categoryHint: Optional. Choose an existing category, or pick “Add…” to create a new one.
+      categoryAddOption: Add…
+      categoryNewPlaceholder: New category, e.g. gifts
+      categoryNewHint: Enter a name and confirm — it will be saved to the database and added to the list.
+      categoryAdd: Add
+      categoryAdding: Saving…
+      categoryAddError: Could not save the category.
+      purchaseType: Purchase type
+      purchaseTypeNone: Not specified
+      purchaseTypeHint: For pet expense accounts — what the spend was for (food, vet, grooming, etc.).
+      lotterySystem: Draw system
+      lotterySystemRule: "{main} numbers from 1–{mainMax}"
+      lotterySystemRuleWithBonus: "{main} from 1–{mainMax} + {bonus} from 1–{bonusMax}"
+      lotterySystems:
+        "6of49": Lotto — 6 of 49
+        "5of42": Mini Lotto — 5 of 42
+        "5of50_1of12": 5 of 50 + 1 of 12
+        "5of50_2of12": 5 of 50 + 2 of 12
+      lotteryBets: Bets
+      lotteryAddBet: Add bet
+      lotteryRemoveBet: Remove
+      lotteryBetLabel: Bet {n}
+      lotteryMainSlot: "Bet {bet}, number {n}"
+      lotteryBonusSlot: "Bet {bet}, bonus {n}"
+      lotteryBetsHint: "{count} boxes in a row (1–{max}). Add more bets below."
+      lotteryNumbers: Main numbers
+      lotteryNumbersPlaceholder: "1–{max}, e.g. 3 12 28"
+      lotteryNumbersAdd: Add
+      lotteryNumbersRemove: Remove {n}
+      lotteryNumbersHint: Enter exactly {count} unique numbers from 1 to {max}.
+      lotteryBonusNumbers: Bonus numbers
+      lotteryBonusPlaceholder: "1–{max}"
+      lotteryBonusHint: Enter exactly {count} unique bonus number(s) from 1 to {max}.
+      lotteryDrawUrl: Draw link
+      lotteryDrawUrlPlaceholder: https://…
+      lotteryDrawUrlHint: Link to the official draw or results page for this ticket.
+      lotteryJackpot: Jackpot / rollover
+      lotteryJackpotPlaceholder: e.g. 12 000 000 PLN
+      lotteryJackpotHint: Current jackpot or rollover announced for this draw.
+      lotteryTrack: Track these numbers
+      lotteryTrackHint: Save the ticket to the tracked list so you can check it after the draw.
+      note: Description
+      notePlaceholder: What was this for?
+      noteHint: Free-text detail shown in history so you can recognize the expense later.
+      submit: Add expense
+      categories:
+        groceries: Groceries
+        transport: Transport
+        dining: Dining out
+        housing: Housing
+        health: Health
+        entertainment: Entertainment
+        shopping: Shopping
+        subscriptions: Subscriptions
+        pets: Pets
+        loterie: Lotteries
+        other: Other
+    lotteryTrack:
+      open: Tracked tickets
+      title: Tracked lottery tickets
+      subtitle: "{n} tickets"
+      empty: No tracked tickets yet — add a lottery expense and keep tracking on.
+      jackpot: "Jackpot: {value}"
+      drawDate: "Draw date: {date}"
+      openDraw: Open draw
+      remove: Remove
+    history:
+      title: Account history
+      empty: No movements yet.
+      close: Close
+      credit: Credit
+      debit: Debit
+      expense: Expense
+      meta: Account update
+      metaLine: "{field}: {from} → {to}"
+      balanceLine: "{before} → {after}"
+      expenseCategory: "Category: {category}"
+      expensePurchaseType: "Type: {type}"
+      expenseLotterySystem: "System: {system}"
+      expenseLotteryNumbers: "Numbers: {numbers}"
+      expenseLotteryBet: "Bet {n}: {numbers}"
+      expenseLotteryJackpot: "Jackpot: {value}"
+      expenseLotteryDrawUrl: "Draw: {url}"
+
 account:
   section: Account
   title: Account settings

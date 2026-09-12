@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\MediaController;
 use App\Http\Controllers\Api\ProductImportController;
 use App\Http\Controllers\Api\ProductImportTraceController;
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\ExpenseCategoryController;
 use App\Http\Controllers\Api\ExchangeRateController;
 use App\Http\Controllers\Api\PersonaImageController;
 use App\Http\Controllers\Api\SavingsTargetController;
@@ -23,6 +24,8 @@ Route::post('product-import/selection', [ProductImportTraceController::class, 'r
 Route::get('exchange-rates', [ExchangeRateController::class, 'index']);
 Route::get('category', [CategoryController::class, 'index']);
 Route::post('category', [CategoryController::class, 'store']);
+Route::get('expense-category', [ExpenseCategoryController::class, 'index']);
+Route::post('expense-category', [ExpenseCategoryController::class, 'store']);
 Route::apiResource('entity', EntityController::class);
 Route::get('entity/{entity}/body-snapshots', [EntityBodySnapshotController::class, 'index']);
 Route::get('entity/{entity}/body-snapshots/prompt-snippet', [EntityBodySnapshotController::class, 'promptSnippet']);

@@ -6,6 +6,12 @@ import {
   newHistoryId,
   parseBalancePln,
 } from '../utils/financeAccountBalance'
+import { isoTimestampFromDateKey } from '../utils/dateDmY'
+import {
+  applyExpenseEntryUpdate,
+  buildExpenseMeta,
+  removeExpenseHistoryEntry,
+} from '../utils/expenseHistory'
 
 const STORAGE_KEY = 'nohooks.petExpenseAccounts'
 const ID_BASE = 10_000
@@ -161,26 +167,59 @@ export const usePetExpenseAccountsStore = defineStore('petExpenseAccounts', {
       return account
     },
 
-    adjustBalance(id, { kind, amount, note }) {
+    adjustBalance(id, {
+      kind,
+      amount,
+      note,
+      category,
+      purchase_type,
+      date,
+      lottery_numbers,
+      lottery_bonus_numbers,
+      lottery_bets,
+      lottery_system,
+      lottery_draw_url,
+      lottery_jackpot,
+      lottery_track,
+    }) {
       const idx = this.accounts.findIndex((a) => Number(a.id) === Number(id))
       if (idx === -1) return null
 
       const delta = Math.abs(parseBalancePln(amount))
       if (delta <= 0) return null
 
+      const isExpense = kind === 'expense'
+      const isDebit = kind === 'debit' || isExpense
       const account = { ...this.accounts[idx] }
       const balance_before = parseBalancePln(account.balance)
-      const signed = kind === 'debit' ? -delta : delta
+      const signed = isDebit ? -delta : delta
       const balance_after = Math.round((balance_before + signed) * 100) / 100
+
+      const meta = isExpense
+        ? buildExpenseMeta({
+            category,
+            purchase_type,
+            lottery_numbers,
+            lottery_bonus_numbers,
+            lottery_bets,
+            lottery_system,
+            lottery_draw_url,
+            lottery_jackpot,
+            lottery_track,
+          })
+        : undefined
+
+      const created_at = date ? isoTimestampFromDateKey(date) : new Date().toISOString()
 
       const entry = {
         id: newHistoryId(),
-        kind: kind === 'debit' ? 'debit' : 'credit',
+        kind: isExpense ? 'expense' : isDebit ? 'debit' : 'credit',
         amount: delta,
         balance_before,
         balance_after,
         note: note ? String(note).trim() : null,
-        created_at: new Date().toISOString(),
+        ...(meta ? { meta } : {}),
+        created_at,
       }
 
       account.balance = balance_after
@@ -190,6 +229,26 @@ export const usePetExpenseAccountsStore = defineStore('petExpenseAccounts', {
       this.accounts = [...this.accounts.slice(0, idx), account, ...this.accounts.slice(idx + 1)]
       writeAll(this.accounts)
       return account
+    },
+
+    updateExpenseEntry(id, entryId, patch) {
+      const idx = this.accounts.findIndex((a) => Number(a.id) === Number(id))
+      if (idx === -1) return null
+      const next = applyExpenseEntryUpdate(this.accounts[idx], entryId, patch)
+      if (!next) return null
+      this.accounts = [...this.accounts.slice(0, idx), next, ...this.accounts.slice(idx + 1)]
+      writeAll(this.accounts)
+      return next
+    },
+
+    removeExpenseEntry(id, entryId) {
+      const idx = this.accounts.findIndex((a) => Number(a.id) === Number(id))
+      if (idx === -1) return null
+      const next = removeExpenseHistoryEntry(this.accounts[idx], entryId)
+      if (!next) return null
+      this.accounts = [...this.accounts.slice(0, idx), next, ...this.accounts.slice(idx + 1)]
+      writeAll(this.accounts)
+      return next
     },
   },
 })
