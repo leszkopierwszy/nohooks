@@ -208,6 +208,8 @@
               </div>
             </form>
           </section>
+
+          <AccountBackupSettings />
         </TabPanel>
 
         <TabPanel class="focus:outline-none">
@@ -232,6 +234,7 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/vue'
+import AccountBackupSettings from '../components/account/AccountBackupSettings.vue'
 import { useI18n } from '../composables/useI18n'
 import { useAuthStore } from '../stores/auth'
 import { useUserStore } from '../stores/user'

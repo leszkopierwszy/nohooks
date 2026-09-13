@@ -291,7 +291,7 @@ account:
   saveError: Could not save profile.
   tabs:
     profile: Profile
-    security: Password & email
+    security: Security
     notifications: Notifications
     payments: Payments
   emailSection:
@@ -310,6 +310,16 @@ account:
     save: Update password
     saved: Password updated.
     error: Could not update password.
+  backup:
+    title: Backup
+    subtitle: Download a copy of your workspace data, or restore from a backup file.
+    download: Download backup
+    restore: Restore from file
+    downloaded: Backup downloaded.
+    restored: Backup restored. Reloading…
+    exportError: Could not create backup.
+    restoreError: Could not restore backup.
+    invalidFile: This file is not a valid workspace backup.
   nav:
     settings: User settings
     backend: Backend

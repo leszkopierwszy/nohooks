@@ -291,7 +291,7 @@ account:
   saveError: Nie udało się zapisać profilu.
   tabs:
     profile: Profil
-    security: Hasło i e-mail
+    security: Bezpieczeństwo
     notifications: Powiadomienia
     payments: Płatności
   emailSection:
@@ -310,6 +310,16 @@ account:
     save: Zmień hasło
     saved: Hasło zostało zmienione.
     error: Nie udało się zmienić hasła.
+  backup:
+    title: Kopia zapasowa
+    subtitle: Pobierz kopię danych workspace albo przywróć je z pliku.
+    download: Pobierz kopię
+    restore: Przywróć z pliku
+    downloaded: Kopia została pobrana.
+    restored: Przywrócono. Odświeżanie…
+    exportError: Nie udało się utworzyć kopii.
+    restoreError: Nie udało się przywrócić kopii.
+    invalidFile: Ten plik nie jest prawidłową kopią workspace.
   nav:
     settings: Ustawienia użytkownika
     backend: Backend
