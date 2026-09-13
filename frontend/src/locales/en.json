@@ -844,7 +844,18 @@
     "noPrim": "Select a Prim",
     "pickPrim": "Select a Prim on the left to see outfits.",
     "occasionsTitle": "Occasions",
-    "clearOccasion": "Show all"
+    "clearOccasion": "Show all",
+    "silhouetteEmpty": "Upload a Prim photo to build a silhouette.",
+    "silhouetteNeedPhoto": "Upload a photo of this Prim first.",
+    "silhouetteNeedGenerate": "Photo ready — generate a Comfy silhouette for styling.",
+    "silhouetteReady": "Silhouette from your Prim photo",
+    "silhouetteSourceOnly": "Photo uploaded — generate silhouette",
+    "silhouetteMissing": "No photo yet",
+    "uploadPhoto": "Upload photo",
+    "generateSilhouette": "Generate silhouette",
+    "regenerateSilhouette": "Regenerate silhouette",
+    "photoUploaded": "Photo saved. You can generate a silhouette now.",
+    "silhouetteGenerated": "Silhouette ready."
   },
   "common": {
     "loading": "Loading…"

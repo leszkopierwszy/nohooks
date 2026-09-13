@@ -31,7 +31,7 @@
     </p>
 
     <div class="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-5">
-      <!-- Left: Prim preview -->
+      <!-- Left: Prim silhouette (Comfy doll from user photo) -->
       <aside class="lg:col-span-2">
         <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
           <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">
@@ -42,43 +42,115 @@
             class="mt-3"
           />
 
-          <div class="relative mt-6 overflow-hidden rounded-xl bg-gray-100">
+          <div class="relative mt-6 overflow-hidden rounded-xl bg-linear-to-b from-gray-50 to-gray-100">
             <div
-              v-if="resolvedAvatarUrl"
-              class="pointer-events-none absolute inset-0 opacity-70"
-              :style="avatarBlurStyle"
+              v-if="silhouetteUrl"
+              class="pointer-events-none absolute inset-0 opacity-50"
+              :style="silhouetteBlurStyle"
               aria-hidden="true"
             />
-            <div class="relative flex aspect-3/4 items-center justify-center p-4">
+
+            <div class="relative flex min-h-88 aspect-3/4 flex-col items-center justify-center p-4">
               <img
-                v-if="resolvedAvatarUrl"
-                :src="resolvedAvatarUrl"
+                v-if="silhouetteUrl"
+                :src="silhouetteUrl"
                 :alt="selectedPrim?.name ?? ''"
-                class="max-h-full max-w-full object-contain drop-shadow-md"
+                :class="[
+                  'max-h-full max-w-full object-contain drop-shadow-lg',
+                  hasDoll ? '' : 'opacity-40 grayscale',
+                ]"
               />
               <div
                 v-else
-                class="flex size-28 items-center justify-center rounded-full bg-gray-200 text-3xl font-semibold text-gray-600"
+                class="flex flex-col items-center gap-3 px-4 text-center"
               >
-                {{ primInitials }}
+                <div
+                  class="flex size-24 items-center justify-center rounded-full bg-gray-200 text-3xl font-semibold text-gray-600"
+                >
+                  {{ primInitials }}
+                </div>
+                <p class="text-sm text-gray-500">
+                  {{ t('style.silhouetteEmpty') }}
+                </p>
+              </div>
+
+              <div
+                v-if="selectedPrim && !hasDoll"
+                class="absolute inset-x-3 bottom-3 rounded-lg bg-white/95 p-3 text-center shadow-sm ring-1 ring-gray-200/80 backdrop-blur-sm"
+              >
+                <p class="text-xs text-gray-600">
+                  {{
+                    hasSource
+                      ? t('style.silhouetteNeedGenerate')
+                      : t('style.silhouetteNeedPhoto')
+                  }}
+                </p>
               </div>
             </div>
           </div>
 
           <div class="mt-4">
-            <h2 class="text-lg font-semibold text-gray-900">
-              {{ selectedPrim?.name ?? t('style.noPrim') }}
-            </h2>
-            <p v-if="selectedPrim?.description" class="mt-1 line-clamp-3 text-sm text-gray-500">
-              {{ selectedPrim.description }}
-            </p>
-            <RouterLink
-              v-if="selectedPrim"
-              :to="`/souls/prims/${selectedPrim.id}`"
-              class="mt-3 inline-block text-sm font-medium text-indigo-600 hover:text-indigo-500"
-            >
-              {{ t('style.openPrim') }}
-            </RouterLink>
+            <div class="flex items-start justify-between gap-2">
+              <div class="min-w-0">
+                <h2 class="text-lg font-semibold text-gray-900">
+                  {{ selectedPrim?.name ?? t('style.noPrim') }}
+                </h2>
+                <p class="mt-0.5 text-xs text-gray-500">
+                  {{
+                    hasDoll
+                      ? t('style.silhouetteReady')
+                      : hasSource
+                        ? t('style.silhouetteSourceOnly')
+                        : t('style.silhouetteMissing')
+                  }}
+                </p>
+              </div>
+              <RouterLink
+                v-if="selectedPrim"
+                :to="`/souls/prims/${selectedPrim.id}`"
+                class="shrink-0 text-xs font-medium text-indigo-600 hover:text-indigo-500"
+              >
+                {{ t('style.openPrim') }}
+              </RouterLink>
+            </div>
+
+            <div v-if="selectedPrim" class="mt-4 flex flex-wrap gap-2">
+              <label
+                class="inline-flex cursor-pointer items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-60"
+                :class="silhouetteBusy ? 'pointer-events-none opacity-60' : ''"
+              >
+                <input
+                  ref="photoInputRef"
+                  type="file"
+                  accept="image/*"
+                  class="sr-only"
+                  :disabled="silhouetteBusy"
+                  @change="onPhotoSelected"
+                />
+                {{
+                  silhouetteBusy && silhouetteAction === 'upload'
+                    ? t('souls.prims.photoUploading')
+                    : t('style.uploadPhoto')
+                }}
+              </label>
+              <button
+                v-if="hasSource || hasDoll"
+                type="button"
+                class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-60"
+                :disabled="silhouetteBusy || !hasSource"
+                @click="onGenerateSilhouette"
+              >
+                {{
+                  silhouetteBusy && silhouetteAction === 'generate'
+                    ? t('souls.prims.generating')
+                    : hasDoll
+                      ? t('style.regenerateSilhouette')
+                      : t('style.generateSilhouette')
+                }}
+              </button>
+            </div>
+            <p v-if="silhouetteError" class="mt-2 text-sm text-red-600">{{ silhouetteError }}</p>
+            <p v-else-if="silhouetteHint" class="mt-2 text-sm text-emerald-700">{{ silhouetteHint }}</p>
           </div>
         </div>
       </aside>
@@ -264,6 +336,10 @@ import {
   OUTFIT_OCCASIONS,
   outfitOccasionMeta,
 } from '../constants/outfitOccasions'
+import {
+  generatePersonaAvatar,
+  uploadPersonaPhoto,
+} from '../services/personaImageProcessing'
 import { useCollectionStore } from '../stores/collection'
 import { useOutfitsStore, wearDateKey } from '../stores/outfits'
 import { usePersonasStore } from '../stores/personas'
@@ -296,6 +372,12 @@ const deleteOpen = ref(false)
 const deleteTarget = ref(null)
 const deleting = ref(false)
 
+const photoInputRef = ref(null)
+const silhouetteBusy = ref(false)
+const silhouetteAction = ref('')
+const silhouetteError = ref('')
+const silhouetteHint = ref('')
+
 const emptyForm = () => ({
   entity_id: '',
   wear_date: toDateKey(new Date()),
@@ -320,23 +402,22 @@ const selectedPrim = computed(() => {
   )
 })
 
-const avatarUrl = computed(() => {
+const hasDoll = computed(() => Boolean(selectedPrim.value?.avatar_doll_url))
+const hasSource = computed(() => Boolean(selectedPrim.value?.avatar_source_url))
+
+/** Prefer Comfy doll silhouette; source photo only as fallback preview. */
+const silhouetteUrl = computed(() => {
   const p = selectedPrim.value
   if (!p) return null
-  return p.avatar_doll_url ?? p.avatar_source_url ?? p.imageUrl ?? p.avatar_url ?? null
+  const raw = p.avatar_doll_url ?? p.avatar_source_url ?? null
+  return resolveStorageUrl(raw) ?? raw
 })
 
-const resolvedAvatarUrl = computed(
-  () => resolveStorageUrl(avatarUrl.value) ?? avatarUrl.value,
-)
-
-const avatarBlurStyle = computed(() => {
+const silhouetteBlurStyle = computed(() => {
   const radialMask =
     'radial-gradient(ellipse 78% 78% at 50% 50%, #000 18%, rgba(0,0,0,0.55) 42%, transparent 70%)'
   return {
-    backgroundImage: resolvedAvatarUrl.value
-      ? `url(${resolvedAvatarUrl.value})`
-      : undefined,
+    backgroundImage: silhouetteUrl.value ? `url(${silhouetteUrl.value})` : undefined,
     filter: 'blur(48px) saturate(1.05)',
     transform: 'scale(1.15)',
     WebkitMaskImage: radialMask,
@@ -353,6 +434,71 @@ const primInitials = computed(() => {
     .map((part) => part[0]?.toUpperCase() ?? '')
     .join('')
 })
+
+async function patchSelectedPrim(patch) {
+  const id = selectedPrim.value?.id
+  if (!id) return
+  await personasStore.fetchPersonas().catch(() => {})
+  const updated = personasStore.prims.find((p) => Number(p.id) === Number(id))
+  if (updated && patch) {
+    Object.assign(updated, patch)
+  }
+}
+
+async function onPhotoSelected(event) {
+  const file = event.target?.files?.[0]
+  if (photoInputRef.value) photoInputRef.value.value = ''
+  if (!file || !selectedPrim.value) return
+
+  silhouetteBusy.value = true
+  silhouetteAction.value = 'upload'
+  silhouetteError.value = ''
+  silhouetteHint.value = ''
+  try {
+    const result = await uploadPersonaPhoto(selectedPrim.value.id, file)
+    await patchSelectedPrim({
+      avatar_source_url: result.avatar_source_url,
+      avatar_doll_url: result.avatar_doll_url ?? selectedPrim.value.avatar_doll_url,
+      imageUrl:
+        result.avatar_doll_url ??
+        result.avatar_source_url ??
+        selectedPrim.value.imageUrl,
+    })
+    silhouetteHint.value = t('style.photoUploaded')
+  } catch (err) {
+    silhouetteError.value = err?.message || t('souls.prims.photoError')
+  } finally {
+    silhouetteBusy.value = false
+    silhouetteAction.value = ''
+  }
+}
+
+async function onGenerateSilhouette() {
+  if (!selectedPrim.value?.avatar_source_url) return
+
+  silhouetteBusy.value = true
+  silhouetteAction.value = 'generate'
+  silhouetteError.value = ''
+  silhouetteHint.value = ''
+  try {
+    const result = await generatePersonaAvatar(selectedPrim.value.id, null)
+    await patchSelectedPrim({
+      avatar_source_url: result.avatar_source_url ?? selectedPrim.value.avatar_source_url,
+      avatar_doll_url:
+        result.avatar_doll_url ?? result.output_url ?? selectedPrim.value.avatar_doll_url,
+      imageUrl:
+        result.avatar_doll_url ??
+        result.output_url ??
+        selectedPrim.value.imageUrl,
+    })
+    silhouetteHint.value = t('style.silhouetteGenerated')
+  } catch (err) {
+    silhouetteError.value = err?.message || t('souls.prims.generateError')
+  } finally {
+    silhouetteBusy.value = false
+    silhouetteAction.value = ''
+  }
+}
 
 const primOutfits = computed(() => {
   const id = selectedPrim.value?.id
@@ -500,6 +646,8 @@ async function confirmDelete() {
 
 watch(selectedPrimId, (id) => {
   if (id != null) personasStore.setActivePersona(id)
+  silhouetteError.value = ''
+  silhouetteHint.value = ''
   loadOutfits().catch(() => {})
 })
 

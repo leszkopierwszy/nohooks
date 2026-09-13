@@ -197,8 +197,20 @@ class ComfyUIProvider
         } catch (PersonaVisionException $e) {
             throw $e;
         } catch (RequestException $e) {
-            $detail = $e->response?->json('error') ?? $e->response?->body() ?? $e->getMessage();
-            throw new PersonaVisionException('Błąd ComfyUI API: '.$detail, (int) $e->getCode(), $e);
+            $detail = $e->response?->json('error')
+                ?? $e->response?->json()
+                ?? $e->response?->body()
+                ?? $e->getMessage();
+
+            if (is_array($detail)) {
+                $detail = json_encode($detail, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            }
+
+            throw new PersonaVisionException(
+                'Błąd ComfyUI API: '.(string) $detail,
+                (int) $e->getCode(),
+                $e
+            );
         } catch (ConnectionException $e) {
             throw new PersonaVisionException(
                 'Brak połączenia z ComfyUI ('.$this->baseUrl().'). Mac: ./scripts/start-comfyui-native.sh',

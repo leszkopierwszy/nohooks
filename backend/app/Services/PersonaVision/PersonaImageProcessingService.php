@@ -175,6 +175,11 @@ class PersonaImageProcessingService
             return $source;
         }
 
+        $fromStorage = $this->storageUrlToLocalPath($source);
+        if ($fromStorage !== null) {
+            return $fromStorage;
+        }
+
         if (filter_var($source, FILTER_VALIDATE_URL)) {
             return $this->comfyui->downloadToTemp($source);
         }
@@ -184,12 +189,43 @@ class PersonaImageProcessingService
         );
     }
 
+    /**
+     * Map /storage/... or public disk URL to a readable local path.
+     */
+    private function storageUrlToLocalPath(string $ref): ?string
+    {
+        $path = parse_url($ref, PHP_URL_PATH) ?: $ref;
+        $path = rawurldecode($path);
+
+        if (str_starts_with($path, '/storage/')) {
+            $relative = ltrim(substr($path, strlen('/storage/')), '/');
+            $local = Storage::disk('public')->path($relative);
+            if (is_readable($local)) {
+                return $local;
+            }
+        }
+
+        if (! str_contains($ref, '://') && Storage::disk('public')->exists($ref)) {
+            $local = Storage::disk('public')->path($ref);
+            if (is_readable($local)) {
+                return $local;
+            }
+        }
+
+        return null;
+    }
+
     private function resolveUrlOrPathToLocal(string $ref): string
     {
         $ref = trim($ref);
 
         if ($ref !== '' && is_readable($ref)) {
             return $ref;
+        }
+
+        $fromStorage = $this->storageUrlToLocalPath($ref);
+        if ($fromStorage !== null) {
+            return $fromStorage;
         }
 
         if (filter_var($ref, FILTER_VALIDATE_URL)) {

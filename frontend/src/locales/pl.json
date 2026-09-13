@@ -844,7 +844,18 @@
     "noPrim": "Wybierz Prima",
     "pickPrim": "Wybierz Prima po lewej, aby zobaczyć outfity.",
     "occasionsTitle": "Okazje",
-    "clearOccasion": "Pokaż wszystkie"
+    "clearOccasion": "Pokaż wszystkie",
+    "silhouetteEmpty": "Wgraj zdjęcie Prima, aby zbudować sylwetkę.",
+    "silhouetteNeedPhoto": "Najpierw wgraj zdjęcie tego Prima.",
+    "silhouetteNeedGenerate": "Zdjęcie gotowe — wygeneruj sylwetkę Comfy do stylizacji.",
+    "silhouetteReady": "Sylwetka ze zdjęcia Prima",
+    "silhouetteSourceOnly": "Zdjęcie wgrane — wygeneruj sylwetkę",
+    "silhouetteMissing": "Brak zdjęcia",
+    "uploadPhoto": "Wgraj zdjęcie",
+    "generateSilhouette": "Generuj sylwetkę",
+    "regenerateSilhouette": "Generuj ponownie",
+    "photoUploaded": "Zdjęcie zapisane. Możesz wygenerować sylwetkę.",
+    "silhouetteGenerated": "Sylwetka gotowa."
   },
   "common": {
     "loading": "Ładowanie…"

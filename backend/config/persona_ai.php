@@ -7,7 +7,9 @@
  *
  * W .env:
  *   PERSONA_AI_PROVIDER=comfyui
- *   COMFYUI_BASE_URL=http://comfyui:8188
+ *   COMFYUI_BASE_URL=http://host.docker.internal:8188
+ *
+ * (Docker CPU profile: COMFYUI_BASE_URL=http://comfyui:8188)
  *
  * Opcjonalnie (zewnętrzne API — wyłączone domyślnie):
  *   PERSONA_AI_PROVIDER=replicate
@@ -22,7 +24,7 @@ return [
     'poll_timeout_seconds' => (int) env('PERSONA_AI_POLL_TIMEOUT_SECONDS', 600),
 
     'comfyui' => [
-        'base_url' => env('COMFYUI_BASE_URL', 'http://comfyui:8188'),
+        'base_url' => env('COMFYUI_BASE_URL', 'http://host.docker.internal:8188'),
 
         // Ścieżka do workflow API (w kontenerze backendu = mount z repo)
         'workflows_path' => env(

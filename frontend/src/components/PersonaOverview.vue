@@ -799,7 +799,7 @@ async function onGenerateAvatar() {
   photoError.value = ''
   photoHint.value = ''
   try {
-    const result = await generatePersonaAvatar(persona.value.id, persona.value.avatar_source_url)
+    const result = await generatePersonaAvatar(persona.value.id, null)
     persona.value = {
       ...persona.value,
       avatar_source_url: result.avatar_source_url ?? persona.value.avatar_source_url,
