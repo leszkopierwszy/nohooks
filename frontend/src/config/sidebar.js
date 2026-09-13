@@ -17,6 +17,7 @@ import {
   BanknotesIcon,
   CalendarIcon,
   SparklesIcon,
+  SwatchIcon,
   Cog6ToothIcon,
   CpuChipIcon,
 } from '@heroicons/vue/24/outline'
@@ -35,6 +36,7 @@ export const sidebarNavigation = [
     ],
   },
   { labelKey: 'nav.collection', href: '/collection', icon: RectangleGroupIcon },
+  { labelKey: 'nav.style', href: '/style', icon: SwatchIcon },
   {
     labelKey: 'nav.finance',
     href: '/finance',
@@ -222,6 +224,7 @@ export function isSidebarNavItemActive(item, path) {
   }
   if (item.href === '/home') return path === '/home' || path === '/'
   if (item.href === '/collection') return path.startsWith('/collection')
+  if (item.href === '/style') return path.startsWith('/style')
   return path === item.href || path.startsWith(`${item.href}/`)
 }
 
@@ -238,6 +241,7 @@ export function sidebarPageTitle(path) {
   if (path.startsWith('/finance')) return t('nav.finance')
   if (path.startsWith('/growth')) return t('nav.growth')
   if (path.startsWith('/collection')) return t('nav.collection')
+  if (path.startsWith('/style')) return t('nav.style')
   if (path.startsWith('/souls/animals')) return t('souls.animals.title')
   if (path.startsWith('/souls/prims') || /^\/souls\/prims\/\d+/.test(path)) return t('nav.prims')
   if (path.startsWith('/souls') || path.startsWith('/personas')) return t('nav.souls')

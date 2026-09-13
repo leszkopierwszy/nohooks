@@ -37,6 +37,7 @@ nav:
   souls: Souls
   prims: Prims
   collection: Collection
+  style: Style
   finance: Finance
   growth: Growth
   calendar: Calendar
@@ -757,6 +758,12 @@ outfit:
   itemCount: '{count} items'
   sourceManual: Manual
   sourceLlm: Suggested
+
+style:
+  subtitle: Plan daily outfits for your Prims from the collection.
+  allPrims: All Prims
+  empty: No outfits in the next 30 days. Add one to get started.
+  openDay: Open in calendar
 
 common:
   loading: Loading…

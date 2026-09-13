@@ -42,6 +42,7 @@
     "souls": "Souls",
     "prims": "Prims",
     "collection": "Kolekcja",
+    "style": "Style",
     "finance": "Finanse",
     "growth": "Rozwój",
     "calendar": "Kalendarz",
@@ -819,6 +820,12 @@
     "itemCount": "{count} itemów",
     "sourceManual": "Ręczny",
     "sourceLlm": "Sugerowany"
+  },
+  "style": {
+    "subtitle": "Planuj codzienne outfity dla Primów na podstawie kolekcji.",
+    "allPrims": "Wszystkie Primy",
+    "empty": "Brak outfitów w ciągu 30 dni. Dodaj pierwszy, aby zacząć.",
+    "openDay": "Otwórz w kalendarzu"
   },
   "common": {
     "loading": "Ładowanie…"
