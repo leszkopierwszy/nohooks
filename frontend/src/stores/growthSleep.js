@@ -1,12 +1,13 @@
 import { defineStore } from 'pinia'
 import { SLEEP_STORAGE_VERSION } from '../constants/growthTrackers'
 import { computeSleepDurationMinutes } from '../utils/growthSleep'
+import { readUserStorage, writeUserStorage } from '../utils/userScopedStorage'
 
 const STORAGE_KEY = 'nohooks.growthSleep.v1'
 
 function readAll() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = readUserStorage(STORAGE_KEY)
     if (!raw) return []
     const parsed = JSON.parse(raw)
     if (parsed?.version !== SLEEP_STORAGE_VERSION || !Array.isArray(parsed.items)) {
@@ -19,7 +20,7 @@ function readAll() {
 }
 
 function writeAll(items) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: SLEEP_STORAGE_VERSION, items }))
+  writeUserStorage(STORAGE_KEY, JSON.stringify({ version: SLEEP_STORAGE_VERSION, items }))
 }
 
 function newId() {

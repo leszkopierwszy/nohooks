@@ -1,35 +1,23 @@
-// src/stores/user.js
-
 import { defineStore } from 'pinia'
 
 export const useUserStore = defineStore('user', {
   state: () => ({
-    user: {
-      id: 1,
-      username: 'bartosz',
-      displayName: 'Bartosz',
-      email: 'bartosz@example.com',
-      avatar: '/mock/avatar.jpg',
-      role: 'creator',
-      bio: 'Building pxlstg.'
-    },
-
-    isAuthenticated: true,
-
+    user: null,
+    isAuthenticated: false,
     stats: {
-      followers: 120,
-      following: 45,
-      collections: 12
-    }
+      followers: 0,
+      following: 0,
+      collections: 0,
+    },
   }),
 
   getters: {
     fullProfile: (state) => ({
       ...state.user,
-      ...state.stats
+      ...state.stats,
     }),
 
-    isCreator: (state) => state.user.role === 'creator'
+    isCreator: (state) => state.user?.role === 'creator',
   },
 
   actions: {
@@ -55,6 +43,6 @@ export const useUserStore = defineStore('user', {
 
     incrementFollowers() {
       this.stats.followers++
-    }
-  }
+    },
+  },
 })

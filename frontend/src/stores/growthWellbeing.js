@@ -1,11 +1,12 @@
 import { defineStore } from 'pinia'
 import { WELLBEING_STORAGE_VERSION } from '../constants/growthTrackers'
+import { readUserStorage, writeUserStorage } from '../utils/userScopedStorage'
 
 const STORAGE_KEY = 'nohooks.growthWellbeing.v1'
 
 function readAll() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = readUserStorage(STORAGE_KEY)
     if (!raw) return []
     const parsed = JSON.parse(raw)
     if (parsed?.version !== WELLBEING_STORAGE_VERSION || !Array.isArray(parsed.items)) {
@@ -18,7 +19,7 @@ function readAll() {
 }
 
 function writeAll(items) {
-  localStorage.setItem(
+  writeUserStorage(
     STORAGE_KEY,
     JSON.stringify({ version: WELLBEING_STORAGE_VERSION, items }),
   )

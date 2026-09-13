@@ -80,6 +80,7 @@ class EntityController extends Controller
         $rules = [
             'name' => 'sometimes|string|max:255',
             'description' => 'nullable|string',
+            'gender' => 'nullable|string|max:32',
             'species' => 'nullable|string|max:64',
             'birth_date' => 'nullable|date',
             'sex' => 'nullable|string|in:female,male,unknown',

@@ -2,6 +2,8 @@ import { defineStore } from 'pinia'
 import { apiRequest } from '../api/client'
 import { isAnimalSoul, isPrimSoul, SOUL_TYPE_ANIMAL, SOUL_TYPE_PRIM } from '../constants/soulTypes'
 
+import { readUserStorage, removeUserStorage, writeUserStorage } from '../utils/userScopedStorage'
+
 const STORAGE_KEY = 'nohooks.activePersonaId'
 
 const AVATAR_BY_NAME = {
@@ -49,7 +51,12 @@ export const usePersonasStore = defineStore('personas', {
         const entities = await apiRequest('/entity')
         this.personas = entities.map((entity) => ({
           ...entity,
-          imageUrl: entity.avatar_url ?? AVATAR_BY_NAME[entity.name] ?? null,
+          imageUrl:
+            entity.avatar_doll_url ??
+            entity.avatar_source_url ??
+            entity.avatar_url ??
+            AVATAR_BY_NAME[entity.name] ??
+            null,
         }))
 
         const prims = this.prims
@@ -77,10 +84,14 @@ export const usePersonasStore = defineStore('personas', {
     setActivePersona(id) {
       this.activePersonaId = id ? Number(id) : null
       if (this.activePersonaId) {
-        localStorage.setItem(STORAGE_KEY, String(this.activePersonaId))
+        writeUserStorage(STORAGE_KEY, String(this.activePersonaId))
       } else {
-        localStorage.removeItem(STORAGE_KEY)
+        removeUserStorage(STORAGE_KEY)
       }
+    },
+
+    reload() {
+      this.activePersonaId = readStoredActiveId()
     },
 
     async fetchPersona(id) {
@@ -100,6 +111,28 @@ export const usePersonasStore = defineStore('personas', {
       })
       await this.fetchPersonas()
       return entity
+    },
+
+    async updateSoul(id, { name, description = '', gender = null }) {
+      const body = {
+        name: String(name).trim(),
+        description: description?.trim() || null,
+        gender: gender || null,
+      }
+      const entity = await apiRequest(`/entity/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(body),
+      })
+      await this.fetchPersonas()
+      return entity
+    },
+
+    async deleteSoul(id) {
+      await apiRequest(`/entity/${id}`, { method: 'DELETE' })
+      if (Number(this.activePersonaId) === Number(id)) {
+        this.setActivePersona(null)
+      }
+      await this.fetchPersonas()
     },
 
     async createAnimal({
@@ -200,7 +233,7 @@ export const usePersonasStore = defineStore('personas', {
 
 function readStoredActiveId() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = readUserStorage(STORAGE_KEY)
     if (!raw) return null
     const parsed = Number(raw)
     return Number.isFinite(parsed) ? parsed : null

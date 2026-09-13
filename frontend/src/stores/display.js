@@ -48,12 +48,18 @@ function ensureSystemThemeListener(onChange) {
 
 /** Przy ustawieniu UI „100%” treść ma skalę ~80% względem poprzedniego domyślnego rozmiaru. */
 export const CONTENT_ZOOM_BASE = 0.8
+export const ZOOM_MIN = 80
+export const ZOOM_MAX = 120
+export const ZOOM_STEP = 10
+export const ZOOM_DEFAULT = 100
 
-export const ZOOM_OPTIONS = [
-  { value: 100, label: '100%' },
-  { value: 80, label: '80%' },
-  { value: 75, label: '75%' },
-]
+export function clampZoomPercent(value) {
+  const n = Number(value)
+  if (!Number.isFinite(n)) return ZOOM_DEFAULT
+  const clamped = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, n))
+  const stepped = Math.round((clamped - ZOOM_MIN) / ZOOM_STEP) * ZOOM_STEP + ZOOM_MIN
+  return Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, stepped))
+}
 
 export function contentZoomFactor(zoomPercent) {
   return (zoomPercent / 100) * CONTENT_ZOOM_BASE
@@ -61,7 +67,7 @@ export function contentZoomFactor(zoomPercent) {
 
 export const useDisplayStore = defineStore('display', {
   state: () => ({
-    zoomPercent: 100,
+    zoomPercent: ZOOM_DEFAULT,
     theme: 'system',
     settingsOpen: false,
   }),
@@ -75,14 +81,11 @@ export const useDisplayStore = defineStore('display', {
     init() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY)
-        let parsed = raw != null ? Number(raw) : 100
-        // Wcześniejsze „80%” na całym dokumencie ≈ nowe „100%” tylko w kolumnie treści.
-        if (parsed === 80) parsed = 100
-        if (ZOOM_OPTIONS.some((o) => o.value === parsed)) {
-          this.zoomPercent = parsed
-        }
+        const parsed = raw != null ? Number(raw) : ZOOM_DEFAULT
+        // Stare „75%” clampujemy do nowego minimum 80%.
+        this.zoomPercent = clampZoomPercent(parsed)
       } catch {
-        this.zoomPercent = 100
+        this.zoomPercent = ZOOM_DEFAULT
       }
       this.initTheme()
       this.applyZoom()
@@ -119,10 +122,10 @@ export const useDisplayStore = defineStore('display', {
     },
 
     setZoom(percent) {
-      if (!ZOOM_OPTIONS.some((o) => o.value === percent)) return
-      this.zoomPercent = percent
+      const next = clampZoomPercent(percent)
+      this.zoomPercent = next
       try {
-        localStorage.setItem(STORAGE_KEY, String(percent))
+        localStorage.setItem(STORAGE_KEY, String(next))
       } catch {
         // ignore
       }

@@ -39,8 +39,10 @@ class ExpenseCategoryController extends Controller
         }
 
         $existing = ExpenseCategory::query()
-            ->where('slug', $slug)
-            ->orWhereRaw('LOWER(name) = ?', [mb_strtolower($name)])
+            ->where(function ($q) use ($slug, $name) {
+                $q->where('slug', $slug)
+                    ->orWhereRaw('LOWER(name) = ?', [mb_strtolower($name)]);
+            })
             ->first();
 
         if ($existing) {

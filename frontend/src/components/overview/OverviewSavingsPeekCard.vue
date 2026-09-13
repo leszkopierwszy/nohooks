@@ -35,9 +35,9 @@
 <script setup>
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { NET_SALARY_PLN } from '../../constants/finance'
 import { savingsTargetColorTheme } from '../../constants/savingsTargetColors'
 import { useI18n } from '../../composables/useI18n'
+import { useNetSalary } from '../../composables/useNetSalary'
 import { formatPercentLabel } from '../../utils/savingsTarget'
 import { useSavingsTargetsStore } from '../../stores/savingsTargets'
 import { useTimelineStore } from '../../stores/timeline'
@@ -46,11 +46,12 @@ const { t } = useI18n()
 const router = useRouter()
 const savingsTargets = useSavingsTargetsStore()
 const timelineStore = useTimelineStore()
+const { netSalaryPln } = useNetSalary()
 
 const theme = computed(() => savingsTargetColorTheme(savingsTargets.primaryTargetColor))
 
 const m2mPln = computed(() =>
-  Math.max(0, NET_SALARY_PLN - timelineStore.activePlannedExpensesSubtotal),
+  Math.max(0, netSalaryPln.value - timelineStore.activePlannedExpensesSubtotal),
 )
 
 const percentLabel = computed(() => {

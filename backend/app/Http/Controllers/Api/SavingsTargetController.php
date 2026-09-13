@@ -69,7 +69,7 @@ class SavingsTargetController extends Controller
 
     private function ensureM2mExists(): void
     {
-        if (SavingsTarget::query()->whereKey(self::M2M_ID)->exists()) {
+        if (SavingsTarget::query()->where('id', self::M2M_ID)->exists()) {
             return;
         }
 
@@ -85,6 +85,11 @@ class SavingsTargetController extends Controller
             'included_asset_ids' => null,
             'sort_order' => 0,
         ]);
+    }
+
+    private function findOwned(string $savingsTarget): SavingsTarget
+    {
+        return SavingsTarget::query()->where('id', $savingsTarget)->firstOrFail();
     }
 
     private function normalizeIncludedAssetIds(mixed $raw): ?array
@@ -155,7 +160,7 @@ class SavingsTargetController extends Controller
 
     public function update(Request $request, string $savingsTarget)
     {
-        $target = SavingsTarget::query()->findOrFail($savingsTarget);
+        $target = $this->findOwned($savingsTarget);
 
         $data = $request->validate([
             'name' => 'sometimes|string|max:80',
@@ -188,7 +193,7 @@ class SavingsTargetController extends Controller
 
     public function updateIncludedAssets(Request $request, string $savingsTarget)
     {
-        $target = SavingsTarget::query()->findOrFail($savingsTarget);
+        $target = $this->findOwned($savingsTarget);
 
         $data = $request->validate([
             'included_asset_ids' => 'present|nullable|array',
@@ -203,7 +208,7 @@ class SavingsTargetController extends Controller
 
     public function recordProgress(Request $request, string $savingsTarget)
     {
-        $target = SavingsTarget::query()->findOrFail($savingsTarget);
+        $target = $this->findOwned($savingsTarget);
 
         $data = $request->validate([
             'date' => 'nullable|date_format:Y-m-d',
@@ -219,7 +224,7 @@ class SavingsTargetController extends Controller
 
     public function updateProgressSnapshots(Request $request, string $savingsTarget)
     {
-        $target = SavingsTarget::query()->findOrFail($savingsTarget);
+        $target = $this->findOwned($savingsTarget);
 
         $data = $request->validate([
             'snapshots' => 'required|array',
@@ -239,7 +244,7 @@ class SavingsTargetController extends Controller
 
     public function setPrimary(string $savingsTarget)
     {
-        $target = SavingsTarget::query()->findOrFail($savingsTarget);
+        $target = $this->findOwned($savingsTarget);
 
         SavingsTarget::query()->update(['is_primary' => false]);
         $target->is_primary = true;
@@ -250,7 +255,7 @@ class SavingsTargetController extends Controller
 
     public function destroy(string $savingsTarget)
     {
-        $target = SavingsTarget::query()->findOrFail($savingsTarget);
+        $target = $this->findOwned($savingsTarget);
 
         if ($target->id === self::M2M_ID) {
             return response()->json(['message' => 'Nie można usunąć targetu M2M.'], 422);
