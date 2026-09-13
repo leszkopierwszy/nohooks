@@ -19,105 +19,202 @@
         <button
           type="button"
           class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800"
-          @click="openCreate"
+          @click="openCreate()"
         >
           {{ t('outfit.add') }}
         </button>
       </div>
     </div>
 
-    <div class="mt-6 flex flex-wrap items-center gap-3">
-      <label for="style-prim-filter" class="text-sm font-medium text-gray-700">
-        {{ t('outfit.prim') }}
-      </label>
-      <select
-        id="style-prim-filter"
-        v-model="primFilter"
-        class="rounded-md border-0 py-2 pl-3 pr-8 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600"
-      >
-        <option value="">{{ t('style.allPrims') }}</option>
-        <option v-for="prim in prims" :key="prim.id" :value="String(prim.id)">
-          {{ prim.name }}
-        </option>
-      </select>
-    </div>
-
     <p v-if="outfitsStore.error" class="mt-6 rounded-md bg-red-50 p-4 text-sm text-red-700">
       {{ outfitsStore.error }}
     </p>
-    <p v-else-if="outfitsStore.loading" class="mt-6 text-sm text-gray-500">
-      {{ t('common.loading') }}
-    </p>
 
-    <div v-else-if="groupedOutfits.length" class="mt-8 space-y-8">
-      <section v-for="group in groupedOutfits" :key="group.date">
-        <h2 class="text-sm font-semibold text-gray-900">
-          {{ formatEventDate(group.date) }}
-        </h2>
-        <ul class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <li
-            v-for="outfit in group.outfits"
-            :key="outfit.id"
-            class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
-          >
-            <div class="flex items-start justify-between gap-2">
-              <div class="min-w-0">
-                <p class="text-sm font-medium text-gray-900">
-                  {{ outfit.entity?.name ?? t('outfit.prim') }}
-                </p>
-                <p v-if="outfit.label" class="mt-0.5 text-xs text-gray-500">
-                  {{ outfit.label }}
-                </p>
-                <p class="mt-1 text-xs text-gray-500">
-                  {{ t('outfit.itemCount', { count: outfit.items?.length ?? 0 }) }}
-                </p>
-              </div>
-              <div class="flex shrink-0 gap-2">
-                <button
-                  type="button"
-                  class="text-xs font-medium text-indigo-600 hover:text-indigo-500"
-                  @click="openEdit(outfit)"
-                >
-                  {{ t('outfit.edit') }}
-                </button>
-                <button
-                  type="button"
-                  class="text-xs font-medium text-gray-500 hover:text-gray-800"
-                  @click="requestRemove(outfit)"
-                >
-                  {{ t('outfit.delete') }}
-                </button>
-              </div>
-            </div>
-            <div v-if="outfit.items?.length" class="mt-3 flex flex-wrap gap-1.5">
+    <div class="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-5">
+      <!-- Left: Prim preview -->
+      <aside class="lg:col-span-2">
+        <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+          <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">
+            {{ t('outfit.prim') }}
+          </p>
+          <PersonaSwitcher
+            v-model="selectedPrimId"
+            class="mt-3"
+          />
+
+          <div class="relative mt-6 overflow-hidden rounded-xl bg-gray-100">
+            <div
+              v-if="resolvedAvatarUrl"
+              class="pointer-events-none absolute inset-0 opacity-70"
+              :style="avatarBlurStyle"
+              aria-hidden="true"
+            />
+            <div class="relative flex aspect-3/4 items-center justify-center p-4">
+              <img
+                v-if="resolvedAvatarUrl"
+                :src="resolvedAvatarUrl"
+                :alt="selectedPrim?.name ?? ''"
+                class="max-h-full max-w-full object-contain drop-shadow-md"
+              />
               <div
-                v-for="item in outfit.items.slice(0, 8)"
-                :key="item.id"
-                class="size-10 overflow-hidden rounded bg-gray-100 ring-1 ring-gray-200"
-                :title="item.name"
+                v-else
+                class="flex size-28 items-center justify-center rounded-full bg-gray-200 text-3xl font-semibold text-gray-600"
               >
-                <img
-                  v-if="itemThumb(item)"
-                  :src="itemThumb(item)"
-                  :alt="item.name"
-                  class="size-full object-cover"
-                />
+                {{ primInitials }}
               </div>
             </div>
+          </div>
+
+          <div class="mt-4">
+            <h2 class="text-lg font-semibold text-gray-900">
+              {{ selectedPrim?.name ?? t('style.noPrim') }}
+            </h2>
+            <p v-if="selectedPrim?.description" class="mt-1 line-clamp-3 text-sm text-gray-500">
+              {{ selectedPrim.description }}
+            </p>
             <RouterLink
-              :to="{ path: '/calendar', query: { date: wearDateKey(outfit) } }"
-              class="mt-3 inline-block text-xs font-medium text-gray-600 hover:text-gray-900"
+              v-if="selectedPrim"
+              :to="`/souls/prims/${selectedPrim.id}`"
+              class="mt-3 inline-block text-sm font-medium text-indigo-600 hover:text-indigo-500"
             >
-              {{ t('style.openDay') }}
+              {{ t('style.openPrim') }}
             </RouterLink>
-          </li>
-        </ul>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Right: occasion tiles + outfits -->
+      <section class="lg:col-span-3">
+        <div class="flex items-center justify-between gap-3">
+          <h2 class="text-sm font-semibold text-gray-900">
+            {{ t('style.occasionsTitle') }}
+          </h2>
+          <button
+            v-if="activeOccasion"
+            type="button"
+            class="text-xs font-medium text-gray-500 hover:text-gray-800"
+            @click="activeOccasion = ''"
+          >
+            {{ t('style.clearOccasion') }}
+          </button>
+        </div>
+
+        <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+          <button
+            v-for="occ in OUTFIT_OCCASIONS"
+            :key="occ.value"
+            type="button"
+            :class="[
+              'rounded-xl border p-4 text-left transition',
+              activeOccasion === occ.value
+                ? 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-200'
+                : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50',
+            ]"
+            @click="toggleOccasion(occ.value)"
+          >
+            <component
+              :is="occasionIcon(occ.icon)"
+              class="size-6 text-gray-700"
+              aria-hidden="true"
+            />
+            <p class="mt-3 text-sm font-semibold text-gray-900">
+              {{ t(occ.labelKey) }}
+            </p>
+            <p class="mt-1 text-xs text-gray-500">
+              {{ t('outfit.outfitCount', { count: countForOccasion(occ.value) }) }}
+            </p>
+          </button>
+        </div>
+
+        <div class="mt-8">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <h3 class="text-sm font-semibold text-gray-900">
+              {{
+                activeOccasion
+                  ? t(outfitOccasionMeta(activeOccasion)?.labelKey ?? 'outfit.titlePlural')
+                  : t('outfit.titlePlural')
+              }}
+            </h3>
+            <button
+              type="button"
+              class="text-sm font-medium text-indigo-600 hover:text-indigo-500"
+              :disabled="!selectedPrim"
+              @click="openCreate(activeOccasion || undefined)"
+            >
+              + {{ t('outfit.add') }}
+            </button>
+          </div>
+
+          <p v-if="outfitsStore.loading" class="mt-4 text-sm text-gray-500">
+            {{ t('common.loading') }}
+          </p>
+          <p v-else-if="!selectedPrim" class="mt-4 text-sm text-gray-500">
+            {{ t('style.pickPrim') }}
+          </p>
+          <ul v-else-if="visibleOutfits.length" class="mt-4 space-y-3">
+            <li
+              v-for="outfit in visibleOutfits"
+              :key="outfit.id"
+              class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
+            >
+              <div class="flex items-start justify-between gap-2">
+                <div class="min-w-0">
+                  <p class="text-sm font-medium text-gray-900">
+                    {{ formatEventDate(wearDateKey(outfit)) }}
+                    <span
+                      v-if="outfit.occasion"
+                      class="ml-2 inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700"
+                    >
+                      {{ t(outfitOccasionMeta(outfit.occasion)?.labelKey ?? 'outfit.occasion') }}
+                    </span>
+                  </p>
+                  <p v-if="outfit.label" class="mt-0.5 text-xs text-gray-500">
+                    {{ outfit.label }}
+                  </p>
+                  <p class="mt-1 text-xs text-gray-500">
+                    {{ t('outfit.itemCount', { count: outfit.items?.length ?? 0 }) }}
+                  </p>
+                </div>
+                <div class="flex shrink-0 gap-2">
+                  <button
+                    type="button"
+                    class="text-xs font-medium text-indigo-600 hover:text-indigo-500"
+                    @click="openEdit(outfit)"
+                  >
+                    {{ t('outfit.edit') }}
+                  </button>
+                  <button
+                    type="button"
+                    class="text-xs font-medium text-gray-500 hover:text-gray-800"
+                    @click="requestRemove(outfit)"
+                  >
+                    {{ t('outfit.delete') }}
+                  </button>
+                </div>
+              </div>
+              <div v-if="outfit.items?.length" class="mt-3 flex flex-wrap gap-1.5">
+                <div
+                  v-for="item in outfit.items.slice(0, 8)"
+                  :key="item.id"
+                  class="size-10 overflow-hidden rounded bg-gray-100 ring-1 ring-gray-200"
+                  :title="item.name"
+                >
+                  <img
+                    v-if="itemThumb(item)"
+                    :src="itemThumb(item)"
+                    :alt="item.name"
+                    class="size-full object-cover"
+                  />
+                </div>
+              </div>
+            </li>
+          </ul>
+          <p v-else class="mt-4 text-sm text-gray-500">
+            {{ activeOccasion ? t('style.emptyOccasion') : t('style.empty') }}
+          </p>
+        </div>
       </section>
     </div>
-
-    <p v-else class="mt-10 text-sm text-gray-500">
-      {{ t('style.empty') }}
-    </p>
 
     <OutfitFormModal
       :open="formOpen"
@@ -147,21 +244,50 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
+import {
+  AcademicCapIcon,
+  BriefcaseIcon,
+  BoltIcon,
+  GlobeAltIcon,
+  HomeIcon,
+  MapIcon,
+  SparklesIcon,
+  StarIcon,
+  SunIcon,
+} from '@heroicons/vue/24/outline'
 import ConfirmDialog from '../components/ConfirmDialog.vue'
 import OutfitFormModal from '../components/outfit/OutfitFormModal.vue'
+import PersonaSwitcher from '../components/PersonaSwitcher.vue'
 import { resolveStorageUrl } from '../api/media'
 import { useI18n } from '../composables/useI18n'
+import {
+  OUTFIT_OCCASIONS,
+  outfitOccasionMeta,
+} from '../constants/outfitOccasions'
 import { useCollectionStore } from '../stores/collection'
 import { useOutfitsStore, wearDateKey } from '../stores/outfits'
 import { usePersonasStore } from '../stores/personas'
-import { addDaysToDateKey, formatEventDate, toDateKey } from '../utils/calendarGrid'
+import { formatEventDate, toDateKey } from '../utils/calendarGrid'
+
+const ICON_MAP = {
+  academic: AcademicCapIcon,
+  briefcase: BriefcaseIcon,
+  home: HomeIcon,
+  map: MapIcon,
+  sparkles: SparklesIcon,
+  bolt: BoltIcon,
+  star: StarIcon,
+  sun: SunIcon,
+  globe: GlobeAltIcon,
+}
 
 const { t } = useI18n()
 const outfitsStore = useOutfitsStore()
 const personasStore = usePersonasStore()
 const collectionStore = useCollectionStore()
 
-const primFilter = ref('')
+const selectedPrimId = ref(null)
+const activeOccasion = ref('')
 const formOpen = ref(false)
 const editingId = ref(null)
 const saving = ref(false)
@@ -174,6 +300,7 @@ const emptyForm = () => ({
   entity_id: '',
   wear_date: toDateKey(new Date()),
   label: '',
+  occasion: '',
   notes: '',
   item_ids: [],
 })
@@ -183,22 +310,62 @@ const form = reactive(emptyForm())
 const prims = computed(() => personasStore.prims)
 const collectionItems = computed(() => collectionStore.allItemsList)
 
-const filteredOutfits = computed(() => {
-  let rows = outfitsStore.outfits
-  if (primFilter.value) {
-    rows = rows.filter((o) => String(o.entity_id) === primFilter.value)
-  }
-  return rows.slice().sort((a, b) => wearDateKey(a).localeCompare(wearDateKey(b)))
+const selectedPrim = computed(() => {
+  const id = selectedPrimId.value ?? personasStore.activePersonaId
+  if (!id) return personasStore.activePrim ?? prims.value[0] ?? null
+  return (
+    prims.value.find((p) => String(p.id) === String(id)) ??
+    personasStore.activePrim ??
+    null
+  )
 })
 
-const groupedOutfits = computed(() => {
-  const map = new Map()
-  for (const outfit of filteredOutfits.value) {
-    const date = wearDateKey(outfit)
-    if (!map.has(date)) map.set(date, [])
-    map.get(date).push(outfit)
+const avatarUrl = computed(() => {
+  const p = selectedPrim.value
+  if (!p) return null
+  return p.avatar_doll_url ?? p.avatar_source_url ?? p.imageUrl ?? p.avatar_url ?? null
+})
+
+const resolvedAvatarUrl = computed(
+  () => resolveStorageUrl(avatarUrl.value) ?? avatarUrl.value,
+)
+
+const avatarBlurStyle = computed(() => {
+  const radialMask =
+    'radial-gradient(ellipse 78% 78% at 50% 50%, #000 18%, rgba(0,0,0,0.55) 42%, transparent 70%)'
+  return {
+    backgroundImage: resolvedAvatarUrl.value
+      ? `url(${resolvedAvatarUrl.value})`
+      : undefined,
+    filter: 'blur(48px) saturate(1.05)',
+    transform: 'scale(1.15)',
+    WebkitMaskImage: radialMask,
+    maskImage: radialMask,
   }
-  return [...map.entries()].map(([date, outfits]) => ({ date, outfits }))
+})
+
+const primInitials = computed(() => {
+  const name = selectedPrim.value?.name ?? ''
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('')
+})
+
+const primOutfits = computed(() => {
+  const id = selectedPrim.value?.id
+  if (!id) return []
+  return outfitsStore.outfits
+    .filter((o) => Number(o.entity_id) === Number(id))
+    .slice()
+    .sort((a, b) => wearDateKey(a).localeCompare(wearDateKey(b)))
+})
+
+const visibleOutfits = computed(() => {
+  if (!activeOccasion.value) return primOutfits.value
+  return primOutfits.value.filter((o) => o.occasion === activeOccasion.value)
 })
 
 const deleteMessage = computed(() => {
@@ -210,26 +377,35 @@ const deleteMessage = computed(() => {
   })
 })
 
+function occasionIcon(key) {
+  return ICON_MAP[key] ?? SparklesIcon
+}
+
+function countForOccasion(value) {
+  return primOutfits.value.filter((o) => o.occasion === value).length
+}
+
+function toggleOccasion(value) {
+  activeOccasion.value = activeOccasion.value === value ? '' : value
+}
+
 function itemThumb(item) {
   const raw = item?.image_url ?? item?.images?.[0]?.url ?? null
   return resolveStorageUrl(raw) ?? raw
 }
 
 async function loadOutfits() {
-  const from = toDateKey(new Date())
-  const to = addDaysToDateKey(from, 30)
-  const params = { from, to }
-  if (primFilter.value) params.entity_id = primFilter.value
+  const params = {}
+  if (selectedPrim.value?.id) params.entity_id = selectedPrim.value.id
   await outfitsStore.fetchOutfits(params)
 }
 
-function resetForm(dateKey) {
+function resetForm(occasion) {
   Object.assign(form, emptyForm())
-  form.wear_date = dateKey || toDateKey(new Date())
-  if (primFilter.value) {
-    form.entity_id = primFilter.value
-  } else if (personasStore.activePrim) {
-    form.entity_id = String(personasStore.activePrim.id)
+  form.wear_date = toDateKey(new Date())
+  form.occasion = occasion || activeOccasion.value || ''
+  if (selectedPrim.value) {
+    form.entity_id = String(selectedPrim.value.id)
   } else if (prims.value[0]) {
     form.entity_id = String(prims.value[0].id)
   }
@@ -242,10 +418,10 @@ async function ensureFormData() {
   if (jobs.length) await Promise.all(jobs)
 }
 
-function openCreate() {
+function openCreate(occasion) {
   editingId.value = null
   formError.value = ''
-  resetForm()
+  resetForm(occasion)
   formOpen.value = true
   ensureFormData().catch(() => {})
 }
@@ -257,6 +433,7 @@ function openEdit(outfit) {
     entity_id: String(outfit.entity_id ?? outfit.entity?.id ?? ''),
     wear_date: wearDateKey(outfit),
     label: outfit.label ?? '',
+    occasion: outfit.occasion ?? '',
     notes: outfit.notes ?? '',
     item_ids: (outfit.items ?? []).map((item) => item.id),
   })
@@ -281,6 +458,7 @@ async function submitForm() {
     entity_id: Number(form.entity_id),
     wear_date: form.wear_date,
     label: form.label?.trim() || null,
+    occasion: form.occasion || null,
     notes: form.notes?.trim() || null,
     item_ids: (form.item_ids ?? []).map((id) => Number(id)),
     source: 'manual',
@@ -320,12 +498,15 @@ async function confirmDelete() {
   }
 }
 
-watch(primFilter, () => {
+watch(selectedPrimId, (id) => {
+  if (id != null) personasStore.setActivePersona(id)
   loadOutfits().catch(() => {})
 })
 
-onMounted(() => {
-  personasStore.fetchPersonas().catch(() => {})
-  loadOutfits().catch(() => {})
+onMounted(async () => {
+  await personasStore.fetchPersonas().catch(() => {})
+  selectedPrimId.value =
+    personasStore.activePrim?.id ?? personasStore.prims[0]?.id ?? null
+  await loadOutfits().catch(() => {})
 })
 </script>

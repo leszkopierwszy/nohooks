@@ -248,6 +248,7 @@ const emptyOutfitForm = () => ({
   entity_id: '',
   wear_date: toDateKey(new Date()),
   label: '',
+  occasion: '',
   notes: '',
   item_ids: [],
 })
@@ -773,6 +774,7 @@ function openEditOutfit(outfit) {
     entity_id: String(outfit.entity_id ?? outfit.entity?.id ?? ''),
     wear_date: outfit.wear_date?.slice?.(0, 10) ?? outfit.wear_date,
     label: outfit.label ?? '',
+    occasion: outfit.occasion ?? '',
     notes: outfit.notes ?? '',
     item_ids: (outfit.items ?? []).map((item) => item.id),
   })
@@ -810,6 +812,7 @@ async function submitOutfitForm() {
     entity_id: Number(outfitForm.entity_id),
     wear_date: outfitForm.wear_date,
     label: outfitForm.label?.trim() || null,
+    occasion: outfitForm.occasion || null,
     notes: outfitForm.notes?.trim() || null,
     item_ids: (outfitForm.item_ids ?? []).map((id) => Number(id)),
     source: 'manual',

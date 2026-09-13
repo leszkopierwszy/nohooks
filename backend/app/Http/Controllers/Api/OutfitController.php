@@ -24,6 +24,7 @@ class OutfitController extends Controller
             ],
             'wear_date' => "{$required}|date",
             'label' => 'nullable|string|max:255',
+            'occasion' => ['nullable', 'string', Rule::in(Outfit::OCCASIONS)],
             'notes' => 'nullable|string|max:5000',
             'source' => ['nullable', 'string', Rule::in(Outfit::SOURCES)],
             'item_ids' => 'nullable|array',
@@ -41,6 +42,11 @@ class OutfitController extends Controller
         if (array_key_exists('notes', $data)) {
             $notes = is_string($data['notes']) ? trim($data['notes']) : $data['notes'];
             $data['notes'] = $notes !== '' ? $notes : null;
+        }
+
+        if (array_key_exists('occasion', $data)) {
+            $occasion = is_string($data['occasion']) ? trim($data['occasion']) : $data['occasion'];
+            $data['occasion'] = $occasion !== '' ? $occasion : null;
         }
 
         if (empty($data['source'])) {
@@ -95,6 +101,7 @@ class OutfitController extends Controller
             'from' => 'nullable|date',
             'to' => 'nullable|date',
             'entity_id' => 'nullable|integer',
+            'occasion' => ['nullable', 'string', Rule::in(Outfit::OCCASIONS)],
         ]);
 
         $query = Outfit::query()
@@ -107,6 +114,10 @@ class OutfitController extends Controller
 
         if ($request->filled('entity_id')) {
             $query->where('entity_id', (int) $request->input('entity_id'));
+        }
+
+        if ($request->filled('occasion')) {
+            $query->where('occasion', $request->input('occasion'));
         }
 
         if ($request->filled('from')) {

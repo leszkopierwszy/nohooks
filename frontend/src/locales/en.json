@@ -805,6 +805,18 @@
     "wearDate": "Date",
     "label": "Label",
     "labelPlaceholder": "Optional name",
+    "occasion": "Occasion",
+    "occasionNone": "No occasion",
+    "occasions": {
+      "school": "School",
+      "work": "Work",
+      "home": "Home",
+      "outing": "Going out",
+      "sport": "Sport",
+      "formal": "Formal",
+      "casual": "Casual",
+      "travel": "Travel"
+    },
     "notes": "Notes",
     "notesPlaceholder": "Optional notes…",
     "items": "Items",
@@ -818,14 +830,21 @@
     "upcomingEmpty": "No outfits planned in the next 7 days.",
     "viewCalendar": "Open calendar",
     "itemCount": "{count} items",
+    "outfitCount": "{count} outfits",
     "sourceManual": "Manual",
     "sourceLlm": "Suggested"
   },
   "style": {
-    "subtitle": "Plan daily outfits for your Prims from the collection.",
+    "subtitle": "Plan looks for each Prim by occasion — school, work, home, and more.",
     "allPrims": "All Prims",
-    "empty": "No outfits in the next 30 days. Add one to get started.",
-    "openDay": "Open in calendar"
+    "empty": "No outfits yet for this Prim. Add one or pick an occasion tile.",
+    "emptyOccasion": "No outfits in this occasion yet.",
+    "openDay": "Open in calendar",
+    "openPrim": "Open Prim profile",
+    "noPrim": "Select a Prim",
+    "pickPrim": "Select a Prim on the left to see outfits.",
+    "occasionsTitle": "Occasions",
+    "clearOccasion": "Show all"
   },
   "common": {
     "loading": "Loading…"

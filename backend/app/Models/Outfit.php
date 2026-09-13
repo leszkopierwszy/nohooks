@@ -11,11 +11,23 @@ class Outfit extends Model
 
     public const SOURCES = ['manual', 'llm'];
 
+    public const OCCASIONS = [
+        'school',
+        'work',
+        'home',
+        'outing',
+        'sport',
+        'formal',
+        'casual',
+        'travel',
+    ];
+
     protected $fillable = [
         'user_id',
         'entity_id',
         'wear_date',
         'label',
+        'occasion',
         'notes',
         'source',
     ];

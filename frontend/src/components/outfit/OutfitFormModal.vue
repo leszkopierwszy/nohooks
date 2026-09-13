@@ -41,6 +41,26 @@
           </div>
 
           <div>
+            <label for="outfit-occasion" class="block text-sm font-medium text-gray-700">
+              {{ t('outfit.occasion') }}
+            </label>
+            <select
+              id="outfit-occasion"
+              v-model="form.occasion"
+              class="mt-1 block w-full rounded-md border-0 py-2 pl-3 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
+            >
+              <option value="">{{ t('outfit.occasionNone') }}</option>
+              <option
+                v-for="occ in OUTFIT_OCCASIONS"
+                :key="occ.value"
+                :value="occ.value"
+              >
+                {{ t(occ.labelKey) }}
+              </option>
+            </select>
+          </div>
+
+          <div>
             <label for="outfit-label" class="block text-sm font-medium text-gray-700">
               {{ t('outfit.label') }}
             </label>
@@ -148,6 +168,7 @@ import { computed } from 'vue'
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/vue'
 import { useI18n } from '../../composables/useI18n'
 import { itemFitsPersona } from '../../constants/itemPersonaFit'
+import { OUTFIT_OCCASIONS } from '../../constants/outfitOccasions'
 
 const props = defineProps({
   open: { type: Boolean, required: true },

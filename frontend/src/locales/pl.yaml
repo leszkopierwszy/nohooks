@@ -743,6 +743,17 @@ outfit:
   wearDate: Data
   label: Etykieta
   labelPlaceholder: Opcjonalna nazwa
+  occasion: Okazja
+  occasionNone: Bez okazji
+  occasions:
+    school: Szkoła
+    work: Praca
+    home: Dom
+    outing: Wyjścia
+    sport: Sport
+    formal: Formalne
+    casual: Casual
+    travel: Podróż
   notes: Notatki
   notesPlaceholder: Opcjonalne notatki…
   items: Itemy
@@ -756,14 +767,21 @@ outfit:
   upcomingEmpty: Brak zaplanowanych outfitów w ciągu 7 dni.
   viewCalendar: Otwórz kalendarz
   itemCount: '{count} itemów'
+  outfitCount: '{count} outfitów'
   sourceManual: Ręczny
   sourceLlm: Sugerowany
 
 style:
-  subtitle: Planuj codzienne outfity dla Primów na podstawie kolekcji.
+  subtitle: Planuj zestawy dla Prima według okazji — szkoła, praca, dom i inne.
   allPrims: Wszystkie Primy
-  empty: Brak outfitów w ciągu 30 dni. Dodaj pierwszy, aby zacząć.
+  empty: Brak outfitów dla tego Prima. Dodaj pierwszy lub wybierz kafelek okazji.
+  emptyOccasion: Brak outfitów w tej okazji.
   openDay: Otwórz w kalendarzu
+  openPrim: Otwórz profil Prima
+  noPrim: Wybierz Prima
+  pickPrim: Wybierz Prima po lewej, aby zobaczyć outfity.
+  occasionsTitle: Okazje
+  clearOccasion: Pokaż wszystkie
 
 common:
   loading: Ładowanie…
