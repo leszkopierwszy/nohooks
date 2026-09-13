@@ -289,6 +289,18 @@ account:
   saveProfile: Zapisz profil
   saved: Zapisano.
   saveError: Nie udało się zapisać profilu.
+  tabs:
+    profile: Profil
+    security: Bezpieczeństwo
+    notifications: Powiadomienia
+    payments: Płatności
+  emailSection:
+    title: E-mail
+    subtitle: Adres używany do logowania na to konto.
+    save: Zapisz e-mail
+  placeholders:
+    notifications: Preferencje powiadomień pojawią się tutaj.
+    payments: Metody płatności i rozliczenia pojawią się tutaj.
   password:
     title: Hasło
     subtitle: Zmień hasło używane do logowania do panelu.
@@ -298,6 +310,16 @@ account:
     save: Zmień hasło
     saved: Hasło zostało zmienione.
     error: Nie udało się zmienić hasła.
+  backup:
+    title: Kopia zapasowa
+    subtitle: Pobierz kopię danych workspace albo przywróć je z pliku.
+    download: Pobierz kopię
+    restore: Przywróć z pliku
+    downloaded: Kopia została pobrana.
+    restored: Przywrócono. Odświeżanie…
+    exportError: Nie udało się utworzyć kopii.
+    restoreError: Nie udało się przywrócić kopii.
+    invalidFile: Ten plik nie jest prawidłową kopią workspace.
   nav:
     settings: Ustawienia użytkownika
     backend: Backend
@@ -342,9 +364,9 @@ display:
     hint: Etykiety interfejsu i główne teksty stron. Domyślnie angielski.
   zoom:
     title: Powiększenie treści
-    hint: Dotyczy kolumny po prawej (sidebar bez zmian). 100% to domyślna gęstość.
+    hint: 80%–120%. Dotyczy kolumny po prawej (sidebar bez zmian). 100% to domyślna gęstość.
   dialog:
-    title: Wyświetlanie
+    title: Ustawienia wyświetlania
     subtitle: Motyw, język i powiększenie treści.
     accountLink: Ustawienia konta
     done: Gotowe
@@ -698,9 +720,9 @@ userMenu:
   openMenu: Otwórz menu
   closeMenu: Zamknij menu
   displayNameFallback: Konto
-  displaySection: Wyświetlanie
+  displaySection: Ustawienia
   accountSettings: Ustawienia konta
-  displaySettings: Wyświetlanie
+  displaySettings: Ustawienia wyświetlania
   zoom: Powiększenie {label}
   logout: Wyloguj się
 

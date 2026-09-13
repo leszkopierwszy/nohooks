@@ -83,24 +83,6 @@
           </button>
         </MenuItem>
 
-        <MenuItem v-for="opt in ZOOM_OPTIONS" :key="opt.value" v-slot="{ active }">
-          <button
-            type="button"
-            :class="[
-              active ? 'bg-gray-50' : '',
-              'flex w-full items-center justify-between px-3 py-2 pl-10 text-left text-sm text-gray-700',
-            ]"
-            @click="displayStore.setZoom(opt.value)"
-          >
-            <span>{{ t('userMenu.zoom', { label: opt.label }) }}</span>
-            <CheckIcon
-              v-if="zoomPercent === opt.value"
-              class="size-4 text-gray-900"
-              aria-hidden="true"
-            />
-          </button>
-        </MenuItem>
-
         <div class="my-1 border-t border-gray-100" />
 
         <MenuItem v-slot="{ active }">
@@ -124,19 +106,17 @@
 
 <script setup>
 import { computed } from 'vue'
-import { storeToRefs } from 'pinia'
 import { RouterLink, useRouter } from 'vue-router'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import {
   AdjustmentsHorizontalIcon,
   ArrowRightOnRectangleIcon,
-  CheckIcon,
   ChevronUpIcon,
   Cog6ToothIcon,
 } from '@heroicons/vue/24/outline'
 import { useI18n } from '../composables/useI18n'
 import { useAuthStore } from '../stores/auth'
-import { useDisplayStore, ZOOM_OPTIONS } from '../stores/display'
+import { useDisplayStore } from '../stores/display'
 import { useUserStore } from '../stores/user'
 import { sidebarClasses } from '../config/sidebar'
 import { userAvatarDataUrl } from '../utils/userAvatar'
@@ -163,7 +143,6 @@ const props = defineProps({
 const displayStore = useDisplayStore()
 const authStore = useAuthStore()
 const userStore = useUserStore()
-const { zoomPercent } = storeToRefs(displayStore)
 
 const displayName = computed(
   () => userStore.user?.displayName ?? userStore.user?.username ?? t('userMenu.displayNameFallback')

@@ -123,3 +123,63 @@ export function queueWorkspaceUpsert(documentKey, rawValue) {
       console.warn('[workspace] upsert failed', documentKey, err)
     })
 }
+
+export const WORKSPACE_BACKUP_KIND = 'nohooks.workspace.backup'
+export const WORKSPACE_BACKUP_VERSION = 1
+
+/**
+ * Build a downloadable workspace backup (API first, local fallback).
+ * @returns {Promise<{ version: number, kind: string, exportedAt: string, documents: Record<string, unknown> }>}
+ */
+export async function createWorkspaceBackup() {
+  let documents = {}
+  try {
+    const remote = await apiRequest('/workspace')
+    documents =
+      remote?.documents && typeof remote.documents === 'object' ? remote.documents : {}
+  } catch {
+    documents = collectLocalWorkspaceDocuments()
+  }
+  if (!documents || Object.keys(documents).length === 0) {
+    documents = collectLocalWorkspaceDocuments()
+  }
+  return {
+    version: WORKSPACE_BACKUP_VERSION,
+    kind: WORKSPACE_BACKUP_KIND,
+    exportedAt: new Date().toISOString(),
+    documents,
+  }
+}
+
+/**
+ * Validate and restore a workspace backup file payload.
+ * @param {unknown} backup
+ * @returns {Promise<Record<string, unknown>>}
+ */
+export async function restoreWorkspaceBackup(backup) {
+  if (!backup || typeof backup !== 'object') {
+    throw new Error('invalid_backup')
+  }
+  const kind = backup.kind
+  const documents = backup.documents
+  if (kind != null && kind !== WORKSPACE_BACKUP_KIND) {
+    throw new Error('invalid_backup')
+  }
+  if (!documents || typeof documents !== 'object') {
+    throw new Error('invalid_backup')
+  }
+
+  const imported = await apiRequest('/workspace/import', {
+    method: 'POST',
+    body: JSON.stringify({
+      documents,
+      only_missing: false,
+    }),
+  })
+  const nextDocs =
+    imported?.documents && typeof imported.documents === 'object'
+      ? imported.documents
+      : documents
+  applyWorkspaceDocumentsLocally(nextDocs)
+  return nextDocs
+}

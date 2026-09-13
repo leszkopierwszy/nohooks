@@ -308,6 +308,21 @@
     "saveProfile": "Save profile",
     "saved": "Saved.",
     "saveError": "Could not save profile.",
+    "tabs": {
+      "profile": "Profile",
+      "security": "Security",
+      "notifications": "Notifications",
+      "payments": "Payments"
+    },
+    "emailSection": {
+      "title": "Email",
+      "subtitle": "Sign-in address for this account.",
+      "save": "Save email"
+    },
+    "placeholders": {
+      "notifications": "Notification preferences will appear here.",
+      "payments": "Payment methods and billing will appear here."
+    },
     "password": {
       "title": "Password",
       "subtitle": "Change the password used to sign in to the panel.",
@@ -317,6 +332,17 @@
       "save": "Update password",
       "saved": "Password updated.",
       "error": "Could not update password."
+    },
+    "backup": {
+      "title": "Backup",
+      "subtitle": "Download a copy of your workspace data, or restore from a backup file.",
+      "download": "Download backup",
+      "restore": "Restore from file",
+      "downloaded": "Backup downloaded.",
+      "restored": "Backup restored. Reloading…",
+      "exportError": "Could not create backup.",
+      "restoreError": "Could not restore backup.",
+      "invalidFile": "This file is not a valid workspace backup."
     },
     "nav": {
       "settings": "User settings",
@@ -367,10 +393,10 @@
     },
     "zoom": {
       "title": "Content zoom",
-      "hint": "Applies to the right column only (sidebar unchanged). 100% is the default density."
+      "hint": "80%–120%. Applies to the right column only (sidebar unchanged). 100% is the default density."
     },
     "dialog": {
-      "title": "Display",
+      "title": "Display settings",
       "subtitle": "Theme, language, and content zoom.",
       "accountLink": "Account settings",
       "done": "Done"
@@ -756,9 +782,9 @@
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
     "displayNameFallback": "Account",
-    "displaySection": "Display",
+    "displaySection": "Settings",
     "accountSettings": "Account settings",
-    "displaySettings": "Display",
+    "displaySettings": "Display settings",
     "zoom": "Zoom {label}",
     "logout": "Sign out"
   },
