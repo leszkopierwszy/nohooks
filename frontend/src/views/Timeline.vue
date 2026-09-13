@@ -25,6 +25,7 @@
             :selected-date="selectedDate"
             :search-active="searchActive"
             :events-for-day="eventsOnDay"
+            :outfits-for-day="outfitsOnDay"
             @select-day="selectDay"
             @create="openCreate"
           />
@@ -43,12 +44,16 @@
             v-else
             :selected-date="selectedDate"
             :events="selectedDayEvents"
+            :outfits="selectedDayOutfits"
             :search-active="searchActive"
             :highlighted-event-id="detailEvent?.id ?? null"
             @select-event="showEventDetail"
             @edit="openEdit"
             @remove="requestRemoveEvent"
             @create="openCreate"
+            @create-outfit="openCreateOutfit"
+            @edit-outfit="openEditOutfit"
+            @remove-outfit="requestRemoveOutfit"
           />
         </TimelineCalendarShell>
 
@@ -59,12 +64,16 @@
         <TimelineSelectedDayAside
           :selected-date="selectedDate"
           :events="selectedDayEvents"
+          :outfits="selectedDayOutfits"
           :search-active="searchActive"
           :highlighted-event-id="detailEvent?.id ?? null"
           @select-event="showEventDetail"
           @edit="openEdit"
           @remove="requestRemoveEvent"
           @create="openCreate"
+          @create-outfit="openCreateOutfit"
+          @edit-outfit="openEditOutfit"
+          @remove-outfit="requestRemoveOutfit"
         />
       </aside>
     </div>
@@ -113,6 +122,29 @@
       @delete="onFormDelete"
       @goal-change="onFormGoalChange"
     />
+
+    <OutfitFormModal
+      :open="outfitFormOpen"
+      :editing-id="outfitEditingId"
+      :saving="outfitSaving"
+      :form-error="outfitFormError"
+      :form="outfitForm"
+      :prims="prims"
+      :items="collectionItems"
+      @close="closeOutfitForm"
+      @submit="submitOutfitForm"
+    />
+
+    <ConfirmDialog
+      :open="outfitDeleteModalOpen"
+      :title="t('outfit.delete')"
+      :message="outfitDeleteMessage"
+      confirm-label="Usuń"
+      variant="danger"
+      :loading="outfitDeleting"
+      @close="closeOutfitDeleteModal"
+      @confirm="confirmDeleteOutfit"
+    />
   </div>
 </template>
 
@@ -120,6 +152,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ConfirmDialog from '../components/ConfirmDialog.vue'
+import OutfitFormModal from '../components/outfit/OutfitFormModal.vue'
 import { useAppSearchStore } from '../stores/appSearch'
 import TimelineEventDetailModal from '../components/TimelineEventDetailModal.vue'
 import TimelineCalendarShell from '../components/timeline/TimelineCalendarShell.vue'
@@ -131,7 +164,11 @@ import TimelineSelectedDayAside from '../components/timeline/TimelineSelectedDay
 import TimelineUpcomingTable from '../components/timeline/TimelineUpcomingTable.vue'
 import TimelineWeekGrid from '../components/timeline/TimelineWeekGrid.vue'
 import { useTimelineStore } from '../stores/timeline'
+import { useOutfitsStore } from '../stores/outfits'
+import { usePersonasStore } from '../stores/personas'
+import { useCollectionStore } from '../stores/collection'
 import { useGrowthGoalsStore } from '../stores/growthGoals'
+import { useI18n } from '../composables/useI18n'
 import { formatWorkDuration } from '../utils/growthGoalWork'
 import { timelineEventTypeMeta } from '../constants/timelineEventTypes'
 import {
@@ -166,10 +203,16 @@ import {
 } from '../utils/timelineRecurrence'
 
 const timelineStore = useTimelineStore()
+const outfitsStore = useOutfitsStore()
+const personasStore = usePersonasStore()
+const collectionStore = useCollectionStore()
 const growthGoalsStore = useGrowthGoalsStore()
 const appSearch = useAppSearchStore()
+const { t } = useI18n()
 
 const activeGrowthGoals = computed(() => growthGoalsStore.activeGoals)
+const prims = computed(() => personasStore.prims)
+const collectionItems = computed(() => collectionStore.allItemsList)
 const route = useRoute()
 const router = useRouter()
 
@@ -193,11 +236,38 @@ const deleteModalOpen = ref(false)
 const deleteTarget = ref(null)
 const deleting = ref(false)
 
+const outfitFormOpen = ref(false)
+const outfitEditingId = ref(null)
+const outfitSaving = ref(false)
+const outfitFormError = ref('')
+const outfitDeleteModalOpen = ref(false)
+const outfitDeleteTarget = ref(null)
+const outfitDeleting = ref(false)
+
+const emptyOutfitForm = () => ({
+  entity_id: '',
+  wear_date: toDateKey(new Date()),
+  label: '',
+  notes: '',
+  item_ids: [],
+})
+
+const outfitForm = reactive(emptyOutfitForm())
+
 const deleteMessage = computed(() => {
   const event = deleteTarget.value
   if (!event) return ''
   const typeLabel = timelineEventTypeMeta(event.type).label
   return `Czy na pewno chcesz usunąć „${event.label}” (${typeLabel})? Tej operacji nie można cofnąć.`
+})
+
+const outfitDeleteMessage = computed(() => {
+  const outfit = outfitDeleteTarget.value
+  if (!outfit) return ''
+  return t('outfit.deleteConfirm', {
+    prim: outfit.entity?.name ?? t('outfit.prim'),
+    date: formatEventDate(outfit.wear_date?.slice?.(0, 10) ?? outfit.wear_date),
+  })
 })
 
 const emptyForm = () => ({
@@ -333,6 +403,15 @@ function eventsOnDay(dateKey) {
 const selectedDayEvents = computed(() => {
   if (!selectedDate.value) return []
   return eventsOnDay(selectedDate.value)
+})
+
+function outfitsOnDay(dateKey) {
+  return outfitsStore.outfitsForDay(dateKey)
+}
+
+const selectedDayOutfits = computed(() => {
+  if (!selectedDate.value) return []
+  return outfitsOnDay(selectedDate.value)
 })
 
 const importantUpcomingEvents = computed(() => {
@@ -668,6 +747,115 @@ async function confirmDeleteEvent() {
   }
 }
 
+function resetOutfitForm(dateKey) {
+  Object.assign(outfitForm, emptyOutfitForm())
+  outfitForm.wear_date = dateKey || selectedDate.value || toDateKey(new Date())
+  const activePrim = personasStore.activePrim
+  if (activePrim) {
+    outfitForm.entity_id = String(activePrim.id)
+  } else if (prims.value[0]) {
+    outfitForm.entity_id = String(prims.value[0].id)
+  }
+}
+
+function openCreateOutfit() {
+  outfitEditingId.value = null
+  outfitFormError.value = ''
+  resetOutfitForm(selectedDate.value)
+  outfitFormOpen.value = true
+  ensureOutfitFormData().catch(() => {})
+}
+
+function openEditOutfit(outfit) {
+  outfitEditingId.value = outfit.id
+  outfitFormError.value = ''
+  Object.assign(outfitForm, {
+    entity_id: String(outfit.entity_id ?? outfit.entity?.id ?? ''),
+    wear_date: outfit.wear_date?.slice?.(0, 10) ?? outfit.wear_date,
+    label: outfit.label ?? '',
+    notes: outfit.notes ?? '',
+    item_ids: (outfit.items ?? []).map((item) => item.id),
+  })
+  outfitFormOpen.value = true
+  ensureOutfitFormData().catch(() => {})
+}
+
+function closeOutfitForm() {
+  outfitFormOpen.value = false
+  outfitEditingId.value = null
+  outfitFormError.value = ''
+}
+
+async function ensureOutfitFormData() {
+  const jobs = []
+  if (!personasStore.personas.length) {
+    jobs.push(personasStore.fetchPersonas())
+  }
+  if (!collectionStore.allItemsList.length) {
+    jobs.push(collectionStore.fetchAllItems())
+  }
+  if (jobs.length) await Promise.all(jobs)
+}
+
+async function submitOutfitForm() {
+  if (!outfitForm.entity_id || !outfitForm.wear_date) {
+    outfitFormError.value = t('outfit.primPlaceholder')
+    return
+  }
+
+  outfitSaving.value = true
+  outfitFormError.value = ''
+
+  const payload = {
+    entity_id: Number(outfitForm.entity_id),
+    wear_date: outfitForm.wear_date,
+    label: outfitForm.label?.trim() || null,
+    notes: outfitForm.notes?.trim() || null,
+    item_ids: (outfitForm.item_ids ?? []).map((id) => Number(id)),
+    source: 'manual',
+  }
+
+  try {
+    if (outfitEditingId.value) {
+      await outfitsStore.updateOutfit(outfitEditingId.value, payload)
+    } else {
+      await outfitsStore.createOutfit(payload)
+    }
+    closeOutfitForm()
+  } catch (err) {
+    outfitFormError.value = err.message
+  } finally {
+    outfitSaving.value = false
+  }
+}
+
+function requestRemoveOutfit(outfit) {
+  outfitDeleteTarget.value = outfit
+  outfitDeleteModalOpen.value = true
+}
+
+function closeOutfitDeleteModal() {
+  outfitDeleteModalOpen.value = false
+  outfitDeleteTarget.value = null
+}
+
+async function confirmDeleteOutfit() {
+  const outfit = outfitDeleteTarget.value
+  if (!outfit || outfitDeleting.value) return
+  outfitDeleting.value = true
+  try {
+    await outfitsStore.deleteOutfit(outfit.id)
+    if (outfitEditingId.value != null && Number(outfitEditingId.value) === Number(outfit.id)) {
+      closeOutfitForm()
+    }
+    closeOutfitDeleteModal()
+  } catch (err) {
+    outfitFormError.value = err.message
+  } finally {
+    outfitDeleting.value = false
+  }
+}
+
 async function loadEvents() {
   const today = toDateKey(new Date())
   const horizon = addDaysToDateKey(today, upcomingHorizonDays)
@@ -686,7 +874,10 @@ async function loadEvents() {
   }
   const fetchFrom = from < today ? from : today
   const fetchTo = to > horizon ? to : horizon
-  await timelineStore.fetchEvents({ from: fetchFrom, to: fetchTo })
+  await Promise.all([
+    timelineStore.fetchEvents({ from: fetchFrom, to: fetchTo }),
+    outfitsStore.fetchOutfits({ from: fetchFrom, to: fetchTo }),
+  ])
 }
 
 watch(() => form.type, (type) => {
@@ -779,6 +970,7 @@ watch(
 
 onMounted(() => {
   growthGoalsStore.reload()
+  personasStore.fetchPersonas().catch(() => {})
   applyDateFromRouteQuery()
   loadEvents()
     .then(() => {

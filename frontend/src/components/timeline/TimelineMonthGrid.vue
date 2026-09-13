@@ -29,7 +29,7 @@
           {{ day.day }}
         </time>
         <div
-          v-if="eventsForDay(day.date).length"
+          v-if="eventsForDay(day.date).length || outfitsForDay(day.date).length"
           class="mt-0.5 flex flex-wrap justify-center gap-0.5 px-1"
         >
           <span
@@ -37,6 +37,11 @@
             :key="ev.id"
             v-bind="timelineEventDotAttrs(ev, 'size-1.5')"
             :title="ev.label"
+          />
+          <span
+            v-if="outfitsForDay(day.date).length"
+            class="size-1.5 rounded-full bg-teal-500"
+            :title="outfitMarkerTitle(day.date)"
           />
         </div>
       </button>
@@ -50,13 +55,20 @@ import { timelineEventDotAttrs } from '../../utils/timelineEventColor'
 
 const weekdays = weekdayLabels()
 
-defineProps({
+const props = defineProps({
   calendarDays: { type: Array, required: true },
   selectedDate: { type: String, required: true },
   searchActive: { type: Boolean, default: false },
   /** (dateKey: string) => TimelineEvent[] */
   eventsForDay: { type: Function, required: true },
+  /** (dateKey: string) => Outfit[] */
+  outfitsForDay: { type: Function, default: () => () => [] },
 })
 
 defineEmits(['select-day', 'create'])
+
+function outfitMarkerTitle(dateKey) {
+  const count = props.outfitsForDay(dateKey)?.length ?? 0
+  return count ? `Outfits: ${count}` : ''
+}
 </script>

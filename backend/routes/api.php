@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\ExchangeRateController;
 use App\Http\Controllers\Api\PersonaImageController;
 use App\Http\Controllers\Api\SavingsTargetController;
 use App\Http\Controllers\Api\TimelineEventController;
+use App\Http\Controllers\Api\OutfitController;
 use App\Http\Controllers\Api\WorkspaceDocumentController;
 
 Route::post('auth/register', [AuthController::class, 'register']);
@@ -57,6 +58,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('character', CharacterController::class)->except(['index']);
     Route::post('item/{item}/duplicate', [ItemController::class, 'duplicate']);
     Route::apiResource('item', ItemController::class);
+    Route::apiResource('outfit', OutfitController::class);
     Route::apiResource('timeline-event', TimelineEventController::class);
     Route::get('savings-target', [SavingsTargetController::class, 'index']);
     Route::post('savings-target', [SavingsTargetController::class, 'store']);

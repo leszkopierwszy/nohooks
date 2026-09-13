@@ -218,6 +218,58 @@
           </div>
 
           <div class="mt-10 border-t border-gray-200 pt-10">
+            <div class="flex items-center justify-between gap-3">
+              <h3 class="text-sm font-medium text-gray-900">{{ t('outfit.upcoming') }}</h3>
+              <RouterLink
+                :to="{ path: '/calendar', query: { date: todayKey } }"
+                class="text-xs font-medium text-indigo-600 hover:text-indigo-500"
+              >
+                {{ t('outfit.viewCalendar') }}
+              </RouterLink>
+            </div>
+            <ul v-if="upcomingOutfits.length" class="mt-4 space-y-3">
+              <li
+                v-for="outfit in upcomingOutfits"
+                :key="outfit.id"
+                class="rounded-md border border-gray-100 bg-gray-50 px-3 py-2"
+              >
+                <RouterLink
+                  :to="{ path: '/calendar', query: { date: wearDateKey(outfit) } }"
+                  class="block"
+                >
+                  <p class="text-sm font-medium text-gray-900">
+                    {{ formatOutfitDate(wearDateKey(outfit)) }}
+                    <span v-if="outfit.label" class="font-normal text-gray-500">
+                      · {{ outfit.label }}
+                    </span>
+                  </p>
+                  <p class="mt-0.5 text-xs text-gray-500">
+                    {{ t('outfit.itemCount', { count: outfit.items?.length ?? 0 }) }}
+                  </p>
+                  <div v-if="outfit.items?.length" class="mt-2 flex flex-wrap gap-1.5">
+                    <div
+                      v-for="item in outfit.items.slice(0, 5)"
+                      :key="item.id"
+                      class="size-8 overflow-hidden rounded bg-gray-200 ring-1 ring-gray-200"
+                      :title="item.name"
+                    >
+                      <img
+                        v-if="itemImageSrc(item)"
+                        :src="itemImageSrc(item)"
+                        :alt="item.name"
+                        class="size-full object-cover"
+                      />
+                    </div>
+                  </div>
+                </RouterLink>
+              </li>
+            </ul>
+            <p v-else class="mt-4 text-sm text-gray-500">
+              {{ t('outfit.upcomingEmpty') }}
+            </p>
+          </div>
+
+          <div class="mt-10 border-t border-gray-200 pt-10">
             <h3 class="text-sm font-medium text-gray-900">Dopasowanie itemów</h3>
             <p class="mt-4 text-sm text-gray-500">
               Itemy nie należą do jednej persony — poniżej widzisz przedmioty, które mogą pasować do
@@ -456,6 +508,8 @@ import {
   uploadPersonaPhoto,
 } from '../services/personaImageProcessing'
 import { usePersonasStore } from '../stores/personas'
+import { useOutfitsStore, wearDateKey } from '../stores/outfits'
+import { addDaysToDateKey, formatEventDate, toDateKey } from '../utils/calendarGrid'
 
 const props = defineProps({
   id: {
@@ -467,6 +521,9 @@ const props = defineProps({
 const { t } = useI18n()
 const router = useRouter()
 const personasStore = usePersonasStore()
+const outfitsStore = useOutfitsStore()
+
+const todayKey = toDateKey(new Date())
 
 const persona = ref(null)
 const loading = ref(false)
@@ -521,6 +578,24 @@ const avatarBlurStyle = computed(() => {
 })
 
 const personaItems = computed(() => persona.value?.items ?? [])
+
+const upcomingOutfits = computed(() => {
+  if (!persona.value?.id) return []
+  const from = todayKey
+  const to = addDaysToDateKey(from, 7)
+  return outfitsStore.outfits
+    .filter((outfit) => {
+      if (Number(outfit.entity_id) !== Number(persona.value.id)) return false
+      const key = wearDateKey(outfit)
+      return key >= from && key <= to
+    })
+    .slice()
+    .sort((a, b) => wearDateKey(a).localeCompare(wearDateKey(b)))
+})
+
+function formatOutfitDate(dateKey) {
+  return formatEventDate(dateKey)
+}
 
 const collectionFilterOptions = computed(() => {
   const map = new Map()
@@ -768,6 +843,11 @@ async function loadPersona(id) {
     persona.value = await personasStore.fetchPersona(id)
     selectedPersonaId.value = Number(id)
     personasStore.setActivePersona(id)
+    const from = toDateKey(new Date())
+    const to = addDaysToDateKey(from, 7)
+    await outfitsStore
+      .fetchOutfits({ from, to, entity_id: id })
+      .catch(() => {})
   } catch (err) {
     error.value = err.message
     persona.value = null

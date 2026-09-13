@@ -726,5 +726,37 @@ userMenu:
   zoom: Powiększenie {label}
   logout: Wyloguj się
 
+outfit:
+  title: Outfit
+  titlePlural: Outfity
+  sectionDay: Outfity na ten dzień
+  emptyDay: Brak outfitów na ten dzień.
+  add: Dodaj outfit
+  edit: Edytuj outfit
+  delete: Usuń outfit
+  deleteConfirm: Usunąć outfit dla {prim} w dniu {date}?
+  formCreate: Nowy outfit
+  formEdit: Edytuj outfit
+  prim: Prim
+  primPlaceholder: Wybierz Prima…
+  wearDate: Data
+  label: Etykieta
+  labelPlaceholder: Opcjonalna nazwa
+  notes: Notatki
+  notesPlaceholder: Opcjonalne notatki…
+  items: Itemy
+  itemsHint: Wybierz itemy z kolekcji pasujące do tego Prima.
+  itemsEmpty: Brak pasujących itemów.
+  itemsSelected: '{count} wybranych'
+  save: Zapisz outfit
+  cancel: Anuluj
+  saving: Zapisywanie…
+  upcoming: Najbliższe outfity
+  upcomingEmpty: Brak zaplanowanych outfitów w ciągu 7 dni.
+  viewCalendar: Otwórz kalendarz
+  itemCount: '{count} itemów'
+  sourceManual: Ręczny
+  sourceLlm: Sugerowany
+
 common:
   loading: Ładowanie…

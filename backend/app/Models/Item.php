@@ -102,4 +102,10 @@ class Item extends Model
     {
         return $this->belongsTo(Category::class, 'category_id');
     }
+
+    public function outfits()
+    {
+        return $this->belongsToMany(Outfit::class, 'outfit_item')
+            ->withPivot('sort_order');
+    }
 }

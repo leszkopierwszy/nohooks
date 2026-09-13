@@ -788,6 +788,38 @@
     "zoom": "Zoom {label}",
     "logout": "Sign out"
   },
+  "outfit": {
+    "title": "Outfit",
+    "titlePlural": "Outfits",
+    "sectionDay": "Outfits for this day",
+    "emptyDay": "No outfits for this day.",
+    "add": "Add outfit",
+    "edit": "Edit outfit",
+    "delete": "Delete outfit",
+    "deleteConfirm": "Delete outfit for {prim} on {date}?",
+    "formCreate": "New outfit",
+    "formEdit": "Edit outfit",
+    "prim": "Prim",
+    "primPlaceholder": "Select a Prim…",
+    "wearDate": "Date",
+    "label": "Label",
+    "labelPlaceholder": "Optional name",
+    "notes": "Notes",
+    "notesPlaceholder": "Optional notes…",
+    "items": "Items",
+    "itemsHint": "Choose items from the collection that fit this Prim.",
+    "itemsEmpty": "No fitting items found.",
+    "itemsSelected": "{count} selected",
+    "save": "Save outfit",
+    "cancel": "Cancel",
+    "saving": "Saving…",
+    "upcoming": "Upcoming outfits",
+    "upcomingEmpty": "No outfits planned in the next 7 days.",
+    "viewCalendar": "Open calendar",
+    "itemCount": "{count} items",
+    "sourceManual": "Manual",
+    "sourceLlm": "Suggested"
+  },
   "common": {
     "loading": "Loading…"
   }

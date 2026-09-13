@@ -74,10 +74,20 @@
     >
       + Dodaj wpis na ten dzień
     </button>
+
+    <OutfitDaySection
+      v-if="selectedDate"
+      :selected-date="selectedDate"
+      :outfits="outfits"
+      @create="$emit('create-outfit')"
+      @edit="$emit('edit-outfit', $event)"
+      @remove="$emit('remove-outfit', $event)"
+    />
   </section>
 </template>
 
 <script setup>
+import OutfitDaySection from '../outfit/OutfitDaySection.vue'
 import { timelineEventTypeMeta } from '../../constants/timelineEventTypes'
 import { formatEventDate, formatTimeRange } from '../../utils/calendarGrid'
 import { formatMoney } from '../../utils/currency'
@@ -88,9 +98,10 @@ import { isYearlyRecurring, yearlyRecurrenceLabel } from '../../utils/timelineRe
 defineProps({
   selectedDate: { type: String, default: '' },
   events: { type: Array, required: true },
+  outfits: { type: Array, default: () => [] },
   searchActive: { type: Boolean, default: false },
   highlightedEventId: { type: [Number, String], default: null },
 })
 
-defineEmits(['select-event', 'edit', 'remove', 'create'])
+defineEmits(['select-event', 'edit', 'remove', 'create', 'create-outfit', 'edit-outfit', 'remove-outfit'])
 </script>

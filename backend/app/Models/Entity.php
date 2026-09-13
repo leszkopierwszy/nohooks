@@ -47,4 +47,9 @@ class Entity extends Model
     {
         return $this->hasMany(EntityTryOn::class)->latest();
     }
+
+    public function outfits()
+    {
+        return $this->hasMany(Outfit::class)->orderBy('wear_date');
+    }
 }
