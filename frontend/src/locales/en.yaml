@@ -772,6 +772,8 @@ outfit:
   sourceLlm: Suggested
 
 style:
+  nav:
+    outfits: Outfits
   subtitle: Plan looks for each Prim by occasion — school, work, home, and more.
   allPrims: All Prims
   empty: No outfits yet for this Prim. Add one or pick an occasion tile.

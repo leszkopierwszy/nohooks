@@ -772,6 +772,8 @@ outfit:
   sourceLlm: Sugerowany
 
 style:
+  nav:
+    outfits: Outfity
   subtitle: Planuj zestawy dla Prima według okazji — szkoła, praca, dom i inne.
   allPrims: Wszystkie Primy
   empty: Brak outfitów dla tego Prima. Dodaj pierwszy lub wybierz kafelek okazji.

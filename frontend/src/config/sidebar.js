@@ -12,7 +12,6 @@ import { translate as t } from '../i18n'
 
 import {
   UserIcon,
-  RectangleGroupIcon,
   CubeTransparentIcon,
   BanknotesIcon,
   CalendarIcon,
@@ -35,8 +34,15 @@ export const sidebarNavigation = [
       { labelKey: 'souls.animals.title', href: '/souls/animals', activeMatch: 'exact' },
     ],
   },
-  { labelKey: 'nav.collection', href: '/collection', icon: RectangleGroupIcon },
-  { labelKey: 'nav.style', href: '/style', icon: SwatchIcon },
+  {
+    labelKey: 'nav.style',
+    href: '/style',
+    icon: SwatchIcon,
+    subItems: [
+      { labelKey: 'style.nav.outfits', href: '/style', activeMatch: 'exact' },
+      { labelKey: 'nav.collection', href: '/collection', activeMatch: 'collection' },
+    ],
+  },
   {
     labelKey: 'nav.finance',
     href: '/finance',
@@ -187,9 +193,16 @@ export function isFinanceSectionActive(path) {
   return path.startsWith('/finance')
 }
 
-/** Czy aktualna trasa należy do grupy z podmenu (Souls, Finanse, Rozwój, …). */
+export function isStyleSectionActive(path) {
+  return path.startsWith('/style') || path.startsWith('/collection')
+}
+
+/** Czy aktualna trasa należy do grupy z podmenu (Souls, Style, Finanse, Rozwój, …). */
 export function isNavGroupActive(item, path) {
   if (!item?.subItems?.length) return false
+  if (item.labelKey === 'nav.style' || item.href?.startsWith('/style') || item.href === '/collection') {
+    return isStyleSectionActive(path)
+  }
   if (item.href?.startsWith('/growth')) {
     return isGrowthSectionActive(path)
   }
@@ -206,6 +219,9 @@ export function isSidebarNavItemActive(item, path) {
   if (item.activeMatch === 'exact') {
     return path === item.href
   }
+  if (item.activeMatch === 'collection') {
+    return path.startsWith('/collection')
+  }
   if (item.activeMatch === 'prims') {
     return (
       path === '/souls/prims' ||
@@ -215,9 +231,12 @@ export function isSidebarNavItemActive(item, path) {
     )
   }
   if (item.subItems) {
+    if (item.labelKey === 'nav.style') return isStyleSectionActive(path)
     if (item.href?.startsWith('/growth')) return path.startsWith('/growth')
     if (item.href?.startsWith('/finance')) return path.startsWith('/finance')
-    return isSoulsSectionActive(path)
+    if (item.href?.startsWith('/style')) return isStyleSectionActive(path)
+    if (item.href?.startsWith('/souls')) return isSoulsSectionActive(path)
+    return item.subItems.some((sub) => isSidebarNavItemActive(sub, path))
   }
   if (item.activeMatch === 'growth-goals') {
     return path === '/growth' || path.startsWith('/growth/goals')
