@@ -221,7 +221,7 @@
             v-for="item in visibleItems"
             :key="item.id"
             type="button"
-            class="group relative flex flex-col overflow-hidden rounded-xl border bg-white text-left shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+            class="group relative flex h-full min-h-0 flex-col overflow-hidden rounded-xl border bg-white text-left shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
             :class="
               isItemSelected(item.id)
                 ? 'border-indigo-500 ring-2 ring-indigo-500/30'
@@ -229,22 +229,22 @@
             "
             @click="toggleItem(item.id)"
           >
-            <div class="relative aspect-square bg-neutral-50">
+            <div class="relative aspect-square w-full shrink-0 overflow-hidden bg-neutral-50">
               <img
                 v-if="itemThumb(item)"
                 :src="itemThumb(item)"
                 :alt="item.name"
-                class="size-full object-contain p-2"
+                class="absolute inset-0 size-full object-contain p-2"
                 draggable="false"
               />
               <div
                 v-else
-                class="flex size-full items-center justify-center px-2 text-center text-xs text-gray-400"
+                class="absolute inset-0 flex items-center justify-center px-2 text-center text-xs text-gray-400"
               >
                 {{ item.name }}
               </div>
               <span
-                class="absolute right-2 top-2 flex size-6 items-center justify-center rounded-full text-xs font-bold"
+                class="absolute right-2 top-2 z-10 flex size-6 items-center justify-center rounded-full text-xs font-bold"
                 :class="
                   isItemSelected(item.id)
                     ? 'bg-indigo-600 text-white'
@@ -255,8 +255,8 @@
                 {{ isItemSelected(item.id) ? '✓' : '' }}
               </span>
             </div>
-            <div class="border-t border-gray-100 px-2.5 py-2">
-              <p class="truncate text-sm font-medium text-gray-900">
+            <div class="flex min-h-14 flex-1 flex-col justify-center border-t border-gray-100 px-2.5 py-2">
+              <p class="line-clamp-2 text-sm font-medium leading-snug text-gray-900">
                 {{ item.name }}
               </p>
               <p class="mt-0.5 truncate text-[11px] text-gray-500">
