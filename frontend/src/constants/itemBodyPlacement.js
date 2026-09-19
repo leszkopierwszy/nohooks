@@ -1,9 +1,14 @@
 /**
  * Hierarchia ubrań względem ciała — flat-lay outfitów.
  *
- * body_zone: head (góra) | torso (środek) | legs (nogi) | feet (stopy) | full (całość)
+ * Canonical clothing types are English (`skirt`, `tights`, …).
+ * Legacy PL category values are mapped via aliases, then placement is looked up.
+ *
+ * body_zone: head | torso | legs | feet | full
  * wear_layer: outer → mid → base → accent
  */
+
+import { resolveCanonicalClothingType } from './itemClothingTypes.js'
 
 export const BODY_ZONES = [
   { value: 'head', labelKey: 'item.bodyZones.head', order: 10 },
@@ -23,75 +28,172 @@ export const WEAR_LAYERS = [
 const ZONE_ORDER = Object.fromEntries(BODY_ZONES.map((z) => [z.value, z.order]))
 const LAYER_ORDER = Object.fromEntries(WEAR_LAYERS.map((l) => [l.value, l.order]))
 
-/** @type {Record<string, [string, string]>} */
-const CATEGORY_MAP = {
-  czapka: ['head', 'outer'],
-  szalik: ['head', 'mid'],
-  rekawiczki: ['head', 'accent'],
-  okulary: ['head', 'accent'],
-  kolczyki: ['head', 'accent'],
-  bizuteria: ['head', 'accent'],
-  naszyjnik: ['head', 'accent'],
-  kurtka: ['torso', 'outer'],
-  marynarka: ['torso', 'outer'],
-  plaszcz: ['torso', 'outer'],
-  bluza: ['torso', 'mid'],
-  sweter: ['torso', 'mid'],
-  cardigan: ['torso', 'mid'],
-  koszulka: ['torso', 'base'],
-  't-shirt': ['torso', 'base'],
-  polowka: ['torso', 'base'],
-  koszula: ['torso', 'base'],
-  top: ['torso', 'base'],
-  bielizna: ['torso', 'base'],
-  spodnie: ['legs', 'mid'],
-  jeansy: ['legs', 'mid'],
-  szorty: ['legs', 'mid'],
-  spodnica: ['legs', 'mid'],
-  legginsy: ['legs', 'base'],
-  rajstopy: ['legs', 'base'],
-  skarpety: ['feet', 'base'],
-  buty: ['feet', 'outer'],
-  sneakers: ['feet', 'outer'],
-  trampki: ['feet', 'outer'],
-  sukienka: ['full', 'mid'],
-  garnitur: ['full', 'outer'],
-  dres: ['full', 'mid'],
-  pizama: ['full', 'base'],
-  kombinezon: ['full', 'mid'],
+export function normalizePlacementKey(value) {
+  return String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .replace(/ł/g, 'l')
 }
 
-export function inferBodyPlacement(category, collectionName = '') {
-  const cat = String(category ?? '')
-    .trim()
-    .toLowerCase()
-  if (cat && CATEGORY_MAP[cat]) {
-    return { body_zone: CATEGORY_MAP[cat][0], wear_layer: CATEGORY_MAP[cat][1] }
+/** English canonical type → [body_zone, wear_layer] */
+const TYPE_PLACEMENT = {
+  hat: ['head', 'outer'],
+  scarf: ['head', 'mid'],
+  gloves: ['head', 'accent'],
+  glasses: ['head', 'accent'],
+  earrings: ['head', 'accent'],
+  jewelry: ['head', 'accent'],
+  necklace: ['head', 'accent'],
+  jacket: ['torso', 'outer'],
+  coat: ['torso', 'outer'],
+  blazer: ['torso', 'outer'],
+  hoodie: ['torso', 'mid'],
+  sweatshirt: ['torso', 'mid'],
+  sweater: ['torso', 'mid'],
+  cardigan: ['torso', 'mid'],
+  't-shirt': ['torso', 'base'],
+  tshirt: ['torso', 'base'],
+  polo: ['torso', 'base'],
+  shirt: ['torso', 'base'],
+  top: ['torso', 'base'],
+  underwear: ['torso', 'base'],
+  pants: ['legs', 'mid'],
+  jeans: ['legs', 'mid'],
+  shorts: ['legs', 'mid'],
+  skirt: ['legs', 'mid'],
+  leggings: ['legs', 'base'],
+  tights: ['legs', 'base'],
+  socks: ['feet', 'base'],
+  shoes: ['feet', 'outer'],
+  sneakers: ['feet', 'outer'],
+  boots: ['feet', 'outer'],
+  dress: ['full', 'mid'],
+  suit: ['full', 'outer'],
+  tracksuit: ['full', 'mid'],
+  pajamas: ['full', 'base'],
+  jumpsuit: ['full', 'mid'],
+}
+
+/**
+ * English (and a few universal) stems in product titles / slugs.
+ * Prefer selecting an English clothing type in the form; this is fallback only.
+ */
+const TEXT_RULES = [
+  { re: /pantyhose|hosiery|(^|[^a-z])tights([^a-z]|$)/, type: 'tights' },
+  { re: /leggings?/, type: 'leggings' },
+  { re: /skort|skirt/, type: 'skirt' },
+  { re: /(^|[^a-z])dress(es)?([^a-z]|$)/, type: 'dress' },
+  { re: /jumpsuit|romper/, type: 'jumpsuit' },
+  { re: /jeans/, type: 'jeans' },
+  { re: /trousers|pants|shorts/, type: 'pants' },
+  { re: /t-?shirts?|tee\b/, type: 't-shirt' },
+  { re: /hoodie|sweatshirt/, type: 'hoodie' },
+  { re: /sweater|cardigan|jumper/, type: 'sweater' },
+  { re: /blazer/, type: 'blazer' },
+  { re: /\bcoats?\b|\bjackets?\b/, type: 'jacket' },
+  { re: /\bboots?\b|sneakers?|loafers?|heels?|sandals?/, type: 'shoes' },
+  { re: /\bsocks?\b/, type: 'socks' },
+  { re: /pajamas?|pyjamas?/, type: 'pajamas' },
+  { re: /\bhats?\b|\bcaps?\b/, type: 'hat' },
+  { re: /\bscar(?:f|ves)\b/, type: 'scarf' },
+  { re: /\bgloves?\b/, type: 'gloves' },
+]
+
+/** Product-title language hints → English type (UI stays English-only). */
+const NAME_TYPE_HINTS = [
+  { re: /rajstop/, type: 'tights' },
+  { re: /leggins/, type: 'leggings' },
+  { re: /spodnicospod|spodnic/, type: 'skirt' },
+  { re: /sukienk/, type: 'dress' },
+  { re: /kombinezon/, type: 'jumpsuit' },
+  { re: /spodnie|szorty/, type: 'pants' },
+  { re: /koszulk/, type: 't-shirt' },
+  { re: /bluza/, type: 'hoodie' },
+  { re: /sweter/, type: 'sweater' },
+  { re: /kurtka|plaszcz|marynarka/, type: 'jacket' },
+  { re: /botki|trampki|\bbuty\b/, type: 'shoes' },
+  { re: /skarpety/, type: 'socks' },
+  { re: /czapka/, type: 'hat' },
+  { re: /szalik/, type: 'scarf' },
+  { re: /rekawiczki/, type: 'gloves' },
+  { re: /pizama/, type: 'pajamas' },
+  { re: /dres/, type: 'tracksuit' },
+  { re: /bielizna/, type: 'underwear' },
+]
+
+function placement(zone, layer) {
+  return { body_zone: zone, wear_layer: layer }
+}
+
+function placementForType(type) {
+  if (!type || !TYPE_PLACEMENT[type]) return null
+  const [zone, layer] = TYPE_PLACEMENT[type]
+  return placement(zone, layer)
+}
+
+function matchTextToType(text) {
+  const n = normalizePlacementKey(text)
+  if (!n) return null
+  for (const rule of TEXT_RULES) {
+    if (rule.re.test(n)) return rule.type
+  }
+  for (const rule of NAME_TYPE_HINTS) {
+    if (rule.re.test(n)) return rule.type
+  }
+  return null
+}
+
+export function inferBodyPlacement(category, collectionName = '', itemName = '') {
+  const fromCategory = resolveCanonicalClothingType(category)
+  if (fromCategory) {
+    const hit = placementForType(fromCategory)
+    if (hit) return hit
   }
 
-  const group = String(collectionName ?? '')
-    .trim()
-    .toLowerCase()
-  if (group === 'shoes' || group === 'obuwie' || group === 'footwear') {
-    return { body_zone: 'feet', wear_layer: 'outer' }
+  const fromNameType = matchTextToType(itemName)
+  if (fromNameType) {
+    const hit = placementForType(fromNameType)
+    if (hit) return hit
   }
-  if (/akcesor|accessor|bag|torb|bi[zż]uter/.test(group)) {
-    return { body_zone: 'head', wear_layer: 'accent' }
+
+  const fromSlugType = matchTextToType(category)
+  if (fromSlugType) {
+    const hit = placementForType(fromSlugType)
+    if (hit) return hit
+  }
+
+  const group = normalizePlacementKey(collectionName)
+  if (group === 'shoes' || group === 'obuwie' || group === 'footwear') {
+    return placement('feet', 'outer')
+  }
+  if (/accessor|bag|jewelry|jewellery/.test(group)) {
+    return placement('head', 'accent')
   }
 
   return { body_zone: null, wear_layer: null }
 }
 
 export function resolveItemBodyZone(item) {
-  if (item?.body_zone) return item.body_zone
   const group = item?.collection_group?.name ?? item?.collectionGroup?.name ?? ''
-  return inferBodyPlacement(item?.category, group).body_zone
+  const inferred = inferBodyPlacement(item?.category, group, item?.name)
+  if (inferred.body_zone) return inferred.body_zone
+  return item?.body_zone ?? null
 }
 
 export function resolveItemWearLayer(item) {
-  if (item?.wear_layer) return item.wear_layer
   const group = item?.collection_group?.name ?? item?.collectionGroup?.name ?? ''
-  return inferBodyPlacement(item?.category, group).wear_layer
+  const inferred = inferBodyPlacement(item?.category, group, item?.name)
+  if (inferred.wear_layer) return inferred.wear_layer
+  return item?.wear_layer ?? null
+}
+
+export function isLegsBaseLayer(item) {
+  return (
+    resolveItemBodyZone(item) === 'legs' &&
+    resolveItemWearLayer(item) === 'base'
+  )
 }
 
 export function compareItemsByBodyHierarchy(a, b) {
@@ -104,9 +206,6 @@ export function compareItemsByBodyHierarchy(a, b) {
   return Number(a?.id ?? 0) - Number(b?.id ?? 0)
 }
 
-/**
- * Podział pod flat-lay: lewa kolumna (główne warstwy), prawa (akcenty / stopy).
- */
 export function splitOutfitItemsForFlatLay(items = []) {
   const sorted = [...items].sort(compareItemsByBodyHierarchy)
 
@@ -117,6 +216,10 @@ export function splitOutfitItemsForFlatLay(items = []) {
     const zone = resolveItemBodyZone(item)
     const layer = resolveItemWearLayer(item)
 
+    if (isLegsBaseLayer(item)) {
+      side.push(item)
+      continue
+    }
     if (zone === 'head' && layer === 'accent') {
       side.push(item)
       continue
@@ -129,7 +232,6 @@ export function splitOutfitItemsForFlatLay(items = []) {
       side.push(item)
       continue
     }
-    // torby / nieokreślone akcenty
     if (!zone && layer === 'accent') {
       side.push(item)
       continue
@@ -138,7 +240,6 @@ export function splitOutfitItemsForFlatLay(items = []) {
     mains.push(item)
   }
 
-  // Fallback: jeśli wszystko poszło na side, przenieś 1–2 pierwsze do mains
   if (!mains.length && side.length) {
     const take = Math.min(2, side.length)
     return {
@@ -152,8 +253,9 @@ export function splitOutfitItemsForFlatLay(items = []) {
     mains,
     side,
     byZone: groupByZone(sorted),
-    // legacy keys used by older callers
-    tops: mains.filter((i) => ['torso', 'head', 'full'].includes(resolveItemBodyZone(i))),
+    tops: mains.filter((i) =>
+      ['torso', 'head', 'full'].includes(resolveItemBodyZone(i)),
+    ),
     bottoms: mains.filter((i) => resolveItemBodyZone(i) === 'legs'),
     onePieces: mains.filter((i) => resolveItemBodyZone(i) === 'full'),
     accessories: side,

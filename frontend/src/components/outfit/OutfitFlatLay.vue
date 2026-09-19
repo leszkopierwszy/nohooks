@@ -4,7 +4,9 @@
       v-if="processing"
       class="absolute inset-x-0 top-2 z-10 flex justify-center"
     >
-      <span class="rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-medium text-gray-600 shadow-sm ring-1 ring-gray-200">
+      <span
+        class="rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-medium text-gray-600 shadow-sm ring-1 ring-gray-200"
+      >
         {{ t('style.cuttingItems') }}
       </span>
     </div>
@@ -13,21 +15,22 @@
       class="flex h-full min-h-0"
       :class="
         sideItems.length
-          ? 'grid grid-cols-[1.3fr_0.7fr] gap-x-2 sm:gap-x-3'
+          ? 'grid grid-cols-[1.35fr_0.65fr] gap-x-3 sm:gap-x-4'
           : ''
       "
     >
-      <!-- Left: body hierarchy — scales to fit fixed height -->
+      <!-- Left: shared width band so tee / skirt / dress read at similar scale -->
       <div
-        class="flex h-full min-h-0 flex-col justify-center gap-1"
-        :class="sideItems.length ? '' : 'mx-auto w-full max-w-xs'"
+        class="flex h-full min-h-0 w-full flex-col justify-center gap-2"
+        :class="sideItems.length ? '' : 'mx-auto max-w-sm'"
       >
         <template v-if="mainItems.length">
           <button
             v-for="item in mainItems"
             :key="item.id"
             type="button"
-            class="group relative flex min-h-0 w-full flex-1 items-center justify-center focus:outline-none"
+            class="group relative flex w-full min-h-0 flex-1 items-center justify-center focus:outline-none"
+            :style="mainSlotStyle(item)"
             :title="itemTitle(item)"
             @click="openItem(item)"
           >
@@ -36,8 +39,10 @@
               :src="thumb(item)"
               :alt="item.name"
               :class="[
-                'max-h-full max-w-[92%] object-contain transition group-hover:scale-[1.02]',
-                isCutout(item) ? 'drop-shadow-[0_1px_2px_rgba(0,0,0,0.14)]' : 'opacity-60',
+                'block w-full max-h-full object-contain object-center transition group-hover:scale-[1.02]',
+                isCutout(item)
+                  ? 'drop-shadow-[0_1px_2px_rgba(0,0,0,0.16)]'
+                  : 'opacity-60',
               ]"
               draggable="false"
             />
@@ -54,17 +59,19 @@
         </p>
       </div>
 
-      <!-- Right: accents + feet -->
+      <!-- Right: hosiery + shoes — capped width, still readable -->
       <div
         v-if="sideItems.length"
-        class="flex h-full min-h-0 flex-col items-center justify-between gap-1.5 py-0.5"
+        class="flex h-full min-h-0 flex-col items-stretch justify-between gap-2 py-0.5"
       >
-        <div class="flex min-h-0 w-full flex-1 flex-col items-center justify-start gap-1">
+        <div
+          class="flex min-h-0 w-full flex-1 flex-col items-center justify-start gap-2"
+        >
           <button
             v-for="item in sideTopItems"
             :key="item.id"
             type="button"
-            class="group flex min-h-0 w-[88%] max-w-36 flex-1 items-center justify-center focus:outline-none"
+            class="group flex min-h-[4.5rem] w-full max-w-[9.5rem] flex-1 items-center justify-center focus:outline-none sm:min-h-[5.5rem]"
             :title="itemTitle(item)"
             @click="openItem(item)"
           >
@@ -73,19 +80,23 @@
               :src="thumb(item)"
               :alt="item.name"
               :class="[
-                'max-h-full max-w-full object-contain transition group-hover:scale-[1.03]',
-                isCutout(item) ? 'drop-shadow-[0_1px_2px_rgba(0,0,0,0.14)]' : 'opacity-60',
+                'block h-auto max-h-full w-[92%] object-contain transition group-hover:scale-[1.03]',
+                isCutout(item)
+                  ? 'drop-shadow-[0_1px_2px_rgba(0,0,0,0.16)]'
+                  : 'opacity-60',
               ]"
               draggable="false"
             />
           </button>
         </div>
-        <div class="flex min-h-0 w-full flex-[1.1] flex-col items-center justify-end gap-1">
+        <div
+          class="flex min-h-0 w-full flex-[1.05] flex-col items-center justify-end gap-2"
+        >
           <button
             v-for="item in sideFootItems"
             :key="item.id"
             type="button"
-            class="group flex min-h-0 w-[90%] max-w-40 flex-1 items-center justify-center focus:outline-none"
+            class="group flex min-h-[5rem] w-full max-w-[10.5rem] flex-1 items-center justify-center focus:outline-none sm:min-h-[6rem]"
             :title="itemTitle(item)"
             @click="openItem(item)"
           >
@@ -94,8 +105,10 @@
               :src="thumb(item)"
               :alt="item.name"
               :class="[
-                'max-h-full max-w-full object-contain transition group-hover:scale-[1.03]',
-                isCutout(item) ? 'drop-shadow-[0_1px_2px_rgba(0,0,0,0.14)]' : 'opacity-60',
+                'block h-auto max-h-full w-full object-contain transition group-hover:scale-[1.03]',
+                isCutout(item)
+                  ? 'drop-shadow-[0_1px_2px_rgba(0,0,0,0.16)]'
+                  : 'opacity-60',
               ]"
               draggable="false"
             />
@@ -114,6 +127,7 @@ import { useI18n } from '../../composables/useI18n'
 import {
   resolveItemBodyZone,
   resolveItemWearLayer,
+  isLegsBaseLayer,
   splitOutfitItemsForFlatLay,
 } from '../../constants/itemBodyPlacement'
 import {
@@ -143,11 +157,37 @@ const mainItems = computed(() => split.value.mains)
 const sideItems = computed(() => split.value.side)
 
 const sideTopItems = computed(() =>
-  sideItems.value.filter((i) => resolveItemBodyZone(i) !== 'feet'),
+  sideItems.value.filter(
+    (i) => resolveItemBodyZone(i) !== 'feet' || isLegsBaseLayer(i),
+  ),
 )
 const sideFootItems = computed(() =>
-  sideItems.value.filter((i) => resolveItemBodyZone(i) === 'feet'),
+  sideItems.value.filter(
+    (i) => resolveItemBodyZone(i) === 'feet' && !isLegsBaseLayer(i),
+  ),
 )
+
+/**
+ * Keep main-column pieces at a readable shared width.
+ * Full-body / dresses can take a bit more vertical flex; skirts share width with tops.
+ */
+function mainSlotStyle(item) {
+  const zone = resolveItemBodyZone(item)
+  const count = Math.max(1, mainItems.value.length)
+  const base = 1
+  let grow = base
+  if (zone === 'full') grow = 1.35
+  else if (zone === 'legs') grow = 1.15
+  else if (zone === 'torso' || zone === 'head') grow = 1.1
+  // Soft floor so 2–3 items never collapse into a tiny strip
+  const minPct = count <= 2 ? 38 : count === 3 ? 28 : 22
+  return {
+    flexGrow: grow,
+    flexShrink: 1,
+    flexBasis: 0,
+    minHeight: `${minPct}%`,
+  }
+}
 
 function originalThumb(item) {
   const raw = item?.image_url ?? item?.images?.[0]?.url ?? null

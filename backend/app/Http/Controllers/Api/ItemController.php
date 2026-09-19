@@ -275,8 +275,17 @@ class ItemController extends Controller
 
         $inferred = ClothingBodyPlacement::infer(
             $data['category'] ?? null,
-            $collectionName
+            $collectionName,
+            $data['name'] ?? null
         );
+
+        // Store category as canonical English type when we can resolve it
+        if (! empty($data['category'])) {
+            $canonical = ClothingBodyPlacement::resolveCanonicalType($data['category']);
+            if ($canonical) {
+                $data['category'] = $canonical;
+            }
+        }
 
         if ($creating || ($submittedZone && empty($data['body_zone'])) || (! $submittedZone && array_key_exists('category', $data))) {
             if (empty($data['body_zone'])) {

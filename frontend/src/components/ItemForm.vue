@@ -256,7 +256,7 @@
     </div>
 
     <div v-if="sizeKind === 'clothing'">
-      <label :for="`${idPrefix}-clothing-type`" class="block text-sm font-medium text-gray-700">Typ ubrania</label>
+      <label :for="`${idPrefix}-clothing-type`" class="block text-sm font-medium text-gray-700">Clothing type</label>
       <select
         :id="`${idPrefix}-clothing-type`"
         v-model="form.category"
@@ -272,7 +272,7 @@
           :id="`${idPrefix}-new-clothing-type`"
           v-model="newClothingType"
           type="text"
-          placeholder="Nowy typ, np. kombinezon"
+          placeholder="New type, e.g. jumpsuit"
           class="min-w-0 flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
           @keydown.enter.prevent="addClothingTypeFromInput"
         />
@@ -281,10 +281,10 @@
           class="shrink-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
           @click="addClothingTypeFromInput"
         >
-          Dodaj typ
+          Add type
         </button>
       </div>
-      <p class="mt-1 text-xs text-gray-500">Wybierz z listy lub dodaj własny typ (zapis na tej przeglądarce).</p>
+      <p class="mt-1 text-xs text-gray-500">Pick from the list or add a custom English type (saved in this browser).</p>
     </div>
 
     <div v-else>
