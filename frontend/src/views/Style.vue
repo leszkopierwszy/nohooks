@@ -290,18 +290,6 @@
       </section>
     </div>
 
-    <OutfitFormModal
-      :open="formOpen"
-      :editing-id="editingId"
-      :saving="saving"
-      :form-error="formError"
-      :form="form"
-      :prims="prims"
-      :items="collectionItems"
-      @close="closeForm"
-      @submit="submitForm"
-    />
-
     <ConfirmDialog
       :open="deleteOpen"
       :title="t('outfit.delete')"
@@ -316,8 +304,8 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { RouterLink } from 'vue-router'
+import { computed, onMounted, ref, watch } from 'vue'
+import { RouterLink, useRouter } from 'vue-router'
 import {
   AcademicCapIcon,
   BriefcaseIcon,
@@ -331,7 +319,6 @@ import {
 } from '@heroicons/vue/24/outline'
 import ConfirmDialog from '../components/ConfirmDialog.vue'
 import OutfitFlatLay from '../components/outfit/OutfitFlatLay.vue'
-import OutfitFormModal from '../components/outfit/OutfitFormModal.vue'
 import PersonaSwitcher from '../components/PersonaSwitcher.vue'
 import { resolveStorageUrl } from '../api/media'
 import { useI18n } from '../composables/useI18n'
@@ -343,10 +330,9 @@ import {
   generatePersonaAvatar,
   uploadPersonaPhoto,
 } from '../services/personaImageProcessing'
-import { useCollectionStore } from '../stores/collection'
 import { useOutfitsStore, wearDateKey } from '../stores/outfits'
 import { usePersonasStore } from '../stores/personas'
-import { formatEventDate, toDateKey } from '../utils/calendarGrid'
+import { formatEventDate } from '../utils/calendarGrid'
 
 const ICON_MAP = {
   academic: AcademicCapIcon,
@@ -361,19 +347,16 @@ const ICON_MAP = {
 }
 
 const { t } = useI18n()
+const router = useRouter()
 const outfitsStore = useOutfitsStore()
 const personasStore = usePersonasStore()
-const collectionStore = useCollectionStore()
 
 const selectedPrimId = ref(null)
 const activeOccasion = ref('')
-const formOpen = ref(false)
-const editingId = ref(null)
-const saving = ref(false)
-const formError = ref('')
 const deleteOpen = ref(false)
 const deleteTarget = ref(null)
 const deleting = ref(false)
+const formError = ref('')
 
 const photoInputRef = ref(null)
 const silhouetteBusy = ref(false)
@@ -381,19 +364,7 @@ const silhouetteAction = ref('')
 const silhouetteError = ref('')
 const silhouetteHint = ref('')
 
-const emptyForm = () => ({
-  entity_id: '',
-  wear_date: toDateKey(new Date()),
-  label: '',
-  occasion: '',
-  notes: '',
-  item_ids: [],
-})
-
-const form = reactive(emptyForm())
-
 const prims = computed(() => personasStore.prims)
-const collectionItems = computed(() => collectionStore.allItemsList)
 
 const selectedPrim = computed(() => {
   const id = selectedPrimId.value ?? personasStore.activePersonaId
@@ -544,82 +515,18 @@ async function loadOutfits() {
   await outfitsStore.fetchOutfits(params)
 }
 
-function resetForm(occasion) {
-  Object.assign(form, emptyForm())
-  form.wear_date = toDateKey(new Date())
-  form.occasion = occasion || activeOccasion.value || ''
-  if (selectedPrim.value) {
-    form.entity_id = String(selectedPrim.value.id)
-  } else if (prims.value[0]) {
-    form.entity_id = String(prims.value[0].id)
-  }
-}
-
-async function ensureFormData() {
-  const jobs = []
-  if (!personasStore.personas.length) jobs.push(personasStore.fetchPersonas())
-  if (!collectionStore.allItemsList.length) jobs.push(collectionStore.fetchAllItems())
-  if (jobs.length) await Promise.all(jobs)
-}
-
 function openCreate(occasion) {
-  editingId.value = null
-  formError.value = ''
-  resetForm(occasion)
-  formOpen.value = true
-  ensureFormData().catch(() => {})
+  const query = {}
+  if (occasion) query.occasion = occasion
+  if (selectedPrim.value?.id) query.entity_id = String(selectedPrim.value.id)
+  router.push({ name: 'StyleOutfitCreate', query })
 }
 
 function openEdit(outfit) {
-  editingId.value = outfit.id
-  formError.value = ''
-  Object.assign(form, {
-    entity_id: String(outfit.entity_id ?? outfit.entity?.id ?? ''),
-    wear_date: wearDateKey(outfit),
-    label: outfit.label ?? '',
-    occasion: outfit.occasion ?? '',
-    notes: outfit.notes ?? '',
-    item_ids: (outfit.items ?? []).map((item) => item.id),
+  router.push({
+    name: 'StyleOutfitEdit',
+    params: { id: String(outfit.id) },
   })
-  formOpen.value = true
-  ensureFormData().catch(() => {})
-}
-
-function closeForm() {
-  formOpen.value = false
-  editingId.value = null
-  formError.value = ''
-}
-
-async function submitForm() {
-  if (!form.entity_id || !form.wear_date) {
-    formError.value = t('outfit.primPlaceholder')
-    return
-  }
-  saving.value = true
-  formError.value = ''
-  const payload = {
-    entity_id: Number(form.entity_id),
-    wear_date: form.wear_date,
-    label: form.label?.trim() || null,
-    occasion: form.occasion || null,
-    notes: form.notes?.trim() || null,
-    item_ids: (form.item_ids ?? []).map((id) => Number(id)),
-    source: 'manual',
-  }
-  try {
-    if (editingId.value) {
-      await outfitsStore.updateOutfit(editingId.value, payload)
-    } else {
-      await outfitsStore.createOutfit(payload)
-    }
-    closeForm()
-    await loadOutfits().catch(() => {})
-  } catch (err) {
-    formError.value = err.message
-  } finally {
-    saving.value = false
-  }
 }
 
 function requestRemove(outfit) {

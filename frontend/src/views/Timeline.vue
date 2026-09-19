@@ -123,18 +123,6 @@
       @goal-change="onFormGoalChange"
     />
 
-    <OutfitFormModal
-      :open="outfitFormOpen"
-      :editing-id="outfitEditingId"
-      :saving="outfitSaving"
-      :form-error="outfitFormError"
-      :form="outfitForm"
-      :prims="prims"
-      :items="collectionItems"
-      @close="closeOutfitForm"
-      @submit="submitOutfitForm"
-    />
-
     <ConfirmDialog
       :open="outfitDeleteModalOpen"
       :title="t('outfit.delete')"
@@ -152,7 +140,6 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ConfirmDialog from '../components/ConfirmDialog.vue'
-import OutfitFormModal from '../components/outfit/OutfitFormModal.vue'
 import { useAppSearchStore } from '../stores/appSearch'
 import TimelineEventDetailModal from '../components/TimelineEventDetailModal.vue'
 import TimelineCalendarShell from '../components/timeline/TimelineCalendarShell.vue'
@@ -166,7 +153,6 @@ import TimelineWeekGrid from '../components/timeline/TimelineWeekGrid.vue'
 import { useTimelineStore } from '../stores/timeline'
 import { useOutfitsStore } from '../stores/outfits'
 import { usePersonasStore } from '../stores/personas'
-import { useCollectionStore } from '../stores/collection'
 import { useGrowthGoalsStore } from '../stores/growthGoals'
 import { useI18n } from '../composables/useI18n'
 import { formatWorkDuration } from '../utils/growthGoalWork'
@@ -205,14 +191,12 @@ import {
 const timelineStore = useTimelineStore()
 const outfitsStore = useOutfitsStore()
 const personasStore = usePersonasStore()
-const collectionStore = useCollectionStore()
 const growthGoalsStore = useGrowthGoalsStore()
 const appSearch = useAppSearchStore()
 const { t } = useI18n()
 
 const activeGrowthGoals = computed(() => growthGoalsStore.activeGoals)
 const prims = computed(() => personasStore.prims)
-const collectionItems = computed(() => collectionStore.allItemsList)
 const route = useRoute()
 const router = useRouter()
 
@@ -236,24 +220,9 @@ const deleteModalOpen = ref(false)
 const deleteTarget = ref(null)
 const deleting = ref(false)
 
-const outfitFormOpen = ref(false)
-const outfitEditingId = ref(null)
-const outfitSaving = ref(false)
-const outfitFormError = ref('')
 const outfitDeleteModalOpen = ref(false)
 const outfitDeleteTarget = ref(null)
 const outfitDeleting = ref(false)
-
-const emptyOutfitForm = () => ({
-  entity_id: '',
-  wear_date: toDateKey(new Date()),
-  label: '',
-  occasion: '',
-  notes: '',
-  item_ids: [],
-})
-
-const outfitForm = reactive(emptyOutfitForm())
 
 const deleteMessage = computed(() => {
   const event = deleteTarget.value
@@ -748,88 +717,23 @@ async function confirmDeleteEvent() {
   }
 }
 
-function resetOutfitForm(dateKey) {
-  Object.assign(outfitForm, emptyOutfitForm())
-  outfitForm.wear_date = dateKey || selectedDate.value || toDateKey(new Date())
-  const activePrim = personasStore.activePrim
-  if (activePrim) {
-    outfitForm.entity_id = String(activePrim.id)
-  } else if (prims.value[0]) {
-    outfitForm.entity_id = String(prims.value[0].id)
-  }
-}
-
 function openCreateOutfit() {
-  outfitEditingId.value = null
-  outfitFormError.value = ''
-  resetOutfitForm(selectedDate.value)
-  outfitFormOpen.value = true
-  ensureOutfitFormData().catch(() => {})
+  const query = {}
+  if (selectedDate.value) query.date = selectedDate.value
+  const activePrim = personasStore.activePrim
+  if (activePrim?.id) {
+    query.entity_id = String(activePrim.id)
+  } else if (prims.value[0]) {
+    query.entity_id = String(prims.value[0].id)
+  }
+  router.push({ name: 'StyleOutfitCreate', query })
 }
 
 function openEditOutfit(outfit) {
-  outfitEditingId.value = outfit.id
-  outfitFormError.value = ''
-  Object.assign(outfitForm, {
-    entity_id: String(outfit.entity_id ?? outfit.entity?.id ?? ''),
-    wear_date: outfit.wear_date?.slice?.(0, 10) ?? outfit.wear_date,
-    label: outfit.label ?? '',
-    occasion: outfit.occasion ?? '',
-    notes: outfit.notes ?? '',
-    item_ids: (outfit.items ?? []).map((item) => item.id),
+  router.push({
+    name: 'StyleOutfitEdit',
+    params: { id: String(outfit.id) },
   })
-  outfitFormOpen.value = true
-  ensureOutfitFormData().catch(() => {})
-}
-
-function closeOutfitForm() {
-  outfitFormOpen.value = false
-  outfitEditingId.value = null
-  outfitFormError.value = ''
-}
-
-async function ensureOutfitFormData() {
-  const jobs = []
-  if (!personasStore.personas.length) {
-    jobs.push(personasStore.fetchPersonas())
-  }
-  if (!collectionStore.allItemsList.length) {
-    jobs.push(collectionStore.fetchAllItems())
-  }
-  if (jobs.length) await Promise.all(jobs)
-}
-
-async function submitOutfitForm() {
-  if (!outfitForm.entity_id || !outfitForm.wear_date) {
-    outfitFormError.value = t('outfit.primPlaceholder')
-    return
-  }
-
-  outfitSaving.value = true
-  outfitFormError.value = ''
-
-  const payload = {
-    entity_id: Number(outfitForm.entity_id),
-    wear_date: outfitForm.wear_date,
-    label: outfitForm.label?.trim() || null,
-    occasion: outfitForm.occasion || null,
-    notes: outfitForm.notes?.trim() || null,
-    item_ids: (outfitForm.item_ids ?? []).map((id) => Number(id)),
-    source: 'manual',
-  }
-
-  try {
-    if (outfitEditingId.value) {
-      await outfitsStore.updateOutfit(outfitEditingId.value, payload)
-    } else {
-      await outfitsStore.createOutfit(payload)
-    }
-    closeOutfitForm()
-  } catch (err) {
-    outfitFormError.value = err.message
-  } finally {
-    outfitSaving.value = false
-  }
 }
 
 function requestRemoveOutfit(outfit) {
@@ -848,12 +752,9 @@ async function confirmDeleteOutfit() {
   outfitDeleting.value = true
   try {
     await outfitsStore.deleteOutfit(outfit.id)
-    if (outfitEditingId.value != null && Number(outfitEditingId.value) === Number(outfit.id)) {
-      closeOutfitForm()
-    }
     closeOutfitDeleteModal()
   } catch (err) {
-    outfitFormError.value = err.message
+    console.error(err)
   } finally {
     outfitDeleting.value = false
   }

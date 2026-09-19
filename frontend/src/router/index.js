@@ -31,6 +31,7 @@ import Wardrobe from '../components/wardrobe.vue'
 import AccountSettings from '../views/AccountSettings.vue'
 import AccountModelAssistant from '../views/AccountModelAssistant.vue'
 import Style from '../views/Style.vue'
+import StyleOutfitEditor from '../views/StyleOutfitEditor.vue'
 import Login from '../views/Login.vue'
 import { useAuthStore } from '../stores/auth'
 
@@ -164,6 +165,22 @@ const routes = [
             path: '/style',
             name: 'Style',
             component: Style,
+            meta: {
+                layout: 'default'
+            },
+        },
+        {
+            path: '/style/outfits/new',
+            name: 'StyleOutfitCreate',
+            component: StyleOutfitEditor,
+            meta: {
+                layout: 'default'
+            },
+        },
+        {
+            path: '/style/outfits/:id/edit',
+            name: 'StyleOutfitEdit',
+            component: StyleOutfitEditor,
             meta: {
                 layout: 'default'
             },

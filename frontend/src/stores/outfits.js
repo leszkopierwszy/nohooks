@@ -90,6 +90,13 @@ export const useOutfitsStore = defineStore('outfits', {
       }
     },
 
+    async fetchOutfit(id) {
+      this.error = null
+      const outfit = await apiRequest(`/outfit/${id}`)
+      this.mergeOutfit(outfit)
+      return outfit
+    },
+
     async createOutfit(payload) {
       this.error = null
       const outfit = await apiRequest('/outfit', {
