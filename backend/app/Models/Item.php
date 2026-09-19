@@ -27,6 +27,8 @@ class Item extends Model
         'size',
         'size_system',
         'category_id',
+        'body_zone',
+        'wear_layer',
         'purchase_price',
         'purchase_currency',
         'purchase_price_pln',
@@ -47,6 +49,7 @@ class Item extends Model
 
     protected $appends = [
         'image_url',
+        'cutout_image_url',
     ];
 
     public function getImageUrlAttribute(): ?string
@@ -56,6 +59,15 @@ class Item extends Model
             : $this->images()->orderBy('sort_order')->first();
 
         return $image?->url;
+    }
+
+    public function getCutoutImageUrlAttribute(): ?string
+    {
+        $image = $this->relationLoaded('images')
+            ? $this->images->first()
+            : $this->images()->orderBy('sort_order')->first();
+
+        return $image?->cutout_url;
     }
 
     public function images()

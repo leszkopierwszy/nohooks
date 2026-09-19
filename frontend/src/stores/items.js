@@ -23,11 +23,23 @@ function appendPayloadToFormData(formData, payload) {
   })
 }
 
+function appendImageFile(formData, field, index, file) {
+  if (!(file instanceof Blob) || file.size === 0) return
+  const name =
+    file instanceof File && file.name
+      ? file.name
+      : `image-${index + 1}.png`
+  formData.append(`${field}[${index}]`, file, name)
+}
+
 function buildItemFormData(
   payload,
   {
     newImages = [],
     newImageUrls = [],
+    newCutoutImages = [],
+    newUrlCutoutImages = [],
+    existingCutoutImages = {},
     removeImageIds = [],
     imageOrderSlots = [],
     traceId = null,
@@ -40,20 +52,34 @@ function buildItemFormData(
     formData.append('trace_id', traceId)
   }
 
-  let fileSlot = 0
-  newImages.forEach((file) => {
+  newImages.forEach((file, index) => {
     if (!(file instanceof Blob) || file.size === 0) return
     const name =
       file instanceof File && file.name
         ? file.name
-        : `image-${fileSlot + 1}.jpg`
-    formData.append(`new_images[${fileSlot}]`, file, name)
-    fileSlot += 1
+        : `image-${index + 1}.jpg`
+    formData.append(`new_images[${index}]`, file, name)
+    const cutout = newCutoutImages[index]
+    if (cutout instanceof Blob && cutout.size > 0) {
+      appendImageFile(formData, 'new_cutout_images', index, cutout)
+    }
   })
 
   if (newImageUrls.length) {
     formData.append('new_image_urls', JSON.stringify(newImageUrls))
   }
+
+  newUrlCutoutImages.forEach((file, index) => {
+    if (file instanceof Blob && file.size > 0) {
+      appendImageFile(formData, 'new_url_cutout_images', index, file)
+    }
+  })
+
+  Object.entries(existingCutoutImages ?? {}).forEach(([id, file]) => {
+    if (file instanceof Blob && file.size > 0) {
+      appendImageFile(formData, 'existing_cutout_images', id, file)
+    }
+  })
 
   if (removeImageIds.length) {
     formData.append('remove_image_ids', JSON.stringify(removeImageIds))
@@ -70,6 +96,9 @@ export function hasImageChanges(fileOptions = {}) {
   return (
     (fileOptions.newImages?.length ?? 0) > 0 ||
     (fileOptions.newImageUrls?.length ?? 0) > 0 ||
+    (fileOptions.newCutoutImages?.some((f) => f instanceof Blob && f.size > 0) ?? false) ||
+    (fileOptions.newUrlCutoutImages?.some((f) => f instanceof Blob && f.size > 0) ?? false) ||
+    Object.keys(fileOptions.existingCutoutImages ?? {}).length > 0 ||
     (fileOptions.removeImageIds?.length ?? 0) > 0 ||
     fileOptions.imageOrderChanged === true ||
     (fileOptions.imageOrderSlots?.length ?? 0) > 0

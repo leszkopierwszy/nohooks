@@ -118,9 +118,9 @@ export function analyzeCutoutProfile(imageData, hints = {}) {
     !studioGray &&
     (Boolean(hints.forceLight) ||
       isLightColorName(hints.colorHint) ||
-      (avgLum > 205 && avgSat < 40 && brightRatio > 0.06) ||
-      (brightRatio > 0.18 && avgLum > 190) ||
-      (avgLum > 235 && avgSat < 25))
+      (avgLum > 200 && avgSat < 40 && brightRatio > 0.05) ||
+      (brightRatio > 0.15 && avgLum > 185) ||
+      (avgLum > 230 && avgSat < 28))
 
   if (studioGray) {
     return {

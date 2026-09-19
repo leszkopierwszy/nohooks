@@ -771,6 +771,25 @@ outfit:
   sourceManual: Manual
   sourceLlm: Suggested
 
+item:
+  bodyZone: Body zone
+  bodyZoneAuto: Automatic (from type)
+  bodyZoneHint: Where it is worn — drives outfit card layout.
+  wearLayer: Layer
+  wearLayerAuto: Automatic (from type)
+  wearLayerHint: outer = coat/jacket, base = tee/undershirt.
+  bodyZones:
+    head: Head / neck
+    torso: Torso
+    legs: Legs
+    feet: Feet
+    full: Full body (dress / jumpsuit)
+  wearLayers:
+    outer: Outer
+    mid: Mid
+    base: Base
+    accent: Accent / accessory
+
 style:
   nav:
     outfits: Outfits

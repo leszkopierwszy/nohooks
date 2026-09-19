@@ -10,11 +10,13 @@ class ItemImage extends Model
         'item_id',
         'image_path',
         'external_url',
+        'cutout_path',
         'sort_order',
     ];
 
     protected $appends = [
         'url',
+        'cutout_url',
     ];
 
     public function item()
@@ -29,5 +31,14 @@ class ItemImage extends Model
         }
 
         return $this->external_url;
+    }
+
+    public function getCutoutUrlAttribute(): ?string
+    {
+        if (!$this->cutout_path) {
+            return null;
+        }
+
+        return '/storage/'.ltrim($this->cutout_path, '/');
     }
 }

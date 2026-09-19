@@ -230,7 +230,7 @@
             <li
               v-for="outfit in visibleOutfits"
               :key="outfit.id"
-              class="flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
+              class="flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
             >
               <div class="flex items-start justify-between gap-3 px-5 pt-4">
                 <div class="min-w-0">
@@ -253,7 +253,7 @@
 
               <OutfitFlatLay
                 v-if="outfit.items?.length"
-                class="mt-3"
+                class="mt-3 shrink-0"
                 :items="outfit.items"
               />
               <p
@@ -264,7 +264,7 @@
               </p>
 
               <div
-                class="flex flex-wrap items-center justify-center gap-6 border-t border-gray-100 bg-white px-4 py-3"
+                class="mt-auto flex flex-wrap items-center justify-center gap-6 border-t border-gray-100 bg-white px-4 py-3"
               >
                 <button
                   type="button"

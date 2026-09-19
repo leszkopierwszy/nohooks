@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use App\Models\Item;
 use App\Services\ExchangeRateService;
 use App\Services\ItemDuplicationService;
 use App\Services\ItemImageOrientationService;
 use App\Services\LangfuseTraceService;
+use App\Support\ClothingBodyPlacement;
 use App\Models\ItemImage;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -140,47 +142,49 @@ class ItemController extends Controller
 
     private function assertValidUploadedImages(Request $request): void
     {
-        $files = $request->file('new_images');
+        foreach (['new_images', 'new_cutout_images', 'new_url_cutout_images', 'existing_cutout_images'] as $field) {
+            $files = $request->file($field);
 
-        if ($files === null) {
-            return;
-        }
-
-        $list = $files instanceof UploadedFile
-            ? [$files]
-            : (is_array($files) ? array_values($files) : []);
-
-        $errors = [];
-
-        foreach ($list as $index => $file) {
-            if (! $file instanceof UploadedFile) {
+            if ($files === null) {
                 continue;
             }
 
-            if ($file->isValid()) {
-                continue;
+            $list = $files instanceof UploadedFile
+                ? [$files]
+                : (is_array($files) ? $files : []);
+
+            $errors = [];
+
+            foreach ($list as $index => $file) {
+                if (! $file instanceof UploadedFile) {
+                    continue;
+                }
+
+                if ($file->isValid()) {
+                    continue;
+                }
+
+                $message = $this->describeUploadError($file);
+
+                Log::warning('item.image.upload_failed', [
+                    'index' => $index,
+                    'field' => "{$field}.{$index}",
+                    'error_code' => $file->getError(),
+                    'error_message' => $file->getErrorMessage(),
+                    'client_name' => $file->getClientOriginalName(),
+                    'client_mime' => $file->getClientMimeType(),
+                    'client_size_bytes' => $file->getSize(),
+                    'php_upload_max_filesize' => ini_get('upload_max_filesize'),
+                    'php_post_max_size' => ini_get('post_max_size'),
+                    'user_message' => $message,
+                ]);
+
+                $errors["{$field}.{$index}"] = [$message];
             }
 
-            $message = $this->describeUploadError($file);
-
-            Log::warning('item.image.upload_failed', [
-                'index' => $index,
-                'field' => "new_images.{$index}",
-                'error_code' => $file->getError(),
-                'error_message' => $file->getErrorMessage(),
-                'client_name' => $file->getClientOriginalName(),
-                'client_mime' => $file->getClientMimeType(),
-                'client_size_bytes' => $file->getSize(),
-                'php_upload_max_filesize' => ini_get('upload_max_filesize'),
-                'php_post_max_size' => ini_get('post_max_size'),
-                'user_message' => $message,
-            ]);
-
-            $errors["new_images.{$index}"] = [$message];
-        }
-
-        if ($errors !== []) {
-            throw ValidationException::withMessages($errors);
+            if ($errors !== []) {
+                throw ValidationException::withMessages($errors);
+            }
         }
     }
 
@@ -205,6 +209,8 @@ class ItemController extends Controller
             'like_rating' => 'nullable|integer|min:1|max:5',
             'brand' => 'nullable|string|max:128',
             'category' => 'nullable|string|max:255',
+            'body_zone' => ($creating ? 'nullable' : 'sometimes|nullable').'|string|in:head,torso,legs,feet,full',
+            'wear_layer' => ($creating ? 'nullable' : 'sometimes|nullable').'|string|in:outer,mid,base,accent',
             'description' => 'nullable|string',
             'color' => 'nullable|string|max:64',
             'season' => 'nullable|string|max:32',
@@ -219,6 +225,12 @@ class ItemController extends Controller
             'source_url' => 'nullable|url|max:2048',
             'new_images' => 'nullable|array|max:'.self::MAX_IMAGES,
             'new_images.*' => 'file|mimes:jpeg,jpg,png,gif,webp|max:5120',
+            'new_cutout_images' => 'nullable|array|max:'.self::MAX_IMAGES,
+            'new_cutout_images.*' => 'file|mimes:png|max:10240',
+            'new_url_cutout_images' => 'nullable|array|max:'.self::MAX_IMAGES,
+            'new_url_cutout_images.*' => 'file|mimes:png|max:10240',
+            'existing_cutout_images' => 'nullable|array|max:'.self::MAX_IMAGES,
+            'existing_cutout_images.*' => 'file|mimes:png|max:10240',
             'new_image_urls' => 'nullable|string',
             'remove_image_ids' => 'nullable|string',
             'image_order_slots' => 'nullable|string',
@@ -226,7 +238,58 @@ class ItemController extends Controller
 
         $data = $request->validate($rules);
 
-        return $this->normalizePersonaFit($data);
+        return $this->applyBodyPlacement(
+            $this->normalizePersonaFit($data),
+            $creating
+        );
+    }
+
+    private function applyBodyPlacement(array $data, bool $creating = false): array
+    {
+        $submittedZone = array_key_exists('body_zone', $data);
+        $submittedLayer = array_key_exists('wear_layer', $data);
+
+        if ($submittedZone) {
+            $data['body_zone'] = ClothingBodyPlacement::normalizeZone($data['body_zone']);
+        }
+        if ($submittedLayer) {
+            $data['wear_layer'] = ClothingBodyPlacement::normalizeLayer($data['wear_layer']);
+        }
+
+        $needsInfer = $creating
+            || ($submittedZone && empty($data['body_zone']))
+            || ($submittedLayer && empty($data['wear_layer']))
+            || ($creating === false && $submittedZone === false && $submittedLayer === false && array_key_exists('category', $data));
+
+        if (! $needsInfer) {
+            return $data;
+        }
+
+        $collectionName = null;
+        if (! empty($data['category_id'])) {
+            $collectionName = Category::query()
+                ->where('user_id', auth()->id())
+                ->where('id', $data['category_id'])
+                ->value('name');
+        }
+
+        $inferred = ClothingBodyPlacement::infer(
+            $data['category'] ?? null,
+            $collectionName
+        );
+
+        if ($creating || ($submittedZone && empty($data['body_zone'])) || (! $submittedZone && array_key_exists('category', $data))) {
+            if (empty($data['body_zone'])) {
+                $data['body_zone'] = $inferred['body_zone'];
+            }
+        }
+        if ($creating || ($submittedLayer && empty($data['wear_layer'])) || (! $submittedLayer && array_key_exists('category', $data))) {
+            if (empty($data['wear_layer'])) {
+                $data['wear_layer'] = $inferred['wear_layer'];
+            }
+        }
+
+        return $data;
     }
 
     private function normalizePersonaFit(array $data): array
@@ -272,6 +335,10 @@ class ItemController extends Controller
         if ($image->image_path) {
             Storage::disk('public')->delete($image->image_path);
         }
+
+        if ($image->cutout_path) {
+            Storage::disk('public')->delete($image->cutout_path);
+        }
     }
 
     private function assertUnderImageLimit(Item $item): void
@@ -281,6 +348,57 @@ class ItemController extends Controller
                 'new_images' => ['Maksymalnie '.self::MAX_IMAGES.' zdjęcia na item.'],
             ]);
         }
+    }
+
+    private function storeCutoutFile(?UploadedFile $file): ?string
+    {
+        if (! $file instanceof UploadedFile) {
+            return null;
+        }
+
+        return $file->store('items/cutouts', 'public');
+    }
+
+    /** @return array<int|string, UploadedFile> */
+    private function uploadedCutoutMap(Request $request, string $field): array
+    {
+        $files = $request->file($field);
+
+        if ($files === null) {
+            return [];
+        }
+
+        if ($files instanceof UploadedFile) {
+            return [0 => $files];
+        }
+
+        if (! is_array($files)) {
+            return [];
+        }
+
+        $map = [];
+        foreach ($files as $key => $file) {
+            if ($file instanceof UploadedFile) {
+                $map[$key] = $file;
+            }
+        }
+
+        return $map;
+    }
+
+    private function replaceImageCutout(ItemImage $image, ?UploadedFile $file): void
+    {
+        if (! $file instanceof UploadedFile) {
+            return;
+        }
+
+        if ($image->cutout_path) {
+            Storage::disk('public')->delete($image->cutout_path);
+        }
+
+        $image->update([
+            'cutout_path' => $this->storeCutoutFile($file),
+        ]);
     }
 
     /** @return list<UploadedFile> */
@@ -322,6 +440,9 @@ class ItemController extends Controller
         $slots = $this->decodeJsonList($request->input('image_order_slots'));
         $newFiles = $this->uploadedImages($request);
         $newUrls = $this->decodeJsonList($request->input('new_image_urls'));
+        $fileCutouts = $this->uploadedCutoutMap($request, 'new_cutout_images');
+        $urlCutouts = $this->uploadedCutoutMap($request, 'new_url_cutout_images');
+        $existingCutouts = $this->uploadedCutoutMap($request, 'existing_cutout_images');
         $addedNewImages = false;
 
         if ($slots !== []) {
@@ -338,6 +459,9 @@ class ItemController extends Controller
 
                     if ($image) {
                         $image->update(['sort_order' => $sortOrder++]);
+                        if (isset($existingCutouts[$id])) {
+                            $this->replaceImageCutout($image, $existingCutouts[$id]);
+                        }
                     }
 
                     continue;
@@ -354,6 +478,7 @@ class ItemController extends Controller
 
                     $item->images()->create([
                         'image_path' => $newFiles[$idx]->store('items', 'public'),
+                        'cutout_path' => $this->storeCutoutFile($fileCutouts[$idx] ?? null),
                         'sort_order' => $sortOrder++,
                     ]);
                     $addedNewImages = true;
@@ -376,6 +501,7 @@ class ItemController extends Controller
 
                     $item->images()->create([
                         'external_url' => $newUrls[$idx],
+                        'cutout_path' => $this->storeCutoutFile($urlCutouts[$idx] ?? null),
                         'sort_order' => $sortOrder++,
                     ]);
                     $addedNewImages = true;
@@ -391,18 +517,19 @@ class ItemController extends Controller
 
         $sortOrder = (int) $item->images()->max('sort_order');
 
-        foreach ($newFiles as $file) {
+        foreach ($newFiles as $idx => $file) {
             $this->assertUnderImageLimit($item);
 
             $sortOrder++;
             $item->images()->create([
                 'image_path' => $file->store('items', 'public'),
+                'cutout_path' => $this->storeCutoutFile($fileCutouts[$idx] ?? null),
                 'sort_order' => $sortOrder,
             ]);
             $addedNewImages = true;
         }
 
-        foreach ($newUrls as $url) {
+        foreach ($newUrls as $idx => $url) {
             if (!is_string($url) || $url === '' || !filter_var($url, FILTER_VALIDATE_URL)) {
                 continue;
             }
@@ -412,9 +539,17 @@ class ItemController extends Controller
             $sortOrder++;
             $item->images()->create([
                 'external_url' => $url,
+                'cutout_path' => $this->storeCutoutFile($urlCutouts[$idx] ?? null),
                 'sort_order' => $sortOrder,
             ]);
             $addedNewImages = true;
+        }
+
+        foreach ($existingCutouts as $id => $file) {
+            $image = $item->images()->where('id', (int) $id)->first();
+            if ($image) {
+                $this->replaceImageCutout($image, $file);
+            }
         }
 
         if ($addedNewImages) {

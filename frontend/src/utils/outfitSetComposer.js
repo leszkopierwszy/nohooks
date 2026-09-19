@@ -4,9 +4,19 @@ import { resolveCutoutOptions } from './imageCutoutTuning'
 import { addSoftOutlineToCutout } from './imageSoftOutline'
 import { splitOutfitItemsForFlatLay } from './outfitFlatLay'
 
-function itemImageUrl(item) {
-  const raw = item?.image_url ?? item?.images?.[0]?.url ?? null
+function itemImageUrl(item, { preferPersisted = true } = {}) {
+  const persisted =
+    item?.cutout_image_url ?? item?.images?.[0]?.cutout_url ?? null
+  const raw = preferPersisted
+    ? (persisted ?? item?.image_url ?? item?.images?.[0]?.url ?? null)
+    : (item?.image_url ?? item?.images?.[0]?.url ?? null)
   return resolveStorageUrl(raw) ?? raw
+}
+
+function itemHasPersistedCutout(item) {
+  return Boolean(
+    item?.cutout_image_url ?? item?.images?.[0]?.cutout_url ?? null
+  )
 }
 
 function loadHtmlImage(source) {
@@ -25,18 +35,39 @@ function loadHtmlImage(source) {
 
 /**
  * Wycina produkt ze zdjęcia i dodaje lekki jasny obrys (jak flat-lay).
+ * Gdy item ma zapisany cutout_url — używa go bez ponownego wycinania
+ * (chyba że options.forceRegenerate).
  *
  * @param {object} item
  * @param {{
  *   outlineRadius?: number,
  *   outlineStrength?: number,
+ *   outlineColor?: [number, number, number],
  *   colorHint?: string|null,
+ *   forceRegenerate?: boolean,
+ *   forceLight?: boolean,
+ *   forceStudioGray?: boolean,
  * }} [options]
  */
 export async function prepareSetItemCutout(item, options = {}) {
-  const url = itemImageUrl(item)
+  const usePersisted =
+    !options.forceRegenerate && itemHasPersistedCutout(item)
+  const url = itemImageUrl(item, { preferPersisted: usePersisted })
   if (!url) {
     throw new Error(`Brak zdjęcia dla „${item?.name ?? 'item'}”.`)
+  }
+
+  if (usePersisted) {
+    const source = await fetchUrlAsFile(url, `item-${item.id}-cutout.png`)
+    const img = await loadHtmlImage(source)
+    const previewUrl = URL.createObjectURL(source)
+    return {
+      item,
+      file: source,
+      previewUrl,
+      width: img.naturalWidth,
+      height: img.naturalHeight,
+    }
   }
 
   const source = await fetchUrlAsFile(url, `item-${item.id}.jpg`)
@@ -46,24 +77,27 @@ export async function prepareSetItemCutout(item, options = {}) {
     forceStudioGray: Boolean(options.forceStudioGray),
   })
 
+  const forceLight = Boolean(options.forceLight || tuned.lightProduct)
+  const forceStudio = Boolean(options.forceStudioGray || tuned.studioGray)
+
   const cutout = await cutoutToPng(source, {
-    threshold: options.forceLight
+    threshold: forceLight
       ? Math.max(tuned.threshold, 22)
       : tuned.threshold,
-    feather: options.forceLight && !tuned.studioGray ? 0 : tuned.feather,
+    feather: forceLight && !forceStudio ? 0 : tuned.feather,
     trim: true,
     fileName: `set-item-${item.id}.png`,
-    fillHoles: tuned.fillHoles,
-    recoverBright: tuned.recoverBright || Boolean(options.forceLight),
-    sharpen: tuned.sharpen || Boolean(options.forceLight),
-    lightProduct: tuned.lightProduct && !tuned.studioGray,
-    studioGray: Boolean(tuned.studioGray || options.forceStudioGray),
+    fillHoles: tuned.fillHoles && !forceLight,
+    recoverBright: tuned.recoverBright || forceLight,
+    sharpen: tuned.sharpen || forceLight,
+    lightProduct: forceLight && !forceStudio,
+    studioGray: forceStudio && !forceLight,
   })
 
   const outlined = await addSoftOutlineToCutout(cutout.file, {
     radius: options.outlineRadius ?? 2,
-    strength: options.outlineStrength ?? 0.7,
-    color: [238, 238, 238],
+    strength: options.outlineStrength ?? 0.55,
+    color: options.outlineColor ?? [210, 210, 214],
     fileName: `set-item-${item.id}-outline.png`,
   })
 
@@ -106,8 +140,8 @@ export async function composeOutfitSetFlatLay(pieces, options = {}) {
 
   const items = pieces.map((p) => p.item)
   const split = splitOutfitItemsForFlatLay(items)
-  let mains = [...split.tops, ...split.onePieces, ...split.bottoms]
-  let accessories = [...split.accessories]
+  let mains = [...(split.mains ?? [])]
+  let accessories = [...(split.side ?? split.accessories ?? [])]
 
   if (!mains.length && accessories.length) {
     mains = accessories.slice(0, Math.min(2, accessories.length))

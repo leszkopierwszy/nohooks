@@ -771,6 +771,25 @@ outfit:
   sourceManual: Ręczny
   sourceLlm: Sugerowany
 
+item:
+  bodyZone: Strefa ciała
+  bodyZoneAuto: Automatycznie (z typu)
+  bodyZoneHint: Gdzie noszone — wpływa na układ na karcie outfit.
+  wearLayer: Warstwa
+  wearLayerAuto: Automatycznie (z typu)
+  wearLayerHint: outer = wierzch (płaszcz), base = spód (koszulka).
+  bodyZones:
+    head: Góra (głowa / szyja)
+    torso: Środek (tors)
+    legs: Nogi
+    feet: Stopy
+    full: Całość (sukienka / kombinezon)
+  wearLayers:
+    outer: Wierzch
+    mid: Środkowa
+    base: Spód / baza
+    accent: Akcent / dodatek
+
 style:
   nav:
     outfits: Outfity

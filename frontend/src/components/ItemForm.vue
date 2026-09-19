@@ -298,6 +298,41 @@
       />
     </div>
 
+    <div v-if="sizeKind === 'clothing' || sizeKind === 'shoes'" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div>
+        <label :for="`${idPrefix}-body-zone`" class="block text-sm font-medium text-gray-700">
+          {{ t('item.bodyZone') }}
+        </label>
+        <select
+          :id="`${idPrefix}-body-zone`"
+          v-model="form.body_zone"
+          class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        >
+          <option value="">{{ t('item.bodyZoneAuto') }}</option>
+          <option v-for="zone in BODY_ZONES" :key="zone.value" :value="zone.value">
+            {{ t(zone.labelKey) }}
+          </option>
+        </select>
+        <p class="mt-1 text-xs text-gray-500">{{ t('item.bodyZoneHint') }}</p>
+      </div>
+      <div>
+        <label :for="`${idPrefix}-wear-layer`" class="block text-sm font-medium text-gray-700">
+          {{ t('item.wearLayer') }}
+        </label>
+        <select
+          :id="`${idPrefix}-wear-layer`"
+          v-model="form.wear_layer"
+          class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        >
+          <option value="">{{ t('item.wearLayerAuto') }}</option>
+          <option v-for="layer in WEAR_LAYERS" :key="layer.value" :value="layer.value">
+            {{ t(layer.labelKey) }}
+          </option>
+        </select>
+        <p class="mt-1 text-xs text-gray-500">{{ t('item.wearLayerHint') }}</p>
+      </div>
+    </div>
+
     <div>
       <label :for="`${idPrefix}-description`" class="block text-sm font-medium text-gray-700">Opis</label>
       <textarea
@@ -779,6 +814,11 @@ import {
   normalizeClothingTypeForStorage,
 } from '../constants/itemClothingTypes'
 import {
+  BODY_ZONES,
+  WEAR_LAYERS,
+  inferBodyPlacement,
+} from '../constants/itemBodyPlacement'
+import {
   CLOTHING_SIZES,
   isClothingCollection,
   isShoesCollection,
@@ -800,10 +840,14 @@ import {
 import { cutoutToPng, detectObjectMask } from '../utils/imageBackgroundCutout'
 import { resolveCutoutOptions } from '../utils/imageCutoutTuning'
 import { prepareShoeCoverImage } from '../utils/prepareShoeCoverImage'
+import { preparePersistedOutfitCutout } from '../utils/preparePersistedOutfitCutout'
 import { normalizeUploadImageFile } from '../utils/normalizeUploadImage'
 import { hasImageChanges, useItemsStore } from '../stores/items'
 import { useCollectionStore } from '../stores/collection'
 import { usePersonasStore } from '../stores/personas'
+import { useI18n } from '../composables/useI18n'
+
+const { t } = useI18n()
 
 const props = defineProps({
   idPrefix: {
@@ -925,6 +969,8 @@ const form = reactive({
   brand: '',
   category_id: '',
   category: '',
+  body_zone: '',
+  wear_layer: '',
   description: '',
   color: '',
   season: '',
@@ -1020,6 +1066,14 @@ function addClothingTypeFromInput() {
   clothingTypesVersion.value += 1
   form.category = option.value
   newClothingType.value = ''
+  applyInferredPlacement(true)
+}
+
+function applyInferredPlacement(force = false) {
+  if (!force && form.body_zone && form.wear_layer) return
+  const inferred = inferBodyPlacement(form.category, selectedCollectionName.value)
+  if (!form.body_zone || force) form.body_zone = inferred.body_zone ?? ''
+  if (!form.wear_layer || force) form.wear_layer = inferred.wear_layer ?? ''
 }
 
 watch(sizeKind, (kind, prev) => {
@@ -1031,8 +1085,19 @@ watch(sizeKind, (kind, prev) => {
     if (kind !== 'shoes') {
       form.size_system = 'eu'
     }
+    applyInferredPlacement(false)
+    if (kind === 'clothing' || kind === 'shoes') {
+      void ensureAllOutfitCutouts()
+    }
   }
 })
+
+watch(
+  () => form.category,
+  () => {
+    applyInferredPlacement(false)
+  },
+)
 
 watch(
   () => props.defaultCategoryId,
@@ -1088,6 +1153,9 @@ function revokeEntryPreview(entry) {
   if (entry.previewUrl?.startsWith('blob:')) {
     URL.revokeObjectURL(entry.previewUrl)
   }
+  if (entry.cutoutPreviewUrl?.startsWith('blob:')) {
+    URL.revokeObjectURL(entry.cutoutPreviewUrl)
+  }
 }
 
 function clearImageState() {
@@ -1127,6 +1195,10 @@ function applyProcessedCoverFile(entryKey, { file, previewUrl, hasAlpha = false,
     fetchBusy: false,
     id: undefined,
     url: undefined,
+    cutoutFile: undefined,
+    cutoutPreviewUrl: undefined,
+    cutoutDirty: true,
+    persistedCutoutUrl: undefined,
     ...extra,
   })
 }
@@ -1225,12 +1297,13 @@ async function cutoutCoverToPng() {
   cutoutFeedback.value = null
   try {
     const result = await cutoutCoverEntry()
-    applyProcessedCoverFile(entry.key, {
+    const updated = applyProcessedCoverFile(entry.key, {
       file: result.file,
       previewUrl: result.previewUrl,
       hasAlpha: true,
       cutout: true,
     })
+    await ensureEntryOutfitCutout(updated ?? entry)
     const pct = Math.round(result.foregroundRatio * 100)
 
     if (editingItemId.value) {
@@ -1276,7 +1349,9 @@ async function prepareImportedShoeImage(entry, { isCover = false } = {}) {
         `Auto: para butów — wycięto PNG, skierowano w prawo (~${pct}% kadru)${lightNote}.`
       )
     }
-    return updated ?? entry
+    const next = updated ?? entry
+    await ensureEntryOutfitCutout(next)
+    return next
   } catch (err) {
     console.warn('Auto-obróbka obuwia nie powiodła się:', err)
     if (isCover) {
@@ -1286,6 +1361,7 @@ async function prepareImportedShoeImage(entry, { isCover = false } = {}) {
         false
       )
     }
+    await ensureEntryOutfitCutout(entry)
     return entry
   } finally {
     patchImageEntry(entry.key, { orientationBusy: false })
@@ -1297,12 +1373,13 @@ async function maybeAutoCutoutCoverEntry(entry) {
   if (coverEntry()?.key !== entry.key) return
   try {
     const result = await cutoutCoverEntry()
-    applyProcessedCoverFile(entry.key, {
+    const updated = applyProcessedCoverFile(entry.key, {
       file: result.file,
       previewUrl: result.previewUrl,
       hasAlpha: true,
       cutout: true,
     })
+    await ensureEntryOutfitCutout(updated ?? entry)
     if (editingItemId.value) {
       await persistCoverImageChanges()
     }
@@ -1325,6 +1402,81 @@ function patchImageEntry(entryKey, patch) {
   }
   imageEntries.value[idx] = next
   return next
+}
+
+function shouldPersistOutfitCutout() {
+  return sizeKind.value === 'clothing' || sizeKind.value === 'shoes'
+}
+
+function revokeCutoutPreview(entry) {
+  if (entry?.cutoutPreviewUrl?.startsWith('blob:')) {
+    URL.revokeObjectURL(entry.cutoutPreviewUrl)
+  }
+}
+
+/** @type {Map<string, Promise<object|null>>} */
+const outfitCutoutJobs = new Map()
+
+/**
+ * Generate cutout+outline sidecar on image add (clothing/shoes).
+ * Stored separately from the gallery original so Style can load without re-cutting.
+ */
+async function ensureEntryOutfitCutout(entry) {
+  if (!entry || !shouldPersistOutfitCutout()) return entry
+
+  const latest = imageEntries.value.find((e) => e.key === entry.key) ?? entry
+  if (latest.cutoutFile instanceof Blob && latest.cutoutFile.size > 0) return latest
+  if (latest.persistedCutoutUrl && !latest.cutoutDirty) return latest
+
+  if (outfitCutoutJobs.has(latest.key)) {
+    return outfitCutoutJobs.get(latest.key)
+  }
+
+  const job = (async () => {
+    patchImageEntry(latest.key, { cutoutBusy: true })
+    try {
+      const source = await entryToProcessableFile(
+        imageEntries.value.find((e) => e.key === latest.key) ?? latest
+      )
+      if (!source) {
+        throw new Error('Brak źródła do wycinki.')
+      }
+
+      const current = imageEntries.value.find((e) => e.key === latest.key) ?? latest
+      const alreadyCutout = Boolean(current.cutout && current.hasAlpha)
+      const result = await preparePersistedOutfitCutout(source, {
+        colorHint: form.color || null,
+        itemName: form.name || '',
+        alreadyCutout,
+      })
+
+      const prev = imageEntries.value.find((e) => e.key === latest.key)
+      revokeCutoutPreview(prev)
+
+      return patchImageEntry(latest.key, {
+        cutoutFile: result.file,
+        cutoutPreviewUrl: result.previewUrl,
+        cutoutBusy: false,
+        cutoutDirty: true,
+      })
+    } catch (err) {
+      console.warn('Outfit cutout nie powiodło się:', err)
+      return patchImageEntry(latest.key, { cutoutBusy: false })
+    } finally {
+      outfitCutoutJobs.delete(latest.key)
+    }
+  })()
+
+  outfitCutoutJobs.set(latest.key, job)
+  return job
+}
+
+async function ensureAllOutfitCutouts() {
+  if (!shouldPersistOutfitCutout()) return
+  for (const entry of [...imageEntries.value]) {
+    if (!isImageEntryReady(entry)) continue
+    await ensureEntryOutfitCutout(entry)
+  }
 }
 
 function setOrientationFeedback(text, ok = true) {
@@ -1531,6 +1683,9 @@ async function onImagesSelected(event) {
     if (isCover) {
       await maybeAutoOrientCoverEntry(entry)
     }
+    await ensureEntryOutfitCutout(
+      imageEntries.value.find((e) => e.key === entry.key) ?? entry
+    )
   }
 }
 
@@ -1560,6 +1715,9 @@ async function addImageFromUrl() {
     if (isCover) {
       await maybeAutoOrientCoverEntry(materialized)
     }
+    await ensureEntryOutfitCutout(
+      imageEntries.value.find((e) => e.key === entryKey) ?? materialized
+    )
   } catch (err) {
     imageEntries.value = imageEntries.value.filter((e) => e.key !== entryKey)
     setOrientationFeedback(
@@ -1609,6 +1767,9 @@ async function buildImageFileOptions() {
   const imageOrderSlots = buildImageOrderSlots()
   const newImages = []
   const newImageUrls = []
+  const newCutoutImages = []
+  const newUrlCutoutImages = []
+  const existingCutoutImages = {}
 
   for (const entry of imageEntries.value) {
     if (!isImageEntryReady(entry)) continue
@@ -1618,8 +1779,26 @@ async function buildImageFileOptions() {
         preferPng: Boolean(entry.hasAlpha || entry.cutout),
       })
       newImages.push(normalized)
+      newCutoutImages.push(
+        entry.cutoutFile instanceof Blob && entry.cutoutFile.size > 0
+          ? entry.cutoutFile
+          : null
+      )
     } else if (entry.kind === 'url') {
       newImageUrls.push(entry.url.trim())
+      newUrlCutoutImages.push(
+        entry.cutoutFile instanceof Blob && entry.cutoutFile.size > 0
+          ? entry.cutoutFile
+          : null
+      )
+    } else if (
+      entry.kind === 'existing' &&
+      entry.id &&
+      entry.cutoutDirty &&
+      entry.cutoutFile instanceof Blob &&
+      entry.cutoutFile.size > 0
+    ) {
+      existingCutoutImages[entry.id] = entry.cutoutFile
     }
   }
 
@@ -1629,6 +1808,9 @@ async function buildImageFileOptions() {
   return {
     newImages,
     newImageUrls,
+    newCutoutImages,
+    newUrlCutoutImages,
+    existingCutoutImages,
     removeImageIds: [...removedImageIds.value],
     imageOrderSlots,
     imageOrderChanged,
@@ -1639,6 +1821,8 @@ function hasPendingImageEntries() {
   return imageEntries.value.some(
     (entry) =>
       entry.fetchBusy ||
+      entry.cutoutBusy ||
+      entry.orientationBusy ||
       (entry.kind === 'file' && !(entry.file instanceof Blob && entry.file.size > 0)) ||
       (entry.kind === 'url' && !entry.url?.trim())
   )
@@ -1819,6 +2003,8 @@ async function applySelectedImportToGallery() {
       true
     )
 
+    await ensureAllOutfitCutouts()
+
     await nextTick()
     document.getElementById(`${props.idPrefix}-images`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
   } finally {
@@ -1964,6 +2150,8 @@ function reset() {
   form.fits_persona_ids = []
   form.default_persona_id = personasStore.prims.find((p) => p.gender === 'female')?.id ?? ''
   form.category = ''
+  form.body_zone = ''
+  form.wear_layer = ''
   form.description = ''
   form.color = ''
   form.season = ''
@@ -1998,6 +2186,8 @@ function loadFromItem(item) {
     sizeKind.value === 'clothing'
       ? normalizeClothingTypeForStorage(item.category) ?? ''
       : item.category ?? ''
+  form.body_zone = item.body_zone ?? ''
+  form.wear_layer = item.wear_layer ?? ''
   form.gift = Boolean(item.gift)
   form.purchase_price = item.gift ? '' : (item.purchase_price ?? '')
   form.purchase_currency = item.gift
@@ -2017,18 +2207,28 @@ function loadFromItem(item) {
   form.fits_persona_ids = normalizeFitsPersonaIds(item.fits_persona_ids ?? [])
   form.default_persona_id = item.default_persona_id ?? ''
   clearImageState()
-  imageEntries.value = (item.images ?? []).map((img) => ({
-    key: nextImageKey(),
-    kind: 'existing',
-    id: img.id,
-    previewUrl: resolveItemImageUrl(img),
-    orientationBusy: false,
-    facing: null,
-    orientation: null,
-  }))
+  imageEntries.value = (item.images ?? []).map((img) => {
+    const cutoutRaw = img.cutout_url ?? null
+    const persistedCutoutUrl = resolveStorageUrl(cutoutRaw) ?? cutoutRaw
+    return {
+      key: nextImageKey(),
+      kind: 'existing',
+      id: img.id,
+      previewUrl: resolveItemImageUrl(img),
+      persistedCutoutUrl: persistedCutoutUrl || null,
+      cutoutDirty: false,
+      orientationBusy: false,
+      facing: null,
+      orientation: null,
+    }
+  })
   initialImageOrderSlots.value = buildImageOrderSlots()
   const input = document.getElementById(`${props.idPrefix}-image`)
   if (input) input.value = ''
+
+  if (shouldPersistOutfitCutout()) {
+    void ensureAllOutfitCutouts()
+  }
 }
 
 function buildPayload() {
@@ -2057,6 +2257,8 @@ function buildPayload() {
       sizeKind.value === 'clothing'
         ? normalizeClothingTypeForStorage(form.category)
         : form.category.trim() || null,
+    body_zone: form.body_zone || null,
+    wear_layer: form.wear_layer || null,
     source_url: form.source_url.trim() || null,
     description: form.description.trim() || null,
     color: normalizeColorForStorage(form.color),
@@ -2082,7 +2284,17 @@ function buildPayload() {
 async function handleSubmit() {
   if (hasPendingImageEntries()) {
     setProductImportFeedback(
-      'Poczekaj, aż wszystkie zdjęcia się pobiorą (lub usuń niedokończone wpisy).',
+      'Poczekaj, aż wszystkie zdjęcia się pobiorą i wytną (lub usuń niedokończone wpisy).',
+      false
+    )
+    return
+  }
+
+  await ensureAllOutfitCutouts()
+
+  if (hasPendingImageEntries()) {
+    setProductImportFeedback(
+      'Poczekaj, aż wycinka zdjęć się skończy.',
       false
     )
     return

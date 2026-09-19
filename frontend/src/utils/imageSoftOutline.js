@@ -44,8 +44,8 @@ export function applySoftOutlineToImageData(
   imageData,
   {
     radius = 2,
-    color = [236, 236, 236],
-    strength = 0.72,
+    color = [210, 210, 214],
+    strength = 0.55,
   } = {}
 ) {
   const { width, height, data } = imageData
