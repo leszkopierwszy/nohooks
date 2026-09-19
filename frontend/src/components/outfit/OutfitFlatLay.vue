@@ -30,7 +30,8 @@
             v-for="item in mainItems"
             :key="item.id"
             type="button"
-            class="group relative min-h-0 w-full focus:outline-none"
+            class="group relative min-h-0 w-full overflow-hidden focus:outline-none"
+            :style="mainStackStyle(item)"
             :title="itemTitle(item)"
             @click="openItem(item)"
           >
@@ -185,12 +186,14 @@ const sideFootItems = computed(() =>
   ),
 )
 
-/** Equal 1fr rows — full-body dresses need most of the column, no crop. */
+/** Equal 1fr rows — full-body dresses need most of the column, no crop.
+ *  Legs need extra height so long pants/jeans aren't clipped at the hem. */
 const mainGridStyle = computed(() => {
   const rows = mainItems.value.map((item) => {
     const zone = resolveItemBodyZone(item)
     if (zone === 'full') return 'minmax(0, 1.55fr)'
-    if (zone === 'legs') return 'minmax(0, 1.15fr)'
+    if (zone === 'legs') return 'minmax(0, 1.5fr)'
+    if (zone === 'torso' || zone === 'head') return 'minmax(0, 0.95fr)'
     return 'minmax(0, 1fr)'
   })
   if (!rows.length) return { gridTemplateRows: 'minmax(0, 1fr)' }
@@ -208,8 +211,19 @@ const sideFootGridStyle = computed(() => {
 })
 
 /**
- * Frame inset: dresses get padding so hems/necks aren't clipped;
- * skirts get a slightly larger paint box for zoom.
+ * Stack tops above bottoms if zoomed legs ever meet the cell above.
+ */
+function mainStackStyle(item) {
+  const zone = resolveItemBodyZone(item)
+  if (zone === 'torso' || zone === 'head') return { zIndex: 3 }
+  if (zone === 'full') return { zIndex: 2 }
+  if (zone === 'legs') return { zIndex: 1 }
+  return { zIndex: 0 }
+}
+
+/**
+ * Frame inset: dresses get padding so hems/necks aren't clipped.
+ * Legs stay inside their cell (card clips overflow) — no negative bottom inset.
  */
 function mainFrameStyle(item) {
   const zone = resolveItemBodyZone(item)
@@ -218,14 +232,14 @@ function mainFrameStyle(item) {
     return { inset: '2% 6% 3% 6%' }
   }
   if (zone === 'legs' && layer === 'mid') {
-    return { inset: '-6% -2% -6% -2%' }
+    return { inset: '1% -2% 2% -2%' }
   }
   return { inset: '0 4%' }
 }
 
 /**
- * Short garments need zoom to match tee width.
- * Full-body pieces must stay at scale 1 — any boost crops them.
+ * Short garments need a bit of zoom to match tee width.
+ * Scale stays inside the overflow-hidden cell so tops aren't covered and hems aren't pushed off-card.
  */
 function mainImageStyle(item) {
   const zone = resolveItemBodyZone(item)
@@ -234,9 +248,9 @@ function mainImageStyle(item) {
   if (zone === 'full') {
     scale = 1
   } else if (zone === 'legs' && layer === 'mid') {
-    scale = 2.15
+    scale = 1.35
   } else if (zone === 'legs') {
-    scale = 1.25
+    scale = 1.15
   } else if (zone === 'torso' || zone === 'head') {
     scale = 1.08
   }
