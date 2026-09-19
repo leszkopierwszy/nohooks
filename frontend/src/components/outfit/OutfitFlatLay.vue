@@ -30,12 +30,13 @@
             v-for="item in mainItems"
             :key="item.id"
             type="button"
-            class="group relative min-h-0 w-full overflow-hidden focus:outline-none"
+            class="group relative min-h-0 w-full focus:outline-none"
             :title="itemTitle(item)"
             @click="openItem(item)"
           >
             <span
-              class="absolute inset-0 flex items-center justify-center px-[4%]"
+              class="absolute flex items-center justify-center"
+              :style="mainFrameStyle(item)"
             >
               <img
                 v-if="thumb(item)"
@@ -184,15 +185,15 @@ const sideFootItems = computed(() =>
   ),
 )
 
-/** Equal 1fr rows — optional extra weight for full-body pieces. */
+/** Equal 1fr rows — full-body dresses need most of the column, no crop. */
 const mainGridStyle = computed(() => {
   const rows = mainItems.value.map((item) => {
     const zone = resolveItemBodyZone(item)
-    if (zone === 'full') return '1.25fr'
-    if (zone === 'legs') return '1.1fr'
-    return '1fr'
+    if (zone === 'full') return 'minmax(0, 1.55fr)'
+    if (zone === 'legs') return 'minmax(0, 1.15fr)'
+    return 'minmax(0, 1fr)'
   })
-  if (!rows.length) return { gridTemplateRows: '1fr' }
+  if (!rows.length) return { gridTemplateRows: 'minmax(0, 1fr)' }
   return { gridTemplateRows: rows.join(' ') }
 })
 
@@ -207,20 +208,42 @@ const sideFootGridStyle = computed(() => {
 })
 
 /**
- * Short garments (skirt / shorts) often look tiny next to a tee after cutout.
- * Keep the layout box identical, then boost scale so width reads like the top.
+ * Frame inset: dresses get padding so hems/necks aren't clipped;
+ * skirts get a slightly larger paint box for zoom.
+ */
+function mainFrameStyle(item) {
+  const zone = resolveItemBodyZone(item)
+  const layer = resolveItemWearLayer(item)
+  if (zone === 'full') {
+    return { inset: '2% 6% 3% 6%' }
+  }
+  if (zone === 'legs' && layer === 'mid') {
+    return { inset: '-6% -2% -6% -2%' }
+  }
+  return { inset: '0 4%' }
+}
+
+/**
+ * Short garments need zoom to match tee width.
+ * Full-body pieces must stay at scale 1 — any boost crops them.
  */
 function mainImageStyle(item) {
   const zone = resolveItemBodyZone(item)
   const layer = resolveItemWearLayer(item)
   let scale = 1
-  if (zone === 'legs' && layer === 'mid') scale = 1.45
-  else if (zone === 'legs') scale = 1.2
-  else if (zone === 'torso') scale = 1.05
-  else if (zone === 'full') scale = 1.08
+  if (zone === 'full') {
+    scale = 1
+  } else if (zone === 'legs' && layer === 'mid') {
+    scale = 2.15
+  } else if (zone === 'legs') {
+    scale = 1.25
+  } else if (zone === 'torso' || zone === 'head') {
+    scale = 1.08
+  }
   return {
-    transform: `scale(${scale})`,
-    transformOrigin: 'center center',
+    transform: scale === 1 ? undefined : `scale(${scale})`,
+    transformOrigin: zone === 'full' ? 'center top' : 'center center',
+    objectPosition: zone === 'full' ? 'center top' : 'center center',
   }
 }
 
