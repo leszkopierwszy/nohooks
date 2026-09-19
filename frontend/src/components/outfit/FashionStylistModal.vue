@@ -121,6 +121,28 @@
           >
             {{ analysis.wardrobe_overview }}
           </p>
+          <ul
+            v-if="analysis.strengths?.length"
+            class="mt-2 space-y-1 text-sm text-gray-600 dark:text-zinc-400"
+          >
+            <li
+              v-for="(s, i) in analysis.strengths"
+              :key="`str-${i}`"
+            >
+              + {{ s }}
+            </li>
+          </ul>
+          <ul
+            v-if="analysis.limitations?.length"
+            class="mt-1 space-y-1 text-sm text-gray-500 dark:text-zinc-500"
+          >
+            <li
+              v-for="(s, i) in analysis.limitations"
+              :key="`lim-${i}`"
+            >
+              − {{ s }}
+            </li>
+          </ul>
         </div>
 
         <div
@@ -141,6 +163,12 @@
                   {{ s.label || t('fashionStylist.untitled') }}
                 </p>
                 <p
+                  v-if="s.formality != null"
+                  class="mt-0.5 text-xs text-gray-500 dark:text-zinc-400"
+                >
+                  {{ t('fashionStylist.formality', { value: s.formality }) }}
+                </p>
+                <p
                   v-if="s.rationale"
                   class="mt-1 text-sm text-gray-500 dark:text-zinc-400"
                 >
@@ -156,102 +184,149 @@
                 {{ savingIndex === idx ? t('outfit.saving') : t('fashionStylist.save') }}
               </button>
             </div>
-            <ul class="mt-3 flex flex-wrap gap-2">
-              <li
-                v-for="item in itemsFor(s.item_ids)"
-                :key="item.id"
-                class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 py-1 pl-1 pr-2.5 text-xs font-medium text-gray-800 dark:bg-zinc-800 dark:text-zinc-200"
-              >
-                <span class="size-6 overflow-hidden rounded-full bg-white ring-1 ring-gray-200 dark:bg-zinc-900 dark:ring-zinc-600">
-                  <img
-                    v-if="thumb(item)"
-                    :src="thumb(item)"
-                    alt=""
-                    class="size-full object-contain"
-                  />
-                </span>
-                {{ item.name }}
-              </li>
-            </ul>
+
+            <div
+              v-if="itemsFor(s.primary_item_ids).length"
+              class="mt-3"
+            >
+              <p class="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+                {{ t('fashionStylist.rolePrimary') }}
+              </p>
+              <ul class="flex flex-wrap gap-2">
+                <li
+                  v-for="item in itemsFor(s.primary_item_ids)"
+                  :key="`p-${item.id}`"
+                  class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 py-1 pl-1 pr-2.5 text-xs font-medium text-gray-800 dark:bg-zinc-800 dark:text-zinc-200"
+                >
+                  <span class="size-6 overflow-hidden rounded-full bg-white ring-1 ring-gray-200 dark:bg-zinc-900 dark:ring-zinc-600">
+                    <img
+                      v-if="thumb(item)"
+                      :src="thumb(item)"
+                      alt=""
+                      class="size-full object-contain"
+                    />
+                  </span>
+                  {{ item.name }}
+                </li>
+              </ul>
+            </div>
+
+            <div
+              v-if="itemsFor(s.supporting_item_ids).length"
+              class="mt-2.5"
+            >
+              <p class="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-zinc-500">
+                {{ t('fashionStylist.roleSupporting') }}
+              </p>
+              <ul class="flex flex-wrap gap-1.5">
+                <li
+                  v-for="item in itemsFor(s.supporting_item_ids)"
+                  :key="`s-${item.id}`"
+                  class="inline-flex items-center gap-1 rounded-full bg-gray-50 py-0.5 pl-0.5 pr-2 text-[11px] font-medium text-gray-500 ring-1 ring-gray-100 dark:bg-zinc-900/60 dark:text-zinc-400 dark:ring-zinc-800"
+                >
+                  <span class="size-5 overflow-hidden rounded-full bg-white/80 ring-1 ring-gray-100 dark:bg-zinc-900 dark:ring-zinc-700">
+                    <img
+                      v-if="thumb(item)"
+                      :src="thumb(item)"
+                      alt=""
+                      class="size-full object-contain opacity-80"
+                    />
+                  </span>
+                  {{ item.name }}
+                </li>
+              </ul>
+            </div>
+
+            <div
+              v-if="itemsFor(s.accessory_item_ids).length"
+              class="mt-2.5"
+            >
+              <p class="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-500">
+                {{ t('fashionStylist.roleAccessory') }}
+              </p>
+              <ul class="flex flex-wrap gap-1.5">
+                <li
+                  v-for="item in itemsFor(s.accessory_item_ids)"
+                  :key="`a-${item.id}`"
+                  class="inline-flex items-center gap-1 rounded-full border border-dashed border-gray-200 py-0.5 pl-0.5 pr-2 text-[11px] font-medium text-gray-600 dark:border-zinc-700 dark:text-zinc-300"
+                >
+                  <span class="size-5 overflow-hidden rounded-full bg-gray-50 ring-1 ring-gray-100 dark:bg-zinc-900 dark:ring-zinc-700">
+                    <img
+                      v-if="thumb(item)"
+                      :src="thumb(item)"
+                      alt=""
+                      class="size-full object-contain"
+                    />
+                  </span>
+                  {{ item.name }}
+                </li>
+              </ul>
+            </div>
           </article>
         </div>
 
         <div
-          v-if="shopping.length"
+          v-if="wardrobeNeeds.length"
           class="space-y-3 border-t border-gray-100 pt-4 dark:border-zinc-800"
         >
           <h3 class="text-sm font-semibold text-gray-900 dark:text-zinc-100">
-            {{ t('fashionStylist.shoppingTitle') }}
+            {{ t('fashionStylist.needsTitle') }}
           </h3>
           <p class="text-sm text-gray-500 dark:text-zinc-400">
-            {{ t('fashionStylist.shoppingSubtitle') }}
+            {{ t('fashionStylist.needsSubtitle') }}
           </p>
           <p
             v-if="!preferredStoresCount"
             class="text-xs text-gray-500 dark:text-zinc-400"
           >
-            {{ t('fashionStylist.shoppingNoStoresHint') }}
+            {{ t('fashionStylist.needsNoStoresHint') }}
           </p>
           <article
-            v-for="(buy, idx) in shopping"
-            :key="idx"
+            v-for="(need, idx) in wardrobeNeeds"
+            :key="need.need_id || idx"
             class="rounded-xl border border-dashed border-indigo-200 bg-indigo-50/40 p-4 dark:border-indigo-900 dark:bg-indigo-950/30"
           >
-            <p class="font-medium text-gray-900 dark:text-zinc-100">
-              {{ buy.title || buy.item_type }}
-              <span
-                v-if="buy.color"
-                class="font-normal text-gray-500 dark:text-zinc-400"
-              >· {{ buy.color }}</span>
-            </p>
-            <p
-              v-if="buy.details"
-              class="mt-1 text-sm text-gray-600 dark:text-zinc-400"
-            >
-              {{ buy.details }}
-            </p>
-            <p
-              v-if="buy.why"
-              class="mt-1 text-sm text-gray-600 dark:text-zinc-400"
-            >
-              {{ buy.why }}
-            </p>
-            <div
-              v-if="buy.example_products?.length"
-              class="mt-2"
-            >
-              <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
-                {{ t('fashionStylist.exampleProducts') }}
+            <div class="flex flex-wrap items-baseline gap-2">
+              <p class="font-medium text-gray-900 dark:text-zinc-100">
+                {{ needSpecLabel(need) }}
               </p>
-              <ul class="mt-1 space-y-0.5">
-                <li
-                  v-for="(ex, exIdx) in buy.example_products"
-                  :key="exIdx"
-                  class="text-sm text-gray-800 dark:text-zinc-200"
-                >
-                  „{{ ex }}”
-                </li>
-              </ul>
+              <span
+                class="rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-700 ring-1 ring-indigo-100 dark:bg-zinc-900 dark:text-indigo-300 dark:ring-indigo-900"
+              >
+                {{ t(`fashionStylist.priority.${need.priority || 'medium'}`) }}
+              </span>
             </div>
+            <p
+              v-if="need.reason"
+              class="mt-1 text-sm text-gray-600 dark:text-zinc-400"
+            >
+              {{ need.reason }}
+            </p>
+            <p
+              v-if="needDetailsText(need)"
+              class="mt-1 text-xs text-gray-500 dark:text-zinc-500"
+            >
+              {{ needDetailsText(need) }}
+            </p>
             <div class="mt-3 flex flex-wrap items-center gap-2">
               <span
-                v-if="buy.store || buy.stores?.length"
+                v-if="need.preferred_stores?.length"
                 class="text-xs font-medium text-indigo-700 dark:text-indigo-300"
               >
-                {{ buy.store || buy.stores[0] }}
+                {{ need.preferred_stores.join(', ') }}
               </span>
               <a
-                v-if="buy.search_url"
-                :href="buy.search_url"
+                v-if="need.search_url"
+                :href="need.search_url"
                 target="_blank"
                 rel="noopener noreferrer"
                 class="inline-flex rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500"
               >
-                {{ t('fashionStylist.searchInStore', { store: buy.store || buy.stores?.[0] || '' }) }}
+                {{ t('fashionStylist.searchHint', { store: need.preferred_stores?.[0] || '' }) }}
               </a>
               <a
-                v-else-if="buy.store_url"
-                :href="buy.store_url"
+                v-else-if="need.store_url"
+                :href="need.store_url"
                 target="_blank"
                 rel="noopener noreferrer"
                 class="text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400"
@@ -260,11 +335,11 @@
               </a>
             </div>
             <ul
-              v-if="itemsFor(buy.pairs_with_item_ids).length"
+              v-if="itemsFor(need.pairs_with_item_ids).length"
               class="mt-3 flex flex-wrap gap-2"
             >
               <li
-                v-for="item in itemsFor(buy.pairs_with_item_ids)"
+                v-for="item in itemsFor(need.pairs_with_item_ids)"
                 :key="item.id"
                 class="inline-flex items-center gap-1.5 rounded-full bg-white py-1 pl-1 pr-2.5 text-xs font-medium text-gray-800 ring-1 ring-gray-200 dark:bg-zinc-900 dark:text-zinc-200 dark:ring-zinc-700"
               >
@@ -325,7 +400,7 @@ const prims = computed(() => personasStore.prims)
 const suggesting = computed(() => fashionStore.suggesting)
 const analysis = computed(() => fashionStore.analysis)
 const suggestions = computed(() => fashionStore.suggestions)
-const shopping = computed(() => fashionStore.shopping)
+const wardrobeNeeds = computed(() => fashionStore.wardrobeNeeds)
 const preferredStoresCount = computed(() => (userStore.user?.fashionStores || []).length)
 const error = computed(() => localError.value || fashionStore.error)
 
@@ -341,6 +416,43 @@ function itemsFor(ids) {
   return (ids ?? [])
     .map((id) => itemsById.value.get(Number(id)))
     .filter(Boolean)
+}
+
+function derivedItemIds(suggestion) {
+  if (Array.isArray(suggestion?.item_ids) && suggestion.item_ids.length) {
+    return suggestion.item_ids.map(Number)
+  }
+  return [
+    ...(suggestion?.primary_item_ids ?? []),
+    ...(suggestion?.supporting_item_ids ?? []),
+    ...(suggestion?.accessory_item_ids ?? []),
+  ].map(Number)
+}
+
+function needSpecLabel(need) {
+  const parts = [
+    need.item_type,
+    ...(need.subtype ?? []).slice(0, 2),
+    ...(need.colors ?? []).slice(0, 2),
+  ].filter(Boolean)
+  return parts.join(' · ') || t('fashionStylist.untitledNeed')
+}
+
+function needDetailsText(need) {
+  const d = need?.details
+  if (!d || typeof d !== 'object') return ''
+  const bits = []
+  if (d.denier && (d.denier.min != null || d.denier.max != null)) {
+    bits.push(`${d.denier.min ?? '?'}–${d.denier.max ?? '?'} DEN`)
+  }
+  if (d.opacity?.length) bits.push(d.opacity.join('/'))
+  if (d.finish?.length) bits.push(d.finish.join('/'))
+  if (d.heel_height_cm && (d.heel_height_cm.min != null || d.heel_height_cm.max != null)) {
+    bits.push(`${d.heel_height_cm.min ?? '?'}–${d.heel_height_cm.max ?? '?'} cm heel`)
+  }
+  if (d.toe?.length) bits.push(d.toe.join('/'))
+  if (d.notes) bits.push(d.notes)
+  return bits.join(' · ')
 }
 
 function thumb(item) {
@@ -398,7 +510,7 @@ async function saveSuggestion(suggestion, idx) {
       label: suggestion.label?.trim() || null,
       occasion: suggestion.occasion || form.occasion || null,
       notes: suggestion.notes || suggestion.rationale || null,
-      item_ids: (suggestion.item_ids ?? []).map(Number),
+      item_ids: derivedItemIds(suggestion),
       source: 'llm',
     })
     emit('saved')

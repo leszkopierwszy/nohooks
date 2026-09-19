@@ -29,6 +29,7 @@ class Item extends Model
         'category_id',
         'body_zone',
         'wear_layer',
+        'garment_attributes',
         'purchase_price',
         'purchase_currency',
         'purchase_price_pln',
@@ -44,6 +45,7 @@ class Item extends Model
         'gift' => 'boolean',
         'fits_all_personas' => 'boolean',
         'fits_persona_ids' => 'array',
+        'garment_attributes' => 'array',
         'like_rating' => 'integer',
     ];
 

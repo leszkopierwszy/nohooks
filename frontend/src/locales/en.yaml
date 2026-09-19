@@ -345,22 +345,29 @@ account:
 fashionStylist:
   open: AI Stylist
   title: AI Stylist
-  subtitle: How many outfits you can make from your wardrobe — and what to buy next (Zara, H&M…).
+  subtitle: Outfits from your wardrobe first — and structured wardrobe needs only when something is missing.
   notes: Preferences
-  notesPlaceholder: e.g. warmer layers, no heels…
+  notesPlaceholder: e.g. warmer layers, no heels, evening wedding…
   suggest: Analyze wardrobe
   thinking: Thinking…
   analysisTitle: Your wardrobe
-  possibleSets: About {count} complete outfits from what you own
+  possibleSets: About {count} coherent outfits from what you own
   results: Outfit ideas from your closet
-  shoppingTitle: What to buy next
-  shoppingSubtitle: Specific product ideas for your preferred stores — with example listing titles and a search link.
-  shoppingNoStoresHint: Tip — add preferred stores under Style → Brands so suggestions match shops you like.
-  exampleProducts: Example listings
-  searchInStore: Search on {store}
+  rolePrimary: Main pieces
+  roleSupporting: Supporting
+  roleAccessory: Accessories
+  formality: Formality {value}/10
+  needsTitle: Wardrobe needs
+  needsSubtitle: Product specifications for a future search — not claims that a store currently has these items.
+  needsNoStoresHint: Tip — add preferred stores under Style → Brands so search hints can prioritize shops you like.
+  searchHint: Search hint on {store}
   openStore: Open store
-  stores: Stores
+  priority:
+    low: Low
+    medium: Medium
+    high: High
   untitled: Suggested look
+  untitledNeed: Wardrobe need
   save: Save outfit
 
 auth:
@@ -811,6 +818,24 @@ item:
   wearLayer: Layer
   wearLayerAuto: Automatic (from type)
   wearLayerHint: outer = coat/jacket, base = tee/undershirt.
+  hosiery:
+    title: Hosiery details
+    hint: Optional structured properties for tights (used by the AI stylist).
+    denier: Denier (DEN)
+    opacityLabel: Opacity
+    finishLabel: Finish
+    pattern: Pattern
+    toe: Toe
+    waist: Waist
+    opacity:
+      ultra_sheer: Ultra sheer
+      sheer: Sheer
+      semi_opaque: Semi-opaque
+      opaque: Opaque
+    finish:
+      matte: Matte
+      satin: Satin
+      glossy: Glossy
   bodyZones:
     head: Head / neck
     torso: Torso

@@ -372,22 +372,30 @@
   "fashionStylist": {
     "open": "Stylista AI",
     "title": "Stylista AI",
-    "subtitle": "Ile outfitów złożysz z szafy — i co dokupić (Zara, H&M…).",
+    "subtitle": "Najpierw outfity z Twojej szafy — i strukturalne braki tylko wtedy, gdy czegoś naprawdę brakuje.",
     "notes": "Preferencje",
-    "notesPlaceholder": "np. cieplejsze warstwy, bez szpilek…",
+    "notesPlaceholder": "np. cieplejsze warstwy, bez szpilek, wieczorne wesele…",
     "suggest": "Przeanalizuj szafę",
     "thinking": "Myślę…",
     "analysisTitle": "Twoja szafa",
-    "possibleSets": "Około {count} kompletnych outfitów z tego, co masz",
+    "possibleSets": "Około {count} spójnych outfitów z tego, co masz",
     "results": "Propozycje z Twojej szafy",
-    "shoppingTitle": "Co dokupić",
-    "shoppingSubtitle": "Konkretne propozycje produktów do Twoich sklepów — z przykładowymi tytułami ofert i linkiem do wyszukiwania.",
-    "shoppingNoStoresHint": "Wskazówka — dodaj ulubione sklepy w Style → Marki, żeby propozycje trafiały w Twoje marki.",
-    "exampleProducts": "Przykładowe oferty",
-    "searchInStore": "Szukaj w {store}",
+    "rolePrimary": "Główne elementy",
+    "roleSupporting": "Wspierające",
+    "roleAccessory": "Akcesoria",
+    "formality": "Formalność {value}/10",
+    "needsTitle": "Braki w szafie",
+    "needsSubtitle": "Specyfikacje produktów do przyszłego wyszukiwania — nie twierdzenia, że sklep ma je teraz na stanie.",
+    "needsNoStoresHint": "Wskazówka — dodaj ulubione sklepy w Style → Marki, żeby podpowiedzi wyszukiwania trafiały w Twoje marki.",
+    "searchHint": "Podpowiedź wyszukiwania w {store}",
     "openStore": "Otwórz sklep",
-    "stores": "Sklepy",
+    "priority": {
+      "low": "Niski",
+      "medium": "Średni",
+      "high": "Wysoki"
+    },
     "untitled": "Proponowany look",
+    "untitledNeed": "Potrzeba",
     "save": "Zapisz outfit"
   },
   "auth": {
@@ -874,6 +882,27 @@
     "wearLayer": "Warstwa",
     "wearLayerAuto": "Automatycznie (z typu)",
     "wearLayerHint": "outer = wierzch (płaszcz), base = spód (koszulka).",
+    "hosiery": {
+      "title": "Szczegóły rajstop",
+      "hint": "Opcjonalne właściwości strukturalne rajstop (dla stylisty AI).",
+      "denier": "Denier (DEN)",
+      "opacityLabel": "Krycie",
+      "finishLabel": "Wykończenie",
+      "pattern": "Wzór",
+      "toe": "Nosek",
+      "waist": "Pas",
+      "opacity": {
+        "ultra_sheer": "Ultra sheer",
+        "sheer": "Sheer",
+        "semi_opaque": "Półkryjące",
+        "opaque": "Kryjące"
+      },
+      "finish": {
+        "matte": "Matowe",
+        "satin": "Satyna",
+        "glossy": "Błyszczące"
+      }
+    },
     "bodyZones": {
       "head": "Góra (głowa / szyja)",
       "torso": "Środek (tors)",

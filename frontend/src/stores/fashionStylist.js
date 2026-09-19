@@ -9,7 +9,7 @@ export const useFashionStylistStore = defineStore('fashionStylist', {
     error: '',
     analysis: null,
     suggestions: [],
-    shopping: [],
+    wardrobeNeeds: [],
   }),
 
   actions: {
@@ -31,7 +31,7 @@ export const useFashionStylistStore = defineStore('fashionStylist', {
       this.error = ''
       this.analysis = null
       this.suggestions = []
-      this.shopping = []
+      this.wardrobeNeeds = []
       try {
         const data = await apiRequest('/fashion-stylist/suggest', {
           method: 'POST',
@@ -44,7 +44,7 @@ export const useFashionStylistStore = defineStore('fashionStylist', {
         })
         this.analysis = data?.analysis ?? null
         this.suggestions = data?.suggestions ?? []
-        this.shopping = data?.shopping ?? []
+        this.wardrobeNeeds = data?.wardrobe_needs ?? []
         return data
       } catch (err) {
         this.error = err.message ?? String(err)
@@ -57,7 +57,7 @@ export const useFashionStylistStore = defineStore('fashionStylist', {
     clearSuggestions() {
       this.analysis = null
       this.suggestions = []
-      this.shopping = []
+      this.wardrobeNeeds = []
       this.error = ''
     },
   },

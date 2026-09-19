@@ -6,6 +6,7 @@ use App\Models\Entity;
 use App\Models\Item;
 use App\Models\User;
 use App\Support\FashionCollection;
+use App\Support\GarmentAttributes;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -25,9 +26,25 @@ class FashionStylistService
 
     /**
      * @return array{
-     *   analysis: array{wardrobe_overview: ?string, possible_sets_estimate: ?int, possible_sets_note: ?string},
-     *   suggestions: list<array{label: ?string, occasion: ?string, notes: ?string, item_ids: list<int>, rationale: ?string}>,
-     *   shopping: list<array{item_type: string, color: ?string, why: ?string, stores: list<string>, pairs_with_item_ids: list<int>}>
+     *   analysis: array{
+     *     wardrobe_overview: ?string,
+     *     strengths: list<string>,
+     *     limitations: list<string>,
+     *     possible_sets_estimate: ?int,
+     *     possible_sets_note: ?string
+     *   },
+     *   suggestions: list<array{
+     *     label: ?string,
+     *     occasion: ?string,
+     *     formality: ?float,
+     *     notes: ?string,
+     *     primary_item_ids: list<int>,
+     *     supporting_item_ids: list<int>,
+     *     accessory_item_ids: list<int>,
+     *     item_ids: list<int>,
+     *     rationale: ?string
+     *   }>,
+     *   wardrobe_needs: list<array<string, mixed>>
      * }
      */
     public function suggest(
@@ -66,24 +83,37 @@ class FashionStylistService
             if (! is_array($row)) {
                 continue;
             }
-            $ids = [];
-            foreach ($row['item_ids'] ?? [] as $id) {
-                $id = (int) $id;
-                if (in_array($id, $allowedIds, true)) {
-                    $ids[] = $id;
-                }
+            $primary = $this->filterCatalogIds($row['primary_item_ids'] ?? [], $allowedIds);
+            $supporting = $this->filterCatalogIds($row['supporting_item_ids'] ?? [], $allowedIds);
+            $accessory = $this->filterCatalogIds($row['accessory_item_ids'] ?? [], $allowedIds);
+
+            // Legacy fallback: flat item_ids only when role arrays absent.
+            if ($primary === [] && $supporting === [] && $accessory === [] && isset($row['item_ids'])) {
+                $primary = $this->filterCatalogIds($row['item_ids'] ?? [], $allowedIds);
             }
-            $ids = array_values(array_unique($ids));
-            if (count($ids) < 1) {
+
+            if ($primary === [] && $supporting === [] && $accessory === []) {
                 continue;
             }
+            // Require at least one primary piece when any roles were used correctly;
+            // if only supporting somehow arrived alone, reject.
+            if ($primary === []) {
+                continue;
+            }
+
+            $itemIds = array_values(array_unique([...$primary, ...$supporting, ...$accessory]));
+
             $suggestions[] = [
                 'label' => isset($row['label']) ? (string) $row['label'] : null,
-                'occasion' => isset($row['occasion']) && $row['occasion'] !== ''
+                'occasion' => isset($row['occasion']) && $row['occasion'] !== '' && $row['occasion'] !== null
                     ? (string) $row['occasion']
                     : ($occasion ?: null),
-                'notes' => isset($row['notes']) ? (string) $row['notes'] : null,
-                'item_ids' => $ids,
+                'formality' => $this->clampFormality($row['formality'] ?? null),
+                'notes' => isset($row['notes']) && $row['notes'] !== null ? (string) $row['notes'] : null,
+                'primary_item_ids' => $primary,
+                'supporting_item_ids' => $supporting,
+                'accessory_item_ids' => $accessory,
+                'item_ids' => $itemIds,
                 'rationale' => isset($row['rationale']) ? (string) $row['rationale'] : null,
             ];
         }
@@ -98,91 +128,233 @@ class FashionStylistService
             'wardrobe_overview' => isset($analysisRaw['wardrobe_overview'])
                 ? (string) $analysisRaw['wardrobe_overview']
                 : ($summary['narrative'] ?? null),
+            'strengths' => $this->stringList($analysisRaw['strengths'] ?? []),
+            'limitations' => $this->stringList($analysisRaw['limitations'] ?? []),
             'possible_sets_estimate' => is_numeric($estimate) ? (int) $estimate : null,
             'possible_sets_note' => isset($analysisRaw['possible_sets_note'])
                 ? (string) $analysisRaw['possible_sets_note']
                 : null,
         ];
 
-        $shopping = [];
-        foreach ($payload['shopping'] ?? [] as $row) {
-            if (! is_array($row)) {
-                continue;
+        $wardrobeNeeds = [];
+        foreach ($payload['wardrobe_needs'] ?? [] as $row) {
+            $normalized = $this->normalizeWardrobeNeed($row, $allowedIds, $preferredStores, $gender);
+            if ($normalized !== null) {
+                $wardrobeNeeds[] = $normalized;
             }
-            $title = trim((string) ($row['title'] ?? ''));
-            $itemType = trim((string) ($row['item_type'] ?? ''));
-            if ($title === '' && $itemType === '') {
-                continue;
-            }
-            if ($title === '') {
-                $title = $itemType;
-            }
-            // Reject overly vague category-only titles.
-            $vague = preg_match('/^(tops?|pants?|trousers?|shoes?|dresses?|skirts?|jackets?|spodnie|buty|sukienki|góra|dół)$/iu', $title);
-            if ($vague && trim((string) ($row['details'] ?? '')) === '') {
-                continue;
-            }
-
-            $pairIds = [];
-            foreach ($row['pairs_with_item_ids'] ?? [] as $id) {
-                $id = (int) $id;
-                if (in_array($id, $allowedIds, true)) {
-                    $pairIds[] = $id;
-                }
-            }
-            $stores = [];
-            foreach ($row['stores'] ?? [] as $store) {
-                $store = trim((string) $store);
-                if ($store !== '') {
-                    $stores[] = $store;
-                }
-            }
-            $primaryStore = trim((string) ($row['store'] ?? ''));
-            if ($primaryStore !== '' && ! in_array($primaryStore, $stores, true)) {
-                array_unshift($stores, $primaryStore);
-            }
-            $storeUrl = trim((string) ($row['store_url'] ?? ''));
-            if ($storeUrl === '') {
-                $storeUrl = $this->matchPreferredStoreUrl($preferredStores, $stores[0] ?? $primaryStore) ?? '';
-            }
-            $examples = [];
-            foreach ($row['example_products'] ?? [] as $ex) {
-                $ex = trim((string) $ex);
-                if ($ex !== '') {
-                    $examples[] = $ex;
-                }
-            }
-            $searchQuery = trim((string) ($row['search_query'] ?? ''));
-            if ($searchQuery === '') {
-                $searchQuery = trim($title.' '.((string) ($row['color'] ?? '')));
-            }
-            $searchUrl = $storeUrl !== ''
-                ? $this->buildStoreSearchUrl($storeUrl, $searchQuery, $gender)
-                : null;
-
-            $shopping[] = [
-                'title' => $title,
-                'item_type' => $itemType !== '' ? $itemType : null,
-                'color' => isset($row['color']) && $row['color'] !== '' ? (string) $row['color'] : null,
-                'details' => isset($row['details']) && trim((string) $row['details']) !== ''
-                    ? (string) $row['details']
-                    : null,
-                'example_products' => array_values(array_unique(array_slice($examples, 0, 3))),
-                'search_query' => $searchQuery !== '' ? $searchQuery : null,
-                'search_url' => $searchUrl,
-                'why' => isset($row['why']) ? (string) $row['why'] : null,
-                'store' => $primaryStore !== '' ? $primaryStore : ($stores[0] ?? null),
-                'store_url' => $storeUrl !== '' ? $storeUrl : null,
-                'stores' => array_values(array_unique($stores)),
-                'pairs_with_item_ids' => array_values(array_unique($pairIds)),
-            ];
         }
 
         return [
             'analysis' => $analysis,
             'suggestions' => array_slice($suggestions, 0, 3),
-            'shopping' => array_slice($shopping, 0, 6),
+            'wardrobe_needs' => array_slice($wardrobeNeeds, 0, 8),
         ];
+    }
+
+    /**
+     * @param  list<mixed>  $ids
+     * @param  list<int>  $allowedIds
+     * @return list<int>
+     */
+    private function filterCatalogIds(array $ids, array $allowedIds): array
+    {
+        $out = [];
+        foreach ($ids as $id) {
+            $id = (int) $id;
+            if (in_array($id, $allowedIds, true)) {
+                $out[] = $id;
+            }
+        }
+
+        return array_values(array_unique($out));
+    }
+
+    private function clampFormality(mixed $value): ?float
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        if (! is_numeric($value)) {
+            return null;
+        }
+        $n = (float) $value;
+        if ($n < 0) {
+            $n = 0;
+        }
+        if ($n > 10) {
+            $n = 10;
+        }
+
+        return $n;
+    }
+
+    /**
+     * @param  mixed  $raw
+     * @return list<string>
+     */
+    private function stringList(mixed $raw): array
+    {
+        if (! is_array($raw)) {
+            return [];
+        }
+        $out = [];
+        foreach ($raw as $item) {
+            $s = trim((string) $item);
+            if ($s !== '') {
+                $out[] = $s;
+            }
+        }
+
+        return array_values($out);
+    }
+
+    /**
+     * @param  mixed  $row
+     * @param  list<int>  $allowedIds
+     * @param  list<array{name: string, brand: ?string, url: string}>  $preferredStores
+     * @param  'female'|'male'|null  $gender
+     * @return array<string, mixed>|null
+     */
+    private function normalizeWardrobeNeed(
+        mixed $row,
+        array $allowedIds,
+        array $preferredStores,
+        ?string $gender,
+    ): ?array {
+        if (! is_array($row)) {
+            return null;
+        }
+
+        $itemType = trim((string) ($row['item_type'] ?? ''));
+        $reason = trim((string) ($row['reason'] ?? ''));
+        if ($itemType === '' || $reason === '') {
+            return null;
+        }
+
+        $needId = trim((string) ($row['need_id'] ?? ''));
+        if ($needId === '') {
+            $needId = 'need_'.substr(sha1($itemType.'|'.$reason), 0, 8);
+        }
+
+        $priority = strtolower(trim((string) ($row['priority'] ?? 'medium')));
+        if (! in_array($priority, ['low', 'medium', 'high'], true)) {
+            $priority = 'medium';
+        }
+
+        $pairIds = $this->filterCatalogIds($row['pairs_with_item_ids'] ?? [], $allowedIds);
+        $stores = $this->stringList($row['preferred_stores'] ?? []);
+        if ($stores === [] && $preferredStores !== []) {
+            $stores = array_map(fn ($s) => $s['name'], array_slice($preferredStores, 0, 3));
+        }
+
+        $formality = null;
+        if (is_array($row['formality'] ?? null)) {
+            $min = $this->clampFormality($row['formality']['min'] ?? null);
+            $max = $this->clampFormality($row['formality']['max'] ?? null);
+            if ($min !== null || $max !== null) {
+                $formality = ['min' => $min, 'max' => $max];
+            }
+        }
+
+        $details = $this->normalizeNeedDetails(is_array($row['details'] ?? null) ? $row['details'] : null);
+
+        $searchQuery = trim((string) ($row['search_query'] ?? ''));
+        if ($searchQuery === '') {
+            $searchQuery = trim(implode(' ', array_filter([
+                $itemType,
+                implode(' ', $this->stringList($row['colors'] ?? [])),
+                implode(' ', $this->stringList($row['subtype'] ?? [])),
+            ])));
+        }
+
+        $primaryStoreName = $stores[0] ?? ($preferredStores[0]['name'] ?? null);
+        $storeUrl = $this->matchPreferredStoreUrl($preferredStores, $primaryStoreName);
+        $searchUrl = ($storeUrl && $searchQuery !== '')
+            ? $this->buildStoreSearchUrl($storeUrl, $searchQuery, $gender)
+            : null;
+
+        return [
+            'need_id' => $needId,
+            'item_type' => $itemType,
+            'subtype' => $this->stringList($row['subtype'] ?? []),
+            'colors' => $this->stringList($row['colors'] ?? []),
+            'formality' => $formality,
+            'styles' => $this->stringList($row['styles'] ?? []),
+            'materials' => $this->stringList($row['materials'] ?? []),
+            'details' => $details,
+            'avoid' => $this->stringList($row['avoid'] ?? []),
+            'reason' => $reason,
+            'priority' => $priority,
+            'pairs_with_item_ids' => $pairIds,
+            'preferred_stores' => $stores,
+            'search_query' => $searchQuery !== '' ? $searchQuery : null,
+            'search_url' => $searchUrl,
+            'store_url' => $storeUrl,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $raw
+     * @return array<string, mixed>|null
+     */
+    private function normalizeNeedDetails(?array $raw): ?array
+    {
+        if ($raw === null) {
+            return null;
+        }
+
+        $out = [];
+
+        if (is_array($raw['denier'] ?? null)) {
+            $min = isset($raw['denier']['min']) && is_numeric($raw['denier']['min'])
+                ? (float) $raw['denier']['min'] : null;
+            $max = isset($raw['denier']['max']) && is_numeric($raw['denier']['max'])
+                ? (float) $raw['denier']['max'] : null;
+            if ($min !== null || $max !== null) {
+                $out['denier'] = ['min' => $min, 'max' => $max];
+            }
+        }
+
+        $opacity = $this->stringList($raw['opacity'] ?? []);
+        $opacity = array_values(array_filter(
+            $opacity,
+            fn ($v) => in_array($v, GarmentAttributes::OPACITY, true)
+        ));
+        if ($opacity !== []) {
+            $out['opacity'] = $opacity;
+        }
+
+        $finish = $this->stringList($raw['finish'] ?? []);
+        $finish = array_values(array_filter(
+            $finish,
+            fn ($v) => in_array($v, GarmentAttributes::FINISH, true)
+        ));
+        if ($finish !== []) {
+            $out['finish'] = $finish;
+        }
+
+        if (is_array($raw['heel_height_cm'] ?? null)) {
+            $min = isset($raw['heel_height_cm']['min']) && is_numeric($raw['heel_height_cm']['min'])
+                ? (float) $raw['heel_height_cm']['min'] : null;
+            $max = isset($raw['heel_height_cm']['max']) && is_numeric($raw['heel_height_cm']['max'])
+                ? (float) $raw['heel_height_cm']['max'] : null;
+            if ($min !== null || $max !== null) {
+                $out['heel_height_cm'] = ['min' => $min, 'max' => $max];
+            }
+        }
+
+        $toe = $this->stringList($raw['toe'] ?? []);
+        if ($toe !== []) {
+            $out['toe'] = $toe;
+        }
+
+        foreach (['pattern', 'waist', 'notes'] as $key) {
+            if (isset($raw[$key]) && $raw[$key] !== null && trim((string) $raw[$key]) !== '') {
+                $out[$key] = trim((string) $raw[$key]);
+            }
+        }
+
+        return $out === [] ? null : $out;
     }
 
     /**
@@ -340,7 +512,17 @@ class FashionStylistService
                 continue;
             }
 
-            $catalog[] = [
+            $attrs = GarmentAttributes::forCatalog(
+                $item->category,
+                is_array($item->garment_attributes) ? $item->garment_attributes : null
+            );
+            $role = GarmentAttributes::visibilityRole(
+                $item->category,
+                $item->body_zone,
+                $item->wear_layer
+            );
+
+            $row = [
                 'id' => (int) $item->id,
                 'name' => $item->name,
                 'brand' => $item->brand,
@@ -349,8 +531,13 @@ class FashionStylistService
                 'collection' => $groupName,
                 'body_zone' => $item->body_zone,
                 'wear_layer' => $item->wear_layer,
+                'visibility_role' => $role,
                 'season' => $item->season,
             ];
+            if ($attrs !== null) {
+                $row['attributes'] = $attrs;
+            }
+            $catalog[] = $row;
         }
 
         return $catalog;
@@ -358,27 +545,31 @@ class FashionStylistService
 
     /**
      * @param  list<array<string, mixed>>  $catalog
-     * @return array{total_items: int, by_body_zone: array<string, int>, by_category: array<string, int>, by_color: array<string, int>, narrative: string}
+     * @return array{total_items: int, by_body_zone: array<string, int>, by_category: array<string, int>, by_color: array<string, int>, by_visibility_role: array<string, int>, narrative: string}
      */
     private function buildWardrobeSummary(array $catalog): array
     {
         $byZone = [];
         $byCategory = [];
         $byColor = [];
+        $byRole = [];
 
         foreach ($catalog as $row) {
             $zone = strtolower(trim((string) ($row['body_zone'] ?? ''))) ?: 'other';
             $category = trim((string) ($row['category'] ?? '')) ?: 'other';
             $color = trim((string) ($row['color'] ?? '')) ?: 'unknown';
+            $role = trim((string) ($row['visibility_role'] ?? '')) ?: 'primary';
 
             $byZone[$zone] = ($byZone[$zone] ?? 0) + 1;
             $byCategory[$category] = ($byCategory[$category] ?? 0) + 1;
             $byColor[$color] = ($byColor[$color] ?? 0) + 1;
+            $byRole[$role] = ($byRole[$role] ?? 0) + 1;
         }
 
         arsort($byZone);
         arsort($byCategory);
         arsort($byColor);
+        arsort($byRole);
 
         $parts = [];
         foreach ($byCategory as $name => $count) {
@@ -398,6 +589,7 @@ class FashionStylistService
             'by_body_zone' => $byZone,
             'by_category' => $byCategory,
             'by_color' => $byColor,
+            'by_visibility_role' => $byRole,
             'narrative' => $narrative,
         ];
     }
@@ -453,14 +645,23 @@ class FashionStylistService
         $userMsg = [
             'persona' => $persona,
             'occasion' => $occasion,
+            'occasion_context' => [
+                'type' => $occasion,
+                'subtype' => null,
+                'setting' => null,
+                'time_of_day' => null,
+                'formality' => null,
+                'desired_impression' => [],
+                'constraints' => [],
+            ],
             'notes' => $notes,
             'wardrobe_summary' => $summary,
             'preferred_stores' => $preferredStores,
             'catalog' => $catalog,
             'ask' => [
-                'how_many_complete_outfits_can_i_compose_from_owned_items',
-                'propose_concrete_outfits_from_catalog',
-                'what_should_i_buy_next_preferring_my_preferred_stores_and_brands',
+                'estimate_coherent_wearable_outfits_from_owned_items',
+                'propose_2_to_3_outfits_with_primary_supporting_accessory_roles',
+                'identify_meaningful_wardrobe_needs_only_when_gaps_exist',
             ],
         ];
 
@@ -508,10 +709,11 @@ class FashionStylistService
             ['role' => 'system', 'content' => $system],
             ['role' => 'user', 'content' => $userContent],
         ];
+        $responseFormat = FashionStylistResponseSchema::chatResponseFormat();
         $requestBody = [
             'model' => $model,
             'temperature' => 0.7,
-            'response_format' => ['type' => 'json_object'],
+            'response_format' => $responseFormat,
             'messages' => $messages,
         ];
         $started = microtime(true);
@@ -520,7 +722,13 @@ class FashionStylistService
             'invocation_mode' => 'chat',
             'messages' => $messages,
             'temperature' => 0.7,
-            'response_format' => ['type' => 'json_object'],
+            'response_format' => [
+                'type' => 'json_schema',
+                'json_schema' => [
+                    'name' => FashionStylistResponseSchema::NAME,
+                    'strict' => true,
+                ],
+            ],
         ];
 
         try {
@@ -595,6 +803,7 @@ class FashionStylistService
         }
 
         $userContent = json_encode($userMsg, JSON_UNESCAPED_UNICODE);
+        $textFormat = FashionStylistResponseSchema::responsesTextFormat();
         $requestBody = [
             'prompt' => ['id' => $agentId],
             'input' => [
@@ -604,7 +813,7 @@ class FashionStylistService
                 ],
             ],
             'text' => [
-                'format' => ['type' => 'json_object'],
+                'format' => $textFormat,
             ],
             'store' => false,
         ];
@@ -619,7 +828,13 @@ class FashionStylistService
             'invocation_mode' => 'agent',
             'agent_id' => $agentId,
             'input' => $requestBody['input'],
-            'text' => $requestBody['text'],
+            'text' => [
+                'format' => [
+                    'type' => 'json_schema',
+                    'name' => FashionStylistResponseSchema::NAME,
+                    'strict' => true,
+                ],
+            ],
             'model' => $model,
         ];
 

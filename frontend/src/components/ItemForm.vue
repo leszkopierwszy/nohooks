@@ -333,6 +333,105 @@
       </div>
     </div>
 
+    <div
+      v-if="showHosieryAttrs"
+      class="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4"
+    >
+      <p class="text-sm font-medium text-gray-800">{{ t('item.hosiery.title') }}</p>
+      <p class="text-xs text-gray-500">{{ t('item.hosiery.hint') }}</p>
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div>
+          <label :for="`${idPrefix}-denier`" class="block text-sm font-medium text-gray-700">
+            {{ t('item.hosiery.denier') }}
+          </label>
+          <input
+            :id="`${idPrefix}-denier`"
+            v-model="form.hosiery.denier"
+            type="number"
+            min="0"
+            max="200"
+            step="1"
+            placeholder="20"
+            class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          />
+        </div>
+        <div>
+          <label :for="`${idPrefix}-opacity`" class="block text-sm font-medium text-gray-700">
+            {{ t('item.hosiery.opacityLabel') }}
+          </label>
+          <select
+            :id="`${idPrefix}-opacity`"
+            v-model="form.hosiery.opacity"
+            class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          >
+            <option value="">—</option>
+            <option
+              v-for="opt in HOSIERY_OPACITY_OPTIONS"
+              :key="opt.value"
+              :value="opt.value"
+            >
+              {{ t(opt.labelKey) }}
+            </option>
+          </select>
+        </div>
+        <div>
+          <label :for="`${idPrefix}-finish`" class="block text-sm font-medium text-gray-700">
+            {{ t('item.hosiery.finishLabel') }}
+          </label>
+          <select
+            :id="`${idPrefix}-finish`"
+            v-model="form.hosiery.finish"
+            class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          >
+            <option value="">—</option>
+            <option
+              v-for="opt in HOSIERY_FINISH_OPTIONS"
+              :key="opt.value"
+              :value="opt.value"
+            >
+              {{ t(opt.labelKey) }}
+            </option>
+          </select>
+        </div>
+        <div>
+          <label :for="`${idPrefix}-hosiery-pattern`" class="block text-sm font-medium text-gray-700">
+            {{ t('item.hosiery.pattern') }}
+          </label>
+          <input
+            :id="`${idPrefix}-hosiery-pattern`"
+            v-model="form.hosiery.pattern"
+            type="text"
+            maxlength="64"
+            class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          />
+        </div>
+        <div>
+          <label :for="`${idPrefix}-hosiery-toe`" class="block text-sm font-medium text-gray-700">
+            {{ t('item.hosiery.toe') }}
+          </label>
+          <input
+            :id="`${idPrefix}-hosiery-toe`"
+            v-model="form.hosiery.toe"
+            type="text"
+            maxlength="64"
+            class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          />
+        </div>
+        <div>
+          <label :for="`${idPrefix}-hosiery-waist`" class="block text-sm font-medium text-gray-700">
+            {{ t('item.hosiery.waist') }}
+          </label>
+          <input
+            :id="`${idPrefix}-hosiery-waist`"
+            v-model="form.hosiery.waist"
+            type="text"
+            maxlength="64"
+            class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          />
+        </div>
+      </div>
+    </div>
+
     <div>
       <label :for="`${idPrefix}-description`" class="block text-sm font-medium text-gray-700">Opis</label>
       <textarea
@@ -819,6 +918,14 @@ import {
   inferBodyPlacement,
 } from '../constants/itemBodyPlacement'
 import {
+  HOSIERY_FINISH_OPTIONS,
+  HOSIERY_OPACITY_OPTIONS,
+  emptyHosieryFormAttrs,
+  hosieryFormFromAttributes,
+  isHosieryType,
+  normalizeGarmentAttributesForStorage,
+} from '../constants/itemGarmentAttributes'
+import {
   CLOTHING_SIZES,
   isClothingCollection,
   isShoesCollection,
@@ -971,6 +1078,7 @@ const form = reactive({
   category: '',
   body_zone: '',
   wear_layer: '',
+  hosiery: emptyHosieryFormAttrs(),
   description: '',
   color: '',
   season: '',
@@ -1014,6 +1122,10 @@ const clothingTypeOptions = computed(() => {
   clothingTypesVersion.value
   return getAllClothingTypes(form.category ? [form.category] : [])
 })
+
+const showHosieryAttrs = computed(
+  () => sizeKind.value === 'clothing' && isHosieryType(form.category),
+)
 
 const defaultPersonaOptions = computed(() => {
   if (form.fits_all_personas) {
@@ -2152,6 +2264,7 @@ function reset() {
   form.category = ''
   form.body_zone = ''
   form.wear_layer = ''
+  form.hosiery = emptyHosieryFormAttrs()
   form.description = ''
   form.color = ''
   form.season = ''
@@ -2188,6 +2301,7 @@ function loadFromItem(item) {
       : item.category ?? ''
   form.body_zone = item.body_zone ?? ''
   form.wear_layer = item.wear_layer ?? ''
+  form.hosiery = hosieryFormFromAttributes(item.garment_attributes)
   form.gift = Boolean(item.gift)
   form.purchase_price = item.gift ? '' : (item.purchase_price ?? '')
   form.purchase_currency = item.gift
@@ -2259,6 +2373,12 @@ function buildPayload() {
         : form.category.trim() || null,
     body_zone: form.body_zone || null,
     wear_layer: form.wear_layer || null,
+    // JSON string so FormData does not coerce objects; null clears attrs for non-hosiery.
+    garment_attributes: JSON.stringify(
+      sizeKind.value === 'clothing'
+        ? normalizeGarmentAttributesForStorage(form.category, form.hosiery)
+        : null,
+    ),
     source_url: form.source_url.trim() || null,
     description: form.description.trim() || null,
     color: normalizeColorForStorage(form.color),

@@ -10,6 +10,7 @@ use App\Services\ItemDuplicationService;
 use App\Services\ItemImageOrientationService;
 use App\Services\LangfuseTraceService;
 use App\Support\ClothingBodyPlacement;
+use App\Support\GarmentAttributes;
 use App\Models\ItemImage;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -211,6 +212,7 @@ class ItemController extends Controller
             'category' => 'nullable|string|max:255',
             'body_zone' => ($creating ? 'nullable' : 'sometimes|nullable').'|string|in:head,torso,legs,feet,full',
             'wear_layer' => ($creating ? 'nullable' : 'sometimes|nullable').'|string|in:outer,mid,base,accent',
+            'garment_attributes' => ($creating ? 'nullable' : 'sometimes|nullable').'|array',
             'description' => 'nullable|string',
             'color' => 'nullable|string|max:64',
             'season' => 'nullable|string|max:32',
@@ -236,12 +238,62 @@ class ItemController extends Controller
             'image_order_slots' => 'nullable|string',
         ];
 
+        $this->prepareGarmentAttributesInput($request);
+
         $data = $request->validate($rules);
 
-        return $this->applyBodyPlacement(
-            $this->normalizePersonaFit($data),
-            $creating
+        return $this->applyGarmentAttributes(
+            $this->applyBodyPlacement(
+                $this->normalizePersonaFit($data),
+                $creating
+            )
         );
+    }
+
+    private function prepareGarmentAttributesInput(Request $request): void
+    {
+        if (! $request->has('garment_attributes')) {
+            return;
+        }
+
+        $value = $request->input('garment_attributes');
+        if ($value === '' || $value === null) {
+            $request->merge(['garment_attributes' => null]);
+
+            return;
+        }
+
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            $request->merge(['garment_attributes' => is_array($decoded) ? $decoded : null]);
+        }
+    }
+
+    private function applyGarmentAttributes(array $data): array
+    {
+        if (! array_key_exists('garment_attributes', $data)) {
+            return $data;
+        }
+
+        $raw = $data['garment_attributes'];
+        if ($raw === null || $raw === []) {
+            $data['garment_attributes'] = null;
+
+            return $data;
+        }
+
+        if (! is_array($raw)) {
+            $data['garment_attributes'] = null;
+
+            return $data;
+        }
+
+        $data['garment_attributes'] = GarmentAttributes::normalize(
+            $data['category'] ?? null,
+            $raw
+        );
+
+        return $data;
     }
 
     private function applyBodyPlacement(array $data, bool $creating = false): array
