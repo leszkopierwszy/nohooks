@@ -839,6 +839,12 @@
       "outfits": "Outfits"
     },
     "subtitle": "Plan looks for each Prim by occasion — school, work, home, and more.",
+    "generateSet": "Generate set",
+    "generatingSet": "Cutting out items…",
+    "generateSetError": "Could not create the set.",
+    "setPreview": "Set preview",
+    "clearSetPreview": "Show originals",
+    "cuttingItems": "Cutting out clothes…",
     "allPrims": "All Prims",
     "empty": "No outfits yet for this Prim. Add one or pick an occasion tile.",
     "emptyOccasion": "No outfits in this occasion yet.",

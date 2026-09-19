@@ -839,6 +839,12 @@
       "outfits": "Outfity"
     },
     "subtitle": "Planuj zestawy dla Prima według okazji — szkoła, praca, dom i inne.",
+    "generateSet": "Generuj set",
+    "generatingSet": "Wycinam itemy…",
+    "generateSetError": "Nie udało się utworzyć setu.",
+    "setPreview": "Podgląd setu",
+    "clearSetPreview": "Pokaż oryginały",
+    "cuttingItems": "Wycinam ubrania…",
     "allPrims": "Wszystkie Primy",
     "empty": "Brak outfitów dla tego Prima. Dodaj pierwszy lub wybierz kafelek okazji.",
     "emptyOccasion": "Brak outfitów w tej okazji.",

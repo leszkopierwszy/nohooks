@@ -1,5 +1,5 @@
 <template>
-  <div class="mx-auto max-w-6xl px-4 pb-8 sm:px-6 lg:px-8">
+  <div class="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div>
         <h1 class="text-2xl font-semibold tracking-tight text-gray-900">
@@ -30,9 +30,9 @@
       {{ outfitsStore.error }}
     </p>
 
-    <div class="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-5">
+    <div class="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-12">
       <!-- Left: Prim silhouette (Comfy doll from user photo) -->
-      <aside class="lg:col-span-2">
+      <aside class="lg:col-span-4">
         <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
           <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">
             {{ t('outfit.prim') }}
@@ -156,7 +156,7 @@
       </aside>
 
       <!-- Right: occasion tiles + outfits -->
-      <section class="lg:col-span-3">
+      <section class="lg:col-span-8">
         <div class="flex items-center justify-between gap-3">
           <h2 class="text-sm font-semibold text-gray-900">
             {{ t('style.occasionsTitle') }}
@@ -223,61 +223,63 @@
           <p v-else-if="!selectedPrim" class="mt-4 text-sm text-gray-500">
             {{ t('style.pickPrim') }}
           </p>
-          <ul v-else-if="visibleOutfits.length" class="mt-4 space-y-3">
+          <ul
+            v-else-if="visibleOutfits.length"
+            class="mt-4 grid grid-cols-1 gap-5 xl:grid-cols-2"
+          >
             <li
               v-for="outfit in visibleOutfits"
               :key="outfit.id"
-              class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
+              class="flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
             >
-              <div class="flex items-start justify-between gap-2">
+              <div class="flex items-start justify-between gap-3 px-5 pt-4">
                 <div class="min-w-0">
-                  <p class="text-sm font-medium text-gray-900">
+                  <p class="text-sm font-semibold text-gray-900">
                     {{ formatEventDate(wearDateKey(outfit)) }}
+                  </p>
+                  <div class="mt-1 flex flex-wrap items-center gap-2">
                     <span
                       v-if="outfit.occasion"
-                      class="ml-2 inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700"
+                      class="inline-flex rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700"
                     >
                       {{ t(outfitOccasionMeta(outfit.occasion)?.labelKey ?? 'outfit.occasion') }}
                     </span>
-                  </p>
-                  <p v-if="outfit.label" class="mt-0.5 text-xs text-gray-500">
-                    {{ outfit.label }}
-                  </p>
-                  <p class="mt-1 text-xs text-gray-500">
-                    {{ t('outfit.itemCount', { count: outfit.items?.length ?? 0 }) }}
-                  </p>
-                </div>
-                <div class="flex shrink-0 gap-2">
-                  <button
-                    type="button"
-                    class="text-xs font-medium text-indigo-600 hover:text-indigo-500"
-                    @click="openEdit(outfit)"
-                  >
-                    {{ t('outfit.edit') }}
-                  </button>
-                  <button
-                    type="button"
-                    class="text-xs font-medium text-gray-500 hover:text-gray-800"
-                    @click="requestRemove(outfit)"
-                  >
-                    {{ t('outfit.delete') }}
-                  </button>
+                    <span v-if="outfit.label" class="text-xs text-gray-500">
+                      {{ outfit.label }}
+                    </span>
+                  </div>
                 </div>
               </div>
-              <div v-if="outfit.items?.length" class="mt-3 flex flex-wrap gap-1.5">
-                <div
-                  v-for="item in outfit.items.slice(0, 8)"
-                  :key="item.id"
-                  class="size-10 overflow-hidden rounded bg-gray-100 ring-1 ring-gray-200"
-                  :title="item.name"
+
+              <OutfitFlatLay
+                v-if="outfit.items?.length"
+                class="mt-3"
+                :items="outfit.items"
+              />
+              <p
+                v-else
+                class="mt-4 px-5 pb-5 text-sm text-gray-500"
+              >
+                {{ t('outfit.itemCount', { count: 0 }) }}
+              </p>
+
+              <div
+                class="flex flex-wrap items-center justify-center gap-6 border-t border-gray-100 bg-white px-4 py-3"
+              >
+                <button
+                  type="button"
+                  class="text-sm font-medium text-indigo-600 hover:text-indigo-500"
+                  @click="openEdit(outfit)"
                 >
-                  <img
-                    v-if="itemThumb(item)"
-                    :src="itemThumb(item)"
-                    :alt="item.name"
-                    class="size-full object-cover"
-                  />
-                </div>
+                  {{ t('outfit.edit') }}
+                </button>
+                <button
+                  type="button"
+                  class="text-sm font-medium text-gray-500 hover:text-gray-800"
+                  @click="requestRemove(outfit)"
+                >
+                  {{ t('outfit.delete') }}
+                </button>
               </div>
             </li>
           </ul>
@@ -328,6 +330,7 @@ import {
   SunIcon,
 } from '@heroicons/vue/24/outline'
 import ConfirmDialog from '../components/ConfirmDialog.vue'
+import OutfitFlatLay from '../components/outfit/OutfitFlatLay.vue'
 import OutfitFormModal from '../components/outfit/OutfitFormModal.vue'
 import PersonaSwitcher from '../components/PersonaSwitcher.vue'
 import { resolveStorageUrl } from '../api/media'
@@ -533,11 +536,6 @@ function countForOccasion(value) {
 
 function toggleOccasion(value) {
   activeOccasion.value = activeOccasion.value === value ? '' : value
-}
-
-function itemThumb(item) {
-  const raw = item?.image_url ?? item?.images?.[0]?.url ?? null
-  return resolveStorageUrl(raw) ?? raw
 }
 
 async function loadOutfits() {

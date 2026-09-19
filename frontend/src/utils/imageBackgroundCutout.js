@@ -315,6 +315,54 @@ function buildBackgroundMask(data, width, height, bg, threshold) {
     }
   }
 
+  return floodBackgroundFromEdges(similarToBg, width, height)
+}
+
+/**
+ * Szare / studio tło: szerszy próg + niska saturacja tła.
+ * Chroni kolorowe partie ubrania (np. niebieskie paski sukienki) przed wciągnięciem do tła.
+ */
+function buildBackgroundMaskStudio(data, width, height, bg, threshold) {
+  const n = width * height
+  const similarToBg = new Uint8Array(n)
+  const bgLum = 0.299 * bg[0] + 0.587 * bg[1] + 0.114 * bg[2]
+  const soft = threshold * 1.35
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4
+      const idx = y * width + x
+      if (data[i + 3] < 20) {
+        similarToBg[idx] = 1
+        continue
+      }
+
+      const r = data[i]
+      const g = data[i + 1]
+      const b = data[i + 2]
+      const dist = colorDistance(r, g, b, bg)
+      const lum = 0.299 * r + 0.587 * g + 0.114 * b
+      const sat = Math.max(r, g, b) - Math.min(r, g, b)
+      const lumDelta = Math.abs(lum - bgLum)
+
+      // Kolorowy produkt (paski, dżins) — nigdy jako tło
+      if (sat > 28 && dist > threshold * 0.55) continue
+
+      // Szare tło: blisko próbki LUB niska saturacja + podobna luminancja
+      if (
+        dist <= soft ||
+        (sat <= 18 && lumDelta <= soft * 0.85 && dist <= soft * 1.15)
+      ) {
+        similarToBg[idx] = 1
+      }
+    }
+  }
+
+  return floodBackgroundFromEdges(similarToBg, width, height)
+}
+
+function floodBackgroundFromEdges(similarToBg, width, height) {
+  const n = width * height
   const isBackground = new Uint8Array(n)
   const visited = new Uint8Array(n)
   const queue = []
@@ -590,6 +638,7 @@ export async function cutoutToPng(
     recoverBright = false,
     sharpen = false,
     lightProduct = false,
+    studioGray = false,
   } = {}
 ) {
   const img = await loadImage(imageSource)
@@ -607,10 +656,12 @@ export async function cutoutToPng(
   const bg = sampleEdgeBackground(data, width, height)
 
   let fg
-  if (lightProduct) {
+  if (lightProduct && !studioGray) {
     fg = buildForegroundMaskLight(data, width, height, bg)
   } else {
-    const isBackground = buildBackgroundMask(data, width, height, bg, threshold)
+    const isBackground = studioGray
+      ? buildBackgroundMaskStudio(data, width, height, bg, threshold)
+      : buildBackgroundMask(data, width, height, bg, threshold)
     fg = new Uint8Array(width * height)
     for (let i = 0; i < fg.length; i++) {
       fg[i] = isBackground[i] ? 0 : 1
@@ -620,10 +671,17 @@ export async function cutoutToPng(
       fg = closeForegroundMask(fg, width, height, 2)
     }
     if (recoverBright) {
-      fg = recoverBrightForeground(data, width, height, fg, bg, threshold)
+      fg = recoverBrightForeground(
+        data,
+        width,
+        height,
+        fg,
+        bg,
+        studioGray ? Math.max(threshold, 34) : threshold
+      )
     }
-    if (fillHoles) {
-      fg = closeForegroundMask(fg, width, height, 1)
+    if (fillHoles || studioGray) {
+      fg = closeForegroundMask(fg, width, height, studioGray ? 2 : 1)
     }
   }
 
