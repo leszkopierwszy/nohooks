@@ -70,6 +70,9 @@ def api_fashion_ai_settings_update(body: FashionAiSettingsUpdate) -> dict:
         model=body.model,
         base_url=body.base_url,
         label=body.label,
+        invocation_mode=body.invocation_mode,
+        agent_id=body.agent_id,
+        clear_agent_id=body.clear_agent_id,
     )
 
 

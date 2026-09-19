@@ -2,6 +2,7 @@
 
 namespace App\Services\FashionAi;
 
+use App\Models\Entity;
 use App\Models\Item;
 use App\Models\User;
 use App\Support\FashionCollection;
@@ -44,6 +45,8 @@ class FashionStylistService
             throw new RuntimeException('Not enough fashion items in the wardrobe for this Prim (need at least 2).');
         }
 
+        $persona = $this->resolvePersona($user, $entityId);
+        $gender = $this->normalizeGender($persona['gender'] ?? null);
         $summary = $this->buildWardrobeSummary($catalog);
         $preferredStores = $this->preferredStoresFor($user);
         $allowedIds = array_map(fn ($row) => (int) $row['id'], $catalog);
@@ -55,6 +58,7 @@ class FashionStylistService
             notes: $notes,
             userId: (int) $user->id,
             entityId: $entityId,
+            persona: $persona,
         );
 
         $suggestions = [];
@@ -105,10 +109,20 @@ class FashionStylistService
             if (! is_array($row)) {
                 continue;
             }
+            $title = trim((string) ($row['title'] ?? ''));
             $itemType = trim((string) ($row['item_type'] ?? ''));
-            if ($itemType === '') {
+            if ($title === '' && $itemType === '') {
                 continue;
             }
+            if ($title === '') {
+                $title = $itemType;
+            }
+            // Reject overly vague category-only titles.
+            $vague = preg_match('/^(tops?|pants?|trousers?|shoes?|dresses?|skirts?|jackets?|spodnie|buty|sukienki|góra|dół)$/iu', $title);
+            if ($vague && trim((string) ($row['details'] ?? '')) === '') {
+                continue;
+            }
+
             $pairIds = [];
             foreach ($row['pairs_with_item_ids'] ?? [] as $id) {
                 $id = (int) $id;
@@ -123,10 +137,42 @@ class FashionStylistService
                     $stores[] = $store;
                 }
             }
+            $primaryStore = trim((string) ($row['store'] ?? ''));
+            if ($primaryStore !== '' && ! in_array($primaryStore, $stores, true)) {
+                array_unshift($stores, $primaryStore);
+            }
+            $storeUrl = trim((string) ($row['store_url'] ?? ''));
+            if ($storeUrl === '') {
+                $storeUrl = $this->matchPreferredStoreUrl($preferredStores, $stores[0] ?? $primaryStore) ?? '';
+            }
+            $examples = [];
+            foreach ($row['example_products'] ?? [] as $ex) {
+                $ex = trim((string) $ex);
+                if ($ex !== '') {
+                    $examples[] = $ex;
+                }
+            }
+            $searchQuery = trim((string) ($row['search_query'] ?? ''));
+            if ($searchQuery === '') {
+                $searchQuery = trim($title.' '.((string) ($row['color'] ?? '')));
+            }
+            $searchUrl = $storeUrl !== ''
+                ? $this->buildStoreSearchUrl($storeUrl, $searchQuery, $gender)
+                : null;
+
             $shopping[] = [
-                'item_type' => $itemType,
+                'title' => $title,
+                'item_type' => $itemType !== '' ? $itemType : null,
                 'color' => isset($row['color']) && $row['color'] !== '' ? (string) $row['color'] : null,
+                'details' => isset($row['details']) && trim((string) $row['details']) !== ''
+                    ? (string) $row['details']
+                    : null,
+                'example_products' => array_values(array_unique(array_slice($examples, 0, 3))),
+                'search_query' => $searchQuery !== '' ? $searchQuery : null,
+                'search_url' => $searchUrl,
                 'why' => isset($row['why']) ? (string) $row['why'] : null,
+                'store' => $primaryStore !== '' ? $primaryStore : ($stores[0] ?? null),
+                'store_url' => $storeUrl !== '' ? $storeUrl : null,
                 'stores' => array_values(array_unique($stores)),
                 'pairs_with_item_ids' => array_values(array_unique($pairIds)),
             ];
@@ -137,6 +183,142 @@ class FashionStylistService
             'suggestions' => array_slice($suggestions, 0, 3),
             'shopping' => array_slice($shopping, 0, 6),
         ];
+    }
+
+    /**
+     * @param  list<array{name: string, brand: ?string, url: string}>  $preferredStores
+     */
+    private function matchPreferredStoreUrl(array $preferredStores, ?string $name): ?string
+    {
+        if ($name === null || $name === '') {
+            return $preferredStores[0]['url'] ?? null;
+        }
+        $needle = mb_strtolower($name);
+        foreach ($preferredStores as $store) {
+            $candidates = [mb_strtolower($store['name']), mb_strtolower((string) ($store['brand'] ?? ''))];
+            foreach ($candidates as $c) {
+                if ($c !== '' && ($c === $needle || str_contains($c, $needle) || str_contains($needle, $c))) {
+                    return $store['url'];
+                }
+            }
+        }
+
+        return $preferredStores[0]['url'] ?? null;
+    }
+
+    /**
+     * @return array{id: int, name: ?string, gender: ?string}
+     */
+    private function resolvePersona(User $user, int $entityId): array
+    {
+        $entity = Entity::query()
+            ->where('user_id', $user->id)
+            ->whereKey($entityId)
+            ->first(['id', 'name', 'gender']);
+
+        return [
+            'id' => $entityId,
+            'name' => $entity?->name,
+            'gender' => $this->normalizeGender($entity?->gender),
+        ];
+    }
+
+    /**
+     * @return 'female'|'male'|null
+     */
+    private function normalizeGender(?string $gender): ?string
+    {
+        $g = strtolower(trim((string) $gender));
+        if (in_array($g, ['female', 'f', 'woman', 'women', 'kobieta', 'damska'], true)) {
+            return 'female';
+        }
+        if (in_array($g, ['male', 'm', 'man', 'men', 'facet', 'mezczyzna', 'mężczyzna', 'meska', 'męska'], true)) {
+            return 'male';
+        }
+
+        return null;
+    }
+
+    /**
+     * Build a store search URL scoped to the Prim's gender section when possible.
+     *
+     * @param  'female'|'male'|null  $gender
+     */
+    private function buildStoreSearchUrl(string $storeUrl, string $query, ?string $gender = null): ?string
+    {
+        $query = trim($query);
+        if ($query === '') {
+            return rtrim($storeUrl, '/') ?: null;
+        }
+        $q = rawurlencode($query);
+        $host = strtolower((string) (parse_url($storeUrl, PHP_URL_HOST) ?: ''));
+        $isWoman = $gender === 'female';
+        $isMan = $gender === 'male';
+
+        if (str_contains($host, 'zara.com')) {
+            $section = $isWoman ? 'WOMAN' : ($isMan ? 'MAN' : null);
+            $url = 'https://www.zara.com/pl/pl/search?searchTerm='.$q;
+
+            return $section ? $url.'&section='.$section : $url;
+        }
+        if (str_contains($host, 'hm.com')) {
+            // H&M PL: department=ladies | men scopes the search grid.
+            $dept = $isWoman ? 'ladies' : ($isMan ? 'men' : null);
+            $url = 'https://www2.hm.com/pl_pl/search-results.html?q='.$q;
+
+            return $dept ? $url.'&department='.$dept : $url;
+        }
+        if (str_contains($host, 'mango.com') || str_contains($host, 'shop.mango')) {
+            // Mango: /search/woman or /search/man
+            $seg = $isWoman ? 'woman' : ($isMan ? 'man' : null);
+            $base = $seg
+                ? 'https://shop.mango.com/pl/search/'.$seg
+                : 'https://shop.mango.com/pl/search';
+
+            return $base.'?q='.$q;
+        }
+        if (str_contains($host, 'reserved.com')) {
+            $seg = $isWoman ? 'woman' : ($isMan ? 'man' : null);
+            $url = 'https://www.reserved.com/pl/pl/search?q='.$q;
+
+            return $seg ? $url.'&gender='.$seg : $url;
+        }
+        if (str_contains($host, 'uniqlo.com')) {
+            $seg = $isWoman ? 'women' : ($isMan ? 'men' : null);
+            $url = 'https://www.uniqlo.com/pl/pl/search?q='.$q;
+
+            return $seg ? $url.'&path='.rawurlencode('/'.$seg) : $url;
+        }
+        if (str_contains($host, 'massimodutti.com')) {
+            // Inditex sibling of Zara — same section param.
+            $section = $isWoman ? 'WOMAN' : ($isMan ? 'MAN' : null);
+            $url = 'https://www.massimodutti.com/pl/search?q='.$q;
+
+            return $section ? $url.'&section='.$section : $url;
+        }
+        if (str_contains($host, 'pullandbear.com')) {
+            $section = $isWoman ? 'WOMAN' : ($isMan ? 'MAN' : null);
+            $url = 'https://www.pullandbear.com/pl/pl/search?q='.$q;
+
+            return $section ? $url.'&section='.$section : $url;
+        }
+        if (str_contains($host, 'bershka.com')) {
+            $section = $isWoman ? 'WOMAN' : ($isMan ? 'MAN' : null);
+            $url = 'https://www.bershka.com/pl/pl/search?q='.$q;
+
+            return $section ? $url.'&section='.$section : $url;
+        }
+
+        $sep = str_contains($storeUrl, '?') ? '&' : '?';
+        $url = rtrim($storeUrl, '/').$sep.'q='.$q;
+        if ($isWoman) {
+            return $url.'&gender=woman';
+        }
+        if ($isMan) {
+            return $url.'&gender=man';
+        }
+
+        return $url;
     }
 
     /**
@@ -255,6 +437,7 @@ class FashionStylistService
      * @param  list<array<string, mixed>>  $catalog
      * @param  array<string, mixed>  $summary
      * @param  list<array{name: string, brand: ?string, url: string}>  $preferredStores
+     * @param  array{id: int, name: ?string, gender: ?string}  $persona
      * @return array<string, mixed>
      */
     private function callOpenAi(
@@ -265,13 +448,10 @@ class FashionStylistService
         ?string $notes,
         int $userId,
         int $entityId,
+        array $persona = [],
     ): array {
-        $apiKey = $this->settings->getApiKey();
-        $model = $this->settings->getModel();
-        $baseUrl = $this->settings->getBaseUrl();
-        $system = $this->settings->getSystemPrompt();
-
         $userMsg = [
+            'persona' => $persona,
             'occasion' => $occasion,
             'notes' => $notes,
             'wardrobe_summary' => $summary,
@@ -283,6 +463,46 @@ class FashionStylistService
                 'what_should_i_buy_next_preferring_my_preferred_stores_and_brands',
             ],
         ];
+
+        if ($this->settings->usesAgent()) {
+            return $this->callOpenAiAgent(
+                userMsg: $userMsg,
+                occasion: $occasion,
+                notes: $notes,
+                userId: $userId,
+                entityId: $entityId,
+                catalogCount: count($catalog),
+            );
+        }
+
+        return $this->callOpenAiChat(
+            userMsg: $userMsg,
+            occasion: $occasion,
+            notes: $notes,
+            userId: $userId,
+            entityId: $entityId,
+            catalogCount: count($catalog),
+        );
+    }
+
+    /**
+     * Chat Completions — system prompt lives in Backend Settings.
+     *
+     * @param  array<string, mixed>  $userMsg
+     * @return array<string, mixed>
+     */
+    private function callOpenAiChat(
+        array $userMsg,
+        ?string $occasion,
+        ?string $notes,
+        int $userId,
+        int $entityId,
+        int $catalogCount,
+    ): array {
+        $apiKey = $this->settings->getApiKey();
+        $model = $this->settings->getModel();
+        $baseUrl = $this->settings->getBaseUrl();
+        $system = $this->settings->getSystemPrompt();
         $userContent = json_encode($userMsg, JSON_UNESCAPED_UNICODE);
         $messages = [
             ['role' => 'system', 'content' => $system],
@@ -294,9 +514,14 @@ class FashionStylistService
             'response_format' => ['type' => 'json_object'],
             'messages' => $messages,
         ];
-
         $started = microtime(true);
         $host = parse_url($baseUrl, PHP_URL_HOST) ?: $baseUrl;
+        $logRequest = [
+            'invocation_mode' => 'chat',
+            'messages' => $messages,
+            'temperature' => 0.7,
+            'response_format' => ['type' => 'json_object'],
+        ];
 
         try {
             $response = Http::withToken($apiKey)
@@ -314,17 +539,13 @@ class FashionStylistService
                 'user_id' => $userId,
                 'occasion' => $occasion,
                 'notes' => $notes,
-                'catalog_count' => count($catalog),
+                'catalog_count' => $catalogCount,
                 'http_status' => $e->response?->status(),
-                'request' => [
-                    'messages' => $messages,
-                    'temperature' => 0.7,
-                    'response_format' => ['type' => 'json_object'],
-                ],
+                'request' => $logRequest,
                 'response' => null,
                 'error' => $e->response?->body() ?: $e->getMessage(),
             ]);
-            Log::warning('Fashion AI OpenAI request failed', [
+            Log::warning('Fashion AI OpenAI chat request failed', [
                 'status' => $e->response?->status(),
                 'body' => $e->response?->body(),
             ]);
@@ -333,6 +554,179 @@ class FashionStylistService
 
         $json = $response->json();
         $content = data_get($json, 'choices.0.message.content');
+
+        return $this->parseAndLogOpenAiJson(
+            content: is_string($content) ? $content : null,
+            json: is_array($json) ? $json : [],
+            model: $model,
+            host: (string) $host,
+            started: $started,
+            entityId: $entityId,
+            userId: $userId,
+            occasion: $occasion,
+            notes: $notes,
+            catalogCount: $catalogCount,
+            httpStatus: $response->status(),
+            logRequest: $logRequest,
+        );
+    }
+
+    /**
+     * Responses API — logic lives in an OpenAI Prompt/Agent (pmpt_…).
+     * App only sends Prim wardrobe + occasion payload.
+     *
+     * @param  array<string, mixed>  $userMsg
+     * @return array<string, mixed>
+     */
+    private function callOpenAiAgent(
+        array $userMsg,
+        ?string $occasion,
+        ?string $notes,
+        int $userId,
+        int $entityId,
+        int $catalogCount,
+    ): array {
+        $apiKey = $this->settings->getApiKey();
+        $model = $this->settings->getModel();
+        $baseUrl = $this->settings->getBaseUrl();
+        $agentId = $this->settings->getAgentId();
+        if ($agentId === null || $agentId === '') {
+            throw new RuntimeException('Fashion AI agent mode requires an OpenAI Prompt/Agent ID in Backend Settings.');
+        }
+
+        $userContent = json_encode($userMsg, JSON_UNESCAPED_UNICODE);
+        $requestBody = [
+            'prompt' => ['id' => $agentId],
+            'input' => [
+                [
+                    'role' => 'user',
+                    'content' => $userContent,
+                ],
+            ],
+            'text' => [
+                'format' => ['type' => 'json_object'],
+            ],
+            'store' => false,
+        ];
+        // Model is optional when the Prompt already pins one; send as fallback.
+        if ($model !== '') {
+            $requestBody['model'] = $model;
+        }
+
+        $started = microtime(true);
+        $host = parse_url($baseUrl, PHP_URL_HOST) ?: $baseUrl;
+        $logRequest = [
+            'invocation_mode' => 'agent',
+            'agent_id' => $agentId,
+            'input' => $requestBody['input'],
+            'text' => $requestBody['text'],
+            'model' => $model,
+        ];
+
+        try {
+            $response = Http::withToken($apiKey)
+                ->acceptJson()
+                ->timeout(120)
+                ->post($baseUrl.'/responses', $requestBody)
+                ->throw();
+        } catch (RequestException $e) {
+            $this->logger->record([
+                'status' => 'error',
+                'model' => $model,
+                'base_url_host' => $host,
+                'duration_ms' => (int) round((microtime(true) - $started) * 1000),
+                'entity_id' => $entityId,
+                'user_id' => $userId,
+                'occasion' => $occasion,
+                'notes' => $notes,
+                'catalog_count' => $catalogCount,
+                'http_status' => $e->response?->status(),
+                'request' => $logRequest,
+                'response' => null,
+                'error' => $e->response?->body() ?: $e->getMessage(),
+            ]);
+            Log::warning('Fashion AI OpenAI agent request failed', [
+                'status' => $e->response?->status(),
+                'body' => $e->response?->body(),
+                'agent_id' => $agentId,
+            ]);
+            throw new RuntimeException('OpenAI agent request failed. Check the Prompt/Agent ID and API key in Backend Settings.');
+        }
+
+        $json = $response->json();
+        $content = $this->extractResponsesOutputText(is_array($json) ? $json : []);
+
+        return $this->parseAndLogOpenAiJson(
+            content: $content,
+            json: is_array($json) ? $json : [],
+            model: (string) (data_get($json, 'model') ?: $model),
+            host: (string) $host,
+            started: $started,
+            entityId: $entityId,
+            userId: $userId,
+            occasion: $occasion,
+            notes: $notes,
+            catalogCount: $catalogCount,
+            httpStatus: $response->status(),
+            logRequest: $logRequest,
+        );
+    }
+
+    /**
+     * @param  array<string, mixed>  $json
+     */
+    private function extractResponsesOutputText(array $json): ?string
+    {
+        $direct = data_get($json, 'output_text');
+        if (is_string($direct) && trim($direct) !== '') {
+            return $direct;
+        }
+
+        $chunks = [];
+        foreach ($json['output'] ?? [] as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+            if (($item['type'] ?? '') !== 'message') {
+                continue;
+            }
+            foreach ($item['content'] ?? [] as $part) {
+                if (! is_array($part)) {
+                    continue;
+                }
+                $type = (string) ($part['type'] ?? '');
+                if (in_array($type, ['output_text', 'text'], true) && isset($part['text']) && is_string($part['text'])) {
+                    $chunks[] = $part['text'];
+                }
+            }
+        }
+
+        if (! $chunks) {
+            return null;
+        }
+
+        return implode("\n", $chunks);
+    }
+
+    /**
+     * @param  array<string, mixed>  $json
+     * @param  array<string, mixed>  $logRequest
+     * @return array<string, mixed>
+     */
+    private function parseAndLogOpenAiJson(
+        ?string $content,
+        array $json,
+        string $model,
+        string $host,
+        float $started,
+        int $entityId,
+        int $userId,
+        ?string $occasion,
+        ?string $notes,
+        int $catalogCount,
+        int $httpStatus,
+        array $logRequest,
+    ): array {
         $durationMs = (int) round((microtime(true) - $started) * 1000);
 
         if (! is_string($content) || trim($content) === '') {
@@ -345,13 +739,9 @@ class FashionStylistService
                 'user_id' => $userId,
                 'occasion' => $occasion,
                 'notes' => $notes,
-                'catalog_count' => count($catalog),
-                'http_status' => $response->status(),
-                'request' => [
-                    'messages' => $messages,
-                    'temperature' => 0.7,
-                    'response_format' => ['type' => 'json_object'],
-                ],
+                'catalog_count' => $catalogCount,
+                'http_status' => $httpStatus,
+                'request' => $logRequest,
                 'response' => [
                     'raw' => $json,
                     'content' => $content,
@@ -364,6 +754,12 @@ class FashionStylistService
 
         $decoded = json_decode($content, true);
         if (! is_array($decoded)) {
+            // Agents sometimes wrap JSON in markdown fences.
+            if (preg_match('/\{.*\}/s', $content, $m)) {
+                $decoded = json_decode($m[0], true);
+            }
+        }
+        if (! is_array($decoded)) {
             $this->logger->record([
                 'status' => 'error',
                 'model' => $model,
@@ -373,13 +769,9 @@ class FashionStylistService
                 'user_id' => $userId,
                 'occasion' => $occasion,
                 'notes' => $notes,
-                'catalog_count' => count($catalog),
-                'http_status' => $response->status(),
-                'request' => [
-                    'messages' => $messages,
-                    'temperature' => 0.7,
-                    'response_format' => ['type' => 'json_object'],
-                ],
+                'catalog_count' => $catalogCount,
+                'http_status' => $httpStatus,
+                'request' => $logRequest,
                 'response' => [
                     'content' => $content,
                 ],
@@ -398,13 +790,9 @@ class FashionStylistService
             'user_id' => $userId,
             'occasion' => $occasion,
             'notes' => $notes,
-            'catalog_count' => count($catalog),
-            'http_status' => $response->status(),
-            'request' => [
-                'messages' => $messages,
-                'temperature' => 0.7,
-                'response_format' => ['type' => 'json_object'],
-            ],
+            'catalog_count' => $catalogCount,
+            'http_status' => $httpStatus,
+            'request' => $logRequest,
             'response' => [
                 'content' => $content,
                 'parsed' => $decoded,

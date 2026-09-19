@@ -15,7 +15,7 @@
       },
     }
   </script>
-  <link rel="stylesheet" href="/static/app.css?v=openai-logs-2" />
+  <link rel="stylesheet" href="/static/app.css?v=openai-agent-1" />
 </head>
 <body>
   <div id="sidebar-backdrop" class="sidebar-backdrop" aria-hidden="true"></div>
@@ -244,6 +244,9 @@
             Klucze API dla stylisty AI w aplikacji (propozycje outfitów z szafy).
             Ustawienia są tylko tutaj — end user w panelu ich nie widzi.
             Aktywny klucz jest używany przez Laravel przy sugestiach.
+            Możesz zostawić logikę w lokalnym system promptcie (<strong>Chat</strong>)
+            albo podpiąć Prompt/Agent z OpenAI Dashboard (<strong>Agent</strong>) — wtedy
+            aplikacja wysyła tylko dane Prima (garderoba + okazja).
           </p>
           <div class="mt-4 flex flex-wrap items-center gap-3">
             <span id="fashion-ai-badge" class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium" style="background: var(--tag-bg); color: var(--text)">
@@ -284,7 +287,7 @@
               />
             </div>
             <div>
-              <label for="fashion-model" class="block text-sm font-medium" style="color: var(--text)">Model</label>
+              <label for="fashion-model" class="block text-sm font-medium" style="color: var(--text)">Model (tryb Chat)</label>
               <input
                 id="fashion-model"
                 type="text"
@@ -303,12 +306,47 @@
                 value="https://api.openai.com/v1"
               />
             </div>
+
+            <h3 class="mt-4 text-sm font-semibold" style="color: var(--text)">Tryb wywołania</h3>
+            <div>
+              <label for="fashion-invocation-mode" class="block text-sm font-medium" style="color: var(--text)">Źródło logiki</label>
+              <select
+                id="fashion-invocation-mode"
+                class="mt-1 block w-full rounded-lg border px-3 py-2 text-sm"
+                style="background: var(--card-bg); border-color: var(--card-border); color: var(--text)"
+              >
+                <option value="chat">Chat — system prompt w Backend Settings</option>
+                <option value="agent">Agent — Prompt/Agent w OpenAI Dashboard</option>
+              </select>
+              <p class="mt-1 text-xs themed-muted">
+                W trybie Agent logikę (instrukcje, narzędzia, schemat JSON) trzymasz w OpenAI.
+                Aplikacja wysyła tylko JSON: persona, garderoba, okazja.
+              </p>
+            </div>
+            <div id="fashion-agent-fields">
+              <label for="fashion-agent-id" class="block text-sm font-medium" style="color: var(--text)">Agent / Prompt ID</label>
+              <input
+                id="fashion-agent-id"
+                type="text"
+                class="mt-1 block w-full rounded-lg border px-3 py-2 text-sm font-mono"
+                style="background: var(--card-bg); border-color: var(--card-border); color: var(--text)"
+                placeholder="pmpt_…"
+                autocomplete="off"
+              />
+              <p class="mt-1 text-xs themed-muted">
+                Skopiuj ID z
+                <a href="https://platform.openai.com/prompts" target="_blank" rel="noopener" class="underline">platform.openai.com/prompts</a>
+                (lub Agent Builder → Prompt). Laravel wywoła <code class="text-[11px] px-1 rounded" style="background: var(--tag-bg)">POST /v1/responses</code>
+                z tym ID.
+              </p>
+            </div>
+
             <div class="flex flex-wrap gap-2">
               <button type="submit" class="btn-primary inline-flex rounded-lg px-4 py-2.5 text-sm font-semibold text-white">
                 Dodaj i aktywuj
               </button>
               <button type="button" id="btn-save-fashion-meta" class="btn-outline inline-flex rounded-lg px-4 py-2.5 text-sm font-semibold">
-                Zapisz model / URL
+                Zapisz ustawienia
               </button>
             </div>
             <p id="fashion-ai-msg" class="text-sm themed-muted" aria-live="polite"></p>
@@ -423,6 +461,6 @@
 
   <div id="toast" class="hidden" role="status"></div>
 
-  <script type="module" src="/static/app.js?v=openai-logs-2"></script>
+  <script type="module" src="/static/app.js?v=openai-agent-1"></script>
 </body>
 </html>

@@ -354,8 +354,11 @@ fashionStylist:
   possibleSets: About {count} complete outfits from what you own
   results: Outfit ideas from your closet
   shoppingTitle: What to buy next
-  shoppingSubtitle: Pieces that unlock more looks with what you already have — look for them at these stores.
+  shoppingSubtitle: Specific product ideas for your preferred stores — with example listing titles and a search link.
   shoppingNoStoresHint: Tip — add preferred stores under Style → Brands so suggestions match shops you like.
+  exampleProducts: Example listings
+  searchInStore: Search on {store}
+  openStore: Open store
   stores: Stores
   untitled: Suggested look
   save: Save outfit

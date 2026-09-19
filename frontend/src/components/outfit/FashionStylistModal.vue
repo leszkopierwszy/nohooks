@@ -198,11 +198,17 @@
             class="rounded-xl border border-dashed border-indigo-200 bg-indigo-50/40 p-4 dark:border-indigo-900 dark:bg-indigo-950/30"
           >
             <p class="font-medium text-gray-900 dark:text-zinc-100">
-              {{ buy.item_type }}
+              {{ buy.title || buy.item_type }}
               <span
                 v-if="buy.color"
                 class="font-normal text-gray-500 dark:text-zinc-400"
               >· {{ buy.color }}</span>
+            </p>
+            <p
+              v-if="buy.details"
+              class="mt-1 text-sm text-gray-600 dark:text-zinc-400"
+            >
+              {{ buy.details }}
             </p>
             <p
               v-if="buy.why"
@@ -210,12 +216,49 @@
             >
               {{ buy.why }}
             </p>
-            <p
-              v-if="buy.stores?.length"
-              class="mt-2 text-xs font-medium text-indigo-700 dark:text-indigo-300"
+            <div
+              v-if="buy.example_products?.length"
+              class="mt-2"
             >
-              {{ t('fashionStylist.stores') }}: {{ buy.stores.join(', ') }}
-            </p>
+              <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+                {{ t('fashionStylist.exampleProducts') }}
+              </p>
+              <ul class="mt-1 space-y-0.5">
+                <li
+                  v-for="(ex, exIdx) in buy.example_products"
+                  :key="exIdx"
+                  class="text-sm text-gray-800 dark:text-zinc-200"
+                >
+                  „{{ ex }}”
+                </li>
+              </ul>
+            </div>
+            <div class="mt-3 flex flex-wrap items-center gap-2">
+              <span
+                v-if="buy.store || buy.stores?.length"
+                class="text-xs font-medium text-indigo-700 dark:text-indigo-300"
+              >
+                {{ buy.store || buy.stores[0] }}
+              </span>
+              <a
+                v-if="buy.search_url"
+                :href="buy.search_url"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500"
+              >
+                {{ t('fashionStylist.searchInStore', { store: buy.store || buy.stores?.[0] || '' }) }}
+              </a>
+              <a
+                v-else-if="buy.store_url"
+                :href="buy.store_url"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+              >
+                {{ t('fashionStylist.openStore') }}
+              </a>
+            </div>
             <ul
               v-if="itemsFor(buy.pairs_with_item_ids).length"
               class="mt-3 flex flex-wrap gap-2"

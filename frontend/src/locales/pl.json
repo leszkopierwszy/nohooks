@@ -381,8 +381,11 @@
     "possibleSets": "Około {count} kompletnych outfitów z tego, co masz",
     "results": "Propozycje z Twojej szafy",
     "shoppingTitle": "Co dokupić",
-    "shoppingSubtitle": "Rzeczy, które odblokują więcej zestawów z tym, co już masz — szukaj ich w tych sklepach.",
+    "shoppingSubtitle": "Konkretne propozycje produktów do Twoich sklepów — z przykładowymi tytułami ofert i linkiem do wyszukiwania.",
     "shoppingNoStoresHint": "Wskazówka — dodaj ulubione sklepy w Style → Marki, żeby propozycje trafiały w Twoje marki.",
+    "exampleProducts": "Przykładowe oferty",
+    "searchInStore": "Szukaj w {store}",
+    "openStore": "Otwórz sklep",
     "stores": "Sklepy",
     "untitled": "Proponowany look",
     "save": "Zapisz outfit"

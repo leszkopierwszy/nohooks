@@ -610,18 +610,28 @@ async function loadFashionAi() {
     })
     if (badge) {
       const n = (data.keys || []).length
-      badge.textContent = data.configured
-        ? `Connected · ${n} key${n === 1 ? '' : 's'}`
-        : 'Not configured'
+      const mode = data.invocation_mode === 'agent' ? 'Agent' : 'Chat'
+      if (!data.configured) {
+        badge.textContent = data.invocation_mode === 'agent' && !data.agent_id
+          ? `Agent · brak Prompt ID · ${n} key${n === 1 ? '' : 's'}`
+          : 'Not configured'
+      } else {
+        badge.textContent = `${mode} · Connected · ${n} key${n === 1 ? '' : 's'}`
+      }
     }
     const model = document.getElementById('fashion-model')
     const base = document.getElementById('fashion-base-url')
     const key = document.getElementById('fashion-api-key')
     const label = document.getElementById('fashion-key-label')
+    const modeEl = document.getElementById('fashion-invocation-mode')
+    const agentEl = document.getElementById('fashion-agent-id')
     if (model) model.value = data.model || 'gpt-4o-mini'
     if (base) base.value = data.base_url || 'https://api.openai.com/v1'
     if (key) key.value = ''
     if (label) label.value = ''
+    if (modeEl) modeEl.value = data.invocation_mode === 'agent' ? 'agent' : 'chat'
+    if (agentEl) agentEl.value = data.agent_id || ''
+    syncFashionAgentFields()
     if (list) {
       const keys = data.keys || []
       if (!keys.length) {
@@ -657,6 +667,12 @@ async function loadFashionAi() {
   }
 }
 
+function syncFashionAgentFields() {
+  const mode = document.getElementById('fashion-invocation-mode')?.value || 'chat'
+  const wrap = document.getElementById('fashion-agent-fields')
+  if (wrap) wrap.style.opacity = mode === 'agent' ? '1' : '0.55'
+}
+
 function escapeHtml(s) {
   return String(s)
     .replace(/&/g, '&amp;')
@@ -667,9 +683,17 @@ function escapeHtml(s) {
 
 async function saveFashionAiMeta() {
   const msg = document.getElementById('fashion-ai-msg')
+  const mode = document.getElementById('fashion-invocation-mode')?.value || 'chat'
+  const agentId = document.getElementById('fashion-agent-id')?.value?.trim() || ''
   const payload = {
     model: document.getElementById('fashion-model')?.value || '',
     base_url: document.getElementById('fashion-base-url')?.value || '',
+    invocation_mode: mode,
+    agent_id: agentId,
+  }
+  if (mode === 'agent' && !agentId) {
+    if (msg) msg.textContent = 'W trybie Agent podaj Prompt/Agent ID (pmpt_…).'
+    return
   }
   try {
     const res = await fetch('/api/fashion-ai/settings', {
@@ -681,7 +705,12 @@ async function saveFashionAiMeta() {
       const body = await res.json().catch(() => ({}))
       throw new Error(body.detail || `HTTP ${res.status}`)
     }
-    if (msg) msg.textContent = 'Zapisano model / URL.'
+    if (msg) {
+      msg.textContent =
+        mode === 'agent'
+          ? 'Zapisano tryb Agent + Prompt ID.'
+          : 'Zapisano tryb Chat / model / URL.'
+    }
     await loadFashionAi()
   } catch (err) {
     if (msg) msg.textContent = err.message || String(err)
@@ -708,6 +737,8 @@ async function addFashionAiKey() {
       body: JSON.stringify({
         model: document.getElementById('fashion-model')?.value || '',
         base_url: document.getElementById('fashion-base-url')?.value || '',
+        invocation_mode: document.getElementById('fashion-invocation-mode')?.value || 'chat',
+        agent_id: document.getElementById('fashion-agent-id')?.value?.trim() || '',
       }),
     })
     const res = await fetch('/api/fashion-ai/keys', {
@@ -767,6 +798,7 @@ document.getElementById('fashion-ai-form')?.addEventListener('submit', (e) => {
 })
 document.getElementById('btn-save-fashion-meta')?.addEventListener('click', () => saveFashionAiMeta())
 document.getElementById('btn-refresh-fashion-ai')?.addEventListener('click', () => loadFashionAi())
+document.getElementById('fashion-invocation-mode')?.addEventListener('change', () => syncFashionAgentFields())
 document.getElementById('fashion-keys-list')?.addEventListener('click', (e) => {
   const act = e.target.closest?.('[data-activate-key]')
   const del = e.target.closest?.('[data-delete-key]')

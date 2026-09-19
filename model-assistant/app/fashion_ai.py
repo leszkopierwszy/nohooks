@@ -18,6 +18,10 @@ from .fashion_prompt import (
 SETTINGS_PATH = DATA_DIR / "fashion_ai.json"
 DEFAULT_MODEL = "gpt-4o-mini"
 DEFAULT_BASE_URL = "https://api.openai.com/v1"
+# chat = Laravel chat/completions + local system prompt
+# agent = OpenAI Responses API with a dashboard Prompt/Agent (pmpt_…) — logic lives in OpenAI
+DEFAULT_INVOCATION_MODE = "chat"
+ALLOWED_INVOCATION_MODES = frozenset({"chat", "agent"})
 
 
 def _read_raw() -> dict[str, Any]:
@@ -129,8 +133,22 @@ def get_base_url() -> str:
     return url or DEFAULT_BASE_URL
 
 
+def get_invocation_mode() -> str:
+    mode = str(_read().get("invocation_mode") or "").strip().lower()
+    return mode if mode in ALLOWED_INVOCATION_MODES else DEFAULT_INVOCATION_MODE
+
+
+def get_agent_id() -> str | None:
+    agent_id = str(_read().get("agent_id") or "").strip()
+    return agent_id or None
+
+
 def is_configured() -> bool:
-    return bool(get_api_key())
+    if not get_api_key():
+        return False
+    if get_invocation_mode() == "agent":
+        return bool(get_agent_id())
+    return True
 
 
 def api_key_hint() -> str | None:
@@ -148,15 +166,20 @@ def public_status() -> dict[str, Any]:
     except Exception:
         pass
     data = _read()
+    mode = get_invocation_mode()
+    agent_id = get_agent_id()
     return {
         "configured": is_configured(),
         "model": get_model(),
         "base_url": base,
         "base_url_host": host,
-        "api_key_set": is_configured(),
+        "api_key_set": bool(get_api_key()),
         "api_key_hint": api_key_hint(),
         "active_key_id": data.get("active_key_id"),
         "keys": list_keys_public(),
+        "invocation_mode": mode,
+        "agent_id": agent_id,
+        "agent_configured": mode == "agent" and bool(agent_id),
     }
 
 
@@ -181,15 +204,25 @@ def set_system_prompt(prompt: str | None, *, reset: bool = False) -> dict[str, A
 
 def prompt_preview() -> dict[str, Any]:
     system = get_system_prompt()
+    mode = get_invocation_mode()
     return {
         "system_prompt": system,
         "is_custom": system.strip() != DEFAULT_SYSTEM_PROMPT.strip(),
         "default_system_prompt": DEFAULT_SYSTEM_PROMPT,
         "user_message_template": USER_MESSAGE_TEMPLATE,
         "request_shape": REQUEST_SHAPE,
+        "invocation_mode": mode,
+        "agent_id": get_agent_id(),
         "notes": (
-            "Laravel builds the user message at request time from the Prim wardrobe "
-            "(fashion items only). The system prompt below is what OpenAI receives as role=system."
+            "Mode chat: Laravel sends role=system (below) + wardrobe JSON via chat/completions. "
+            "Mode agent: logic lives in your OpenAI Prompt/Agent (pmpt_…); Laravel only sends "
+            "persona + wardrobe + occasion as Responses API input — the system prompt below is unused."
+            if mode == "agent"
+            else (
+                "Laravel builds the user message at request time from the Prim wardrobe "
+                "(fashion items only). The system prompt below is what OpenAI receives as role=system. "
+                "Switch to Agent mode in OpenAI connector to attach a dashboard Prompt/Agent instead."
+            )
         ),
     }
 
@@ -202,6 +235,8 @@ def runtime_credentials() -> dict[str, Any]:
         "model": get_model(),
         "base_url": get_base_url(),
         "system_prompt": get_system_prompt(),
+        "invocation_mode": get_invocation_mode(),
+        "agent_id": get_agent_id(),
     }
 
 
@@ -212,8 +247,11 @@ def update_settings(
     model: str | None = None,
     base_url: str | None = None,
     label: str | None = None,
+    invocation_mode: str | None = None,
+    agent_id: str | None = None,
+    clear_agent_id: bool = False,
 ) -> dict[str, Any]:
-    """Update model/base_url; optionally add a key (legacy-friendly)."""
+    """Update model/base_url/agent; optionally add a key (legacy-friendly)."""
     data = _read()
 
     if clear_api_key:
@@ -236,6 +274,22 @@ def update_settings(
             data["base_url"] = u
         else:
             data.pop("base_url", None)
+
+    if invocation_mode is not None:
+        mode = str(invocation_mode).strip().lower()
+        if mode in ALLOWED_INVOCATION_MODES:
+            data["invocation_mode"] = mode
+        elif mode == "":
+            data.pop("invocation_mode", None)
+
+    if clear_agent_id:
+        data.pop("agent_id", None)
+    elif agent_id is not None:
+        aid = str(agent_id).strip()
+        if aid:
+            data["agent_id"] = aid
+        else:
+            data.pop("agent_id", None)
 
     _write(data)
     return public_status()

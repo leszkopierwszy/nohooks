@@ -18,6 +18,17 @@ class FashionAiSettingsUpdate(BaseModel):
     model: str | None = Field(None, max_length=120)
     base_url: str | None = Field(None, max_length=255)
     label: str | None = Field(None, max_length=120)
+    invocation_mode: str | None = Field(
+        None,
+        max_length=32,
+        description="chat = chat/completions + system prompt; agent = Responses API + OpenAI Prompt/Agent id",
+    )
+    agent_id: str | None = Field(
+        None,
+        max_length=255,
+        description="OpenAI Prompt/Agent id (pmpt_…) used when invocation_mode=agent",
+    )
+    clear_agent_id: bool = False
 
 
 class FashionAiKeyCreate(BaseModel):
