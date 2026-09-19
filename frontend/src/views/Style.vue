@@ -17,6 +17,14 @@
           {{ t('outfit.viewCalendar') }}
         </RouterLink>
         <button
+          v-if="stylistConfigured"
+          type="button"
+          class="rounded-lg px-3 py-2 text-sm font-medium text-indigo-700 ring-1 ring-inset ring-indigo-200 hover:bg-indigo-50"
+          @click="stylistOpen = true"
+        >
+          {{ t('fashionStylist.open') }}
+        </button>
+        <button
           type="button"
           class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800"
           @click="openCreate()"
@@ -300,6 +308,14 @@
       @close="deleteOpen = false"
       @confirm="confirmDelete"
     />
+
+    <FashionStylistModal
+      :open="stylistOpen"
+      :entity-id="selectedPrim?.id ?? ''"
+      :occasion="activeOccasion"
+      @close="stylistOpen = false"
+      @saved="onStylistSaved"
+    />
   </div>
 </template>
 
@@ -318,6 +334,7 @@ import {
   SunIcon,
 } from '@heroicons/vue/24/outline'
 import ConfirmDialog from '../components/ConfirmDialog.vue'
+import FashionStylistModal from '../components/outfit/FashionStylistModal.vue'
 import OutfitFlatLay from '../components/outfit/OutfitFlatLay.vue'
 import PersonaSwitcher from '../components/PersonaSwitcher.vue'
 import { resolveStorageUrl } from '../api/media'
@@ -330,6 +347,7 @@ import {
   generatePersonaAvatar,
   uploadPersonaPhoto,
 } from '../services/personaImageProcessing'
+import { useFashionStylistStore } from '../stores/fashionStylist'
 import { useOutfitsStore, wearDateKey } from '../stores/outfits'
 import { usePersonasStore } from '../stores/personas'
 import { formatEventDate } from '../utils/calendarGrid'
@@ -350,6 +368,7 @@ const { t } = useI18n()
 const router = useRouter()
 const outfitsStore = useOutfitsStore()
 const personasStore = usePersonasStore()
+const fashionStylistStore = useFashionStylistStore()
 
 const selectedPrimId = ref(null)
 const activeOccasion = ref('')
@@ -357,6 +376,9 @@ const deleteOpen = ref(false)
 const deleteTarget = ref(null)
 const deleting = ref(false)
 const formError = ref('')
+const stylistOpen = ref(false)
+
+const stylistConfigured = computed(() => fashionStylistStore.configured)
 
 const photoInputRef = ref(null)
 const silhouetteBusy = ref(false)
@@ -549,6 +571,10 @@ async function confirmDelete() {
   }
 }
 
+async function onStylistSaved() {
+  await loadOutfits().catch(() => {})
+}
+
 watch(selectedPrimId, (id) => {
   if (id != null) personasStore.setActivePersona(id)
   silhouetteError.value = ''
@@ -560,6 +586,9 @@ onMounted(async () => {
   await personasStore.fetchPersonas().catch(() => {})
   selectedPrimId.value =
     personasStore.activePrim?.id ?? personasStore.prims[0]?.id ?? null
-  await loadOutfits().catch(() => {})
+  await Promise.all([
+    loadOutfits().catch(() => {}),
+    fashionStylistStore.fetchStatus().catch(() => {}),
+  ])
 })
 </script>

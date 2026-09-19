@@ -215,6 +215,30 @@ body {
   .content-wrap { padding-left: 2.5rem; padding-right: 2.5rem; }
 }
 
+.app-view[hidden] {
+  display: none !important;
+}
+
+.page-view-wrap {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 1.5rem 1.5rem 4rem;
+}
+.page-view-wrap--wide {
+  max-width: 48rem;
+}
+@media (min-width: 640px) {
+  .page-view-wrap {
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+    padding-top: 2rem;
+  }
+}
+
+.prose-section--page {
+  padding-top: 0;
+}
+
 .prose-section {
   padding-top: 2.5rem;
   scroll-margin-top: 5rem;

@@ -47,11 +47,14 @@ function loadHtmlImage(source) {
  *   forceRegenerate?: boolean,
  *   forceLight?: boolean,
  *   forceStudioGray?: boolean,
+ *   skipOutline?: boolean,
  * }} [options]
  */
 export async function prepareSetItemCutout(item, options = {}) {
   const usePersisted =
-    !options.forceRegenerate && itemHasPersistedCutout(item)
+    !options.forceRegenerate &&
+    !options.skipOutline &&
+    itemHasPersistedCutout(item)
   const url = itemImageUrl(item, { preferPersisted: usePersisted })
   if (!url) {
     throw new Error(`Brak zdjęcia dla „${item?.name ?? 'item'}”.`)
@@ -70,7 +73,10 @@ export async function prepareSetItemCutout(item, options = {}) {
     }
   }
 
-  const source = await fetchUrlAsFile(url, `item-${item.id}.jpg`)
+  const source = await fetchUrlAsFile(
+    itemImageUrl(item, { preferPersisted: false }) ?? url,
+    `item-${item.id}.jpg`,
+  )
   const tuned = await resolveCutoutOptions(source, {
     colorHint: options.colorHint ?? item?.color ?? null,
     forceLight: Boolean(options.forceLight),
@@ -93,6 +99,16 @@ export async function prepareSetItemCutout(item, options = {}) {
     lightProduct: forceLight && !forceStudio,
     studioGray: forceStudio && !forceLight,
   })
+
+  if (options.skipOutline) {
+    return {
+      item,
+      file: cutout.file,
+      previewUrl: cutout.previewUrl,
+      width: cutout.width,
+      height: cutout.height,
+    }
+  }
 
   const outlined = await addSoftOutlineToCutout(cutout.file, {
     radius: options.outlineRadius ?? 2,

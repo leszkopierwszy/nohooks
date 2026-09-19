@@ -40,9 +40,12 @@ services:
       LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-pk-lf-nohooks-product-parser}
       LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-sk-lf-nohooks-product-parser}
       LANGFUSE_UI_URL: ${LANGFUSE_NEXTAUTH_URL:-http://localhost:3100}
+      MODEL_ASSISTANT_URL: ${MODEL_ASSISTANT_URL:-http://model-assistant:8080}
+      FASHION_AI_INTERNAL_TOKEN: ${FASHION_AI_INTERNAL_TOKEN:-}
     depends_on:
       - db
       - product-parser
+      - model-assistant
     command: sh -c "php artisan storage:link --relative 2>/dev/null || true && php artisan serve --host=0.0.0.0 --port=8000"
 
   # Wolne na Macu (emulacja CPU). Użyj: docker compose --profile docker-comfyui up -d comfyui
@@ -120,6 +123,8 @@ services:
       - ${COMFYUI_MODELS_HOST_PATH:-./comfyui-models}:/models
       - model_assistant_data:/data
       - ./model-assistant/catalog.json:/app/catalog.json:ro
+      - ./model-assistant/app:/app/app:ro
+      - ./model-assistant/static:/app/static:ro
 
   frontend:
     build: ./frontend

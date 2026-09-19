@@ -351,7 +351,7 @@
     },
     "backend": {
       "title": "Backend",
-      "subtitle": "ComfyUI model catalog, Langfuse (import traces), and service configuration.",
+      "subtitle": "Links to Backend Settings (:8190), ComfyUI models, Langfuse, and Fashion AI connector.",
       "openLink": "Open in new tab",
       "links": {
         "home": "Backend Settings",
@@ -363,9 +363,29 @@
         "langfuse": "Langfuse",
         "langfuseHint": "Observability UI — product-parser and Ollama traces.",
         "langfuseGuide": "Langfuse guide",
-        "langfuseGuideHint": "Overview and service status in Backend Settings."
+        "langfuseGuideHint": "Overview and service status in Backend Settings.",
+        "fashionAi": "Fashion AI connector",
+        "fashionAiHint": "OpenAI API key for the AI stylist — opens Backend Settings (:8190)."
       }
     }
+  },
+  "fashionStylist": {
+    "open": "AI Stylist",
+    "title": "AI Stylist",
+    "subtitle": "How many outfits you can make from your wardrobe — and what to buy next (Zara, H&M…).",
+    "notes": "Preferences",
+    "notesPlaceholder": "e.g. warmer layers, no heels…",
+    "suggest": "Analyze wardrobe",
+    "thinking": "Thinking…",
+    "analysisTitle": "Your wardrobe",
+    "possibleSets": "About {count} complete outfits from what you own",
+    "results": "Outfit ideas from your closet",
+    "shoppingTitle": "What to buy next",
+    "shoppingSubtitle": "Pieces that unlock more looks with what you already have — look for them at these stores.",
+    "shoppingNoStoresHint": "Tip — add preferred stores under Style → Brands so suggestions match shops you like.",
+    "stores": "Stores",
+    "untitled": "Suggested look",
+    "save": "Save outfit"
   },
   "auth": {
     "loginTitle": "Sign in",
@@ -867,7 +887,21 @@
   },
   "style": {
     "nav": {
-      "outfits": "Outfits"
+      "outfits": "Outfits",
+      "brands": "Brands"
+    },
+    "brands": {
+      "title": "Brands & stores",
+      "subtitle": "Shops and brands you like — the AI stylist prefers these when suggesting what to buy. Add a store by pasting its URL.",
+      "empty": "No stores yet — paste a shop URL below (e.g. Zara, H&M).",
+      "url": "Store URL",
+      "name": "Name",
+      "brand": "Brand",
+      "brandPlaceholder": "optional",
+      "add": "Add store",
+      "remove": "Remove",
+      "saved": "Saved.",
+      "saveError": "Could not save stores."
     },
     "subtitle": "Plan looks for each Prim by occasion — school, work, home, and more.",
     "generateSet": "Generate set",

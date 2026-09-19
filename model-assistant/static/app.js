@@ -466,14 +466,15 @@ function updateSidebarBundleLinks(bundles) {
 }
 
 function setupNavScrollSpy() {
-  const links = document.querySelectorAll('.nav-link[data-section]')
+  const links = document.querySelectorAll('.nav-link[data-section]:not([data-view])')
   const sections = [...links].map((l) => document.getElementById(l.dataset.section)).filter(Boolean)
 
   const observer = new IntersectionObserver(
     (entries) => {
+      if (document.getElementById('view-home')?.hidden) return
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          links.forEach((l) => {
+          document.querySelectorAll('.nav-link[data-section]').forEach((l) => {
             l.classList.toggle('active', l.dataset.section === entry.target.id)
           })
         }
@@ -482,6 +483,52 @@ function setupNavScrollSpy() {
     { rootMargin: '-20% 0px -70% 0px', threshold: 0 }
   )
   sections.forEach((s) => observer.observe(s))
+}
+
+const STANDALONE_VIEWS = new Set(['fashion-ai', 'openai-prompt', 'openai-logs'])
+
+function setActiveNav(sectionId) {
+  document.querySelectorAll('.nav-link[data-section]').forEach((l) => {
+    l.classList.toggle('active', l.dataset.section === sectionId)
+  })
+}
+
+function showAppView(viewId) {
+  document.querySelectorAll('[data-app-view]').forEach((el) => {
+    const match = el.dataset.appView === viewId
+    el.hidden = !match
+  })
+  if (viewId !== 'home') {
+    window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' })
+  }
+}
+
+function applyRouteFromHash() {
+  const raw = (location.hash || '#intro').replace(/^#/, '')
+  const id = raw.startsWith('bundle-') ? 'bundles' : raw || 'intro'
+
+  if (STANDALONE_VIEWS.has(id)) {
+    showAppView(id)
+    setActiveNav(id)
+    if (id === 'fashion-ai') loadFashionAi().catch((e) => console.error(e))
+    if (id === 'openai-prompt') loadOpenaiPrompt().catch((e) => console.error(e))
+    if (id === 'openai-logs') loadOpenaiLogs().catch((e) => console.error(e))
+    return
+  }
+
+  showAppView('home')
+  setActiveNav(id)
+  const el = document.getElementById(id)
+  if (el && raw) {
+    requestAnimationFrame(() => {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }
+}
+
+function setupViewRouter() {
+  window.addEventListener('hashchange', () => applyRouteFromHash())
+  applyRouteFromHash()
 }
 
 function setupSidebar() {
@@ -511,7 +558,10 @@ function setupSearch() {
     if (input) input.value = v
     if (heroSearch) heroSearch.value = v
     filterBundles(v)
-    if (v) document.getElementById('bundles')?.scrollIntoView({ behavior: 'smooth' })
+    if (v) {
+      if (location.hash !== '#bundles') location.hash = 'bundles'
+      else document.getElementById('bundles')?.scrollIntoView({ behavior: 'smooth' })
+    }
   }
   input?.addEventListener('input', (e) => sync(e.target.value))
   heroSearch?.addEventListener('input', (e) => sync(e.target.value))
@@ -548,7 +598,372 @@ setupSidebar()
 setupNavScrollSpy()
 setupSearch()
 document.getElementById('btn-refresh-observability')?.addEventListener('click', () => loadObservability())
+
+async function loadFashionAi() {
+  const badge = document.getElementById('fashion-ai-badge')
+  const msg = document.getElementById('fashion-ai-msg')
+  const list = document.getElementById('fashion-keys-list')
+  try {
+    const data = await fetch('/api/fashion-ai/settings').then((r) => {
+      if (!r.ok) throw new Error(`HTTP ${r.status}`)
+      return r.json()
+    })
+    if (badge) {
+      const n = (data.keys || []).length
+      badge.textContent = data.configured
+        ? `Connected · ${n} key${n === 1 ? '' : 's'}`
+        : 'Not configured'
+    }
+    const model = document.getElementById('fashion-model')
+    const base = document.getElementById('fashion-base-url')
+    const key = document.getElementById('fashion-api-key')
+    const label = document.getElementById('fashion-key-label')
+    if (model) model.value = data.model || 'gpt-4o-mini'
+    if (base) base.value = data.base_url || 'https://api.openai.com/v1'
+    if (key) key.value = ''
+    if (label) label.value = ''
+    if (list) {
+      const keys = data.keys || []
+      if (!keys.length) {
+        list.innerHTML = '<p class="text-sm themed-muted">Brak zapisanych kluczy.</p>'
+      } else {
+        list.innerHTML = keys
+          .map((k) => {
+            const active = k.active
+              ? '<span class="ml-2 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide" style="background: var(--status-ok-bg); color: var(--status-ok-text)">active</span>'
+              : ''
+            const activateBtn = k.active
+              ? ''
+              : `<button type="button" class="btn-outline rounded-md px-2.5 py-1 text-xs font-semibold" data-activate-key="${k.id}">Aktywuj</button>`
+            return `<div class="flex flex-wrap items-center justify-between gap-2 rounded-xl border px-3 py-2.5 overflow-hidden" style="border-color: var(--card-border); background: var(--card-bg)">
+              <div class="min-w-0 flex-1 overflow-hidden">
+                <p class="text-sm font-medium truncate" style="color: var(--text)">${escapeHtml(k.label || 'untitled')}${active}</p>
+                <p class="mt-0.5 font-mono text-xs themed-muted truncate" title="${escapeHtml(k.api_key_hint || '')}">${escapeHtml(k.api_key_hint || '••••')}</p>
+              </div>
+              <div class="flex shrink-0 flex-wrap gap-2">
+                ${activateBtn}
+                <button type="button" class="btn-outline rounded-md px-2.5 py-1 text-xs font-semibold" data-delete-key="${k.id}">Usuń</button>
+              </div>
+            </div>`
+          })
+          .join('')
+      }
+    }
+    if (msg) msg.textContent = ''
+  } catch (err) {
+    if (badge) badge.textContent = 'Error'
+    if (list) list.innerHTML = `<p class="text-sm" style="color: var(--status-err-text)">${escapeHtml(err.message || String(err))}</p>`
+    if (msg) msg.textContent = err.message || String(err)
+  }
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
+async function saveFashionAiMeta() {
+  const msg = document.getElementById('fashion-ai-msg')
+  const payload = {
+    model: document.getElementById('fashion-model')?.value || '',
+    base_url: document.getElementById('fashion-base-url')?.value || '',
+  }
+  try {
+    const res = await fetch('/api/fashion-ai/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      throw new Error(body.detail || `HTTP ${res.status}`)
+    }
+    if (msg) msg.textContent = 'Zapisano model / URL.'
+    await loadFashionAi()
+  } catch (err) {
+    if (msg) msg.textContent = err.message || String(err)
+  }
+}
+
+async function addFashionAiKey() {
+  const msg = document.getElementById('fashion-ai-msg')
+  const apiKey = document.getElementById('fashion-api-key')?.value?.trim()
+  if (!apiKey) {
+    if (msg) msg.textContent = 'Podaj klucz API.'
+    return
+  }
+  const payload = {
+    api_key: apiKey,
+    label: document.getElementById('fashion-key-label')?.value?.trim() || '',
+    activate: true,
+  }
+  if (msg) msg.textContent = 'Zapisywanie…'
+  try {
+    await fetch('/api/fashion-ai/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({
+        model: document.getElementById('fashion-model')?.value || '',
+        base_url: document.getElementById('fashion-base-url')?.value || '',
+      }),
+    })
+    const res = await fetch('/api/fashion-ai/keys', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    const body = await res.json().catch(() => ({}))
+    if (!res.ok) {
+      const detail = body.detail
+      const text = Array.isArray(detail)
+        ? detail.map((d) => d.msg || JSON.stringify(d)).join('; ')
+        : detail || `HTTP ${res.status}`
+      throw new Error(text)
+    }
+    if (msg) msg.textContent = 'Dodano klucz i ustawiono jako aktywny.'
+    await loadFashionAi()
+  } catch (err) {
+    if (msg) msg.textContent = err.message || String(err)
+  }
+}
+
+async function activateFashionKey(id) {
+  const msg = document.getElementById('fashion-ai-msg')
+  try {
+    const res = await fetch(`/api/fashion-ai/keys/${encodeURIComponent(id)}/activate`, {
+      method: 'POST',
+      headers: { Accept: 'application/json' },
+    })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    if (msg) msg.textContent = 'Ustawiono aktywny klucz.'
+    await loadFashionAi()
+  } catch (err) {
+    if (msg) msg.textContent = err.message || String(err)
+  }
+}
+
+async function deleteFashionKey(id) {
+  const msg = document.getElementById('fashion-ai-msg')
+  if (!confirm('Usunąć ten klucz?')) return
+  try {
+    const res = await fetch(`/api/fashion-ai/keys/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: { Accept: 'application/json' },
+    })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    if (msg) msg.textContent = 'Klucz usunięty.'
+    await loadFashionAi()
+  } catch (err) {
+    if (msg) msg.textContent = err.message || String(err)
+  }
+}
+
+document.getElementById('fashion-ai-form')?.addEventListener('submit', (e) => {
+  e.preventDefault()
+  addFashionAiKey()
+})
+document.getElementById('btn-save-fashion-meta')?.addEventListener('click', () => saveFashionAiMeta())
+document.getElementById('btn-refresh-fashion-ai')?.addEventListener('click', () => loadFashionAi())
+document.getElementById('fashion-keys-list')?.addEventListener('click', (e) => {
+  const act = e.target.closest?.('[data-activate-key]')
+  const del = e.target.closest?.('[data-delete-key]')
+  if (act) activateFashionKey(act.getAttribute('data-activate-key'))
+  if (del) deleteFashionKey(del.getAttribute('data-delete-key'))
+})
+
+async function loadOpenaiPrompt() {
+  const badge = document.getElementById('openai-prompt-badge')
+  const msg = document.getElementById('openai-prompt-msg')
+  const ta = document.getElementById('openai-system-prompt')
+  const userTpl = document.getElementById('openai-user-template')
+  const shape = document.getElementById('openai-request-shape')
+  try {
+    const data = await fetch('/api/fashion-ai/prompt').then((r) => {
+      if (!r.ok) throw new Error(`HTTP ${r.status}`)
+      return r.json()
+    })
+    if (ta) ta.value = data.system_prompt || ''
+    if (userTpl) userTpl.textContent = data.user_message_template || ''
+    if (shape) shape.textContent = JSON.stringify(data.request_shape || {}, null, 2)
+    if (badge) {
+      badge.textContent = data.is_custom ? 'Custom prompt' : 'Default prompt'
+    }
+    if (msg) msg.textContent = data.notes || ''
+  } catch (err) {
+    if (badge) badge.textContent = 'Błąd'
+    if (msg) msg.textContent = err.message || String(err)
+  }
+}
+
+async function saveOpenaiPrompt() {
+  const msg = document.getElementById('openai-prompt-msg')
+  const ta = document.getElementById('openai-system-prompt')
+  try {
+    const res = await fetch('/api/fashion-ai/prompt', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ system_prompt: ta?.value || '', reset: false }),
+    })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    if (msg) msg.textContent = 'Prompt zapisany — Laravel użyje go przy kolejnej sugestii.'
+    await loadOpenaiPrompt()
+  } catch (err) {
+    if (msg) msg.textContent = err.message || String(err)
+  }
+}
+
+async function resetOpenaiPrompt() {
+  const msg = document.getElementById('openai-prompt-msg')
+  if (!confirm('Przywrócić domyślny system prompt?')) return
+  try {
+    const res = await fetch('/api/fashion-ai/prompt', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ reset: true }),
+    })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    if (msg) msg.textContent = 'Przywrócono domyślny prompt.'
+    await loadOpenaiPrompt()
+  } catch (err) {
+    if (msg) msg.textContent = err.message || String(err)
+  }
+}
+
+document.getElementById('btn-refresh-openai-prompt')?.addEventListener('click', () => loadOpenaiPrompt())
+document.getElementById('btn-save-openai-prompt')?.addEventListener('click', () => saveOpenaiPrompt())
+document.getElementById('btn-reset-openai-prompt')?.addEventListener('click', () => resetOpenaiPrompt())
+
+let openaiLogsCache = []
+
+function fmtLogTime(iso) {
+  if (!iso) return '—'
+  try {
+    return new Date(iso).toLocaleString('pl-PL')
+  } catch {
+    return iso
+  }
+}
+
+function prettyJson(value) {
+  try {
+    return JSON.stringify(value, null, 2)
+  } catch {
+    return String(value ?? '')
+  }
+}
+
+function renderOpenaiLogDetail(entry) {
+  const box = document.getElementById('openai-log-detail')
+  if (!box) return
+  if (!entry) {
+    box.innerHTML = `<p class="text-sm themed-muted">Wybierz wpis z listy.</p>`
+    return
+  }
+  const reqMsgs = entry.request?.messages || []
+  const system = reqMsgs.find((m) => m.role === 'system')?.content || ''
+  const user = reqMsgs.find((m) => m.role === 'user')?.content || ''
+  const content = entry.response?.content ?? entry.response?.parsed ?? entry.response
+  box.innerHTML = `
+    <div class="space-y-3 text-sm">
+      <div class="flex flex-wrap gap-2 text-xs themed-muted">
+        <span>${fmtLogTime(entry.created_at)}</span>
+        <span>·</span>
+        <span>${entry.model || '—'}</span>
+        <span>·</span>
+        <span>${entry.duration_ms != null ? `${entry.duration_ms} ms` : '—'}</span>
+        <span>·</span>
+        <span>catalog ${entry.catalog_count ?? '—'}</span>
+        ${entry.occasion ? `<span>·</span><span>${entry.occasion}</span>` : ''}
+      </div>
+      ${entry.error ? `<p class="rounded-md px-3 py-2 text-sm" style="background: var(--status-err-bg); color: var(--status-err-text)">${escapeHtml(entry.error)}</p>` : ''}
+      <div>
+        <p class="font-semibold" style="color: var(--text)">System</p>
+        <pre class="mt-1 max-h-40 overflow-auto rounded border p-2 font-mono text-xs whitespace-pre-wrap" style="border-color: var(--card-border)">${escapeHtml(system)}</pre>
+      </div>
+      <div>
+        <p class="font-semibold" style="color: var(--text)">User</p>
+        <pre class="mt-1 max-h-56 overflow-auto rounded border p-2 font-mono text-xs whitespace-pre-wrap" style="border-color: var(--card-border)">${escapeHtml(typeof user === 'string' ? user : prettyJson(user))}</pre>
+      </div>
+      <div>
+        <p class="font-semibold" style="color: var(--text)">Model response</p>
+        <pre class="mt-1 max-h-72 overflow-auto rounded border p-2 font-mono text-xs whitespace-pre-wrap" style="border-color: var(--card-border)">${escapeHtml(typeof content === 'string' ? content : prettyJson(content))}</pre>
+      </div>
+      ${entry.usage ? `<div><p class="font-semibold" style="color: var(--text)">Usage</p><pre class="mt-1 overflow-auto rounded border p-2 font-mono text-xs" style="border-color: var(--card-border)">${escapeHtml(prettyJson(entry.usage))}</pre></div>` : ''}
+    </div>
+  `
+}
+
+async function loadOpenaiLogs() {
+  const badge = document.getElementById('openai-logs-badge')
+  const msg = document.getElementById('openai-logs-msg')
+  const list = document.getElementById('openai-logs-list')
+  try {
+    const data = await fetch('/api/fashion-ai/logs?limit=50').then((r) => {
+      if (!r.ok) throw new Error(`HTTP ${r.status}`)
+      return r.json()
+    })
+    openaiLogsCache = data.entries || []
+    if (badge) badge.textContent = `${data.count ?? openaiLogsCache.length} wpisów`
+    if (msg) msg.textContent = openaiLogsCache.length ? '' : 'Brak logów — wywołaj Suggest outfits w aplikacji.'
+    if (!list) return
+    if (!openaiLogsCache.length) {
+      list.innerHTML = `<p class="text-sm themed-muted">Brak wpisów.</p>`
+      renderOpenaiLogDetail(null)
+      return
+    }
+    list.innerHTML = openaiLogsCache
+      .map((e) => {
+        const ok = e.status === 'ok'
+        const label = ok ? 'OK' : 'ERR'
+        const bg = ok ? 'var(--status-ok-bg)' : 'var(--status-err-bg)'
+        const fg = ok ? 'var(--status-ok-text)' : 'var(--status-err-text)'
+        return `<button type="button" data-log-id="${escapeHtml(e.id)}" class="w-full text-left rounded-lg border px-3 py-2 hover:opacity-90" style="border-color: var(--card-border); background: var(--card-bg)">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-sm font-medium truncate" style="color: var(--text)">${escapeHtml(e.model || 'model')}</span>
+            <span class="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold" style="background:${bg};color:${fg}">${label}</span>
+          </div>
+          <p class="mt-1 text-xs themed-muted truncate">${fmtLogTime(e.created_at)} · ${e.duration_ms != null ? e.duration_ms + ' ms' : '—'} · cat ${e.catalog_count ?? '—'}${e.occasion ? ' · ' + escapeHtml(e.occasion) : ''}</p>
+        </button>`
+      })
+      .join('')
+    renderOpenaiLogDetail(openaiLogsCache[0])
+  } catch (err) {
+    if (badge) badge.textContent = 'Błąd'
+    if (msg) msg.textContent = err.message || String(err)
+  }
+}
+
+async function clearOpenaiLogs() {
+  const msg = document.getElementById('openai-logs-msg')
+  if (!confirm('Wyczyścić wszystkie logi OpenAI?')) return
+  try {
+    const res = await fetch('/api/fashion-ai/logs', { method: 'DELETE', headers: { Accept: 'application/json' } })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    if (msg) msg.textContent = 'Wyczyszczono.'
+    await loadOpenaiLogs()
+  } catch (err) {
+    if (msg) msg.textContent = err.message || String(err)
+  }
+}
+
+document.getElementById('btn-refresh-openai-logs')?.addEventListener('click', () => loadOpenaiLogs())
+document.getElementById('btn-clear-openai-logs')?.addEventListener('click', () => clearOpenaiLogs())
+document.getElementById('openai-logs-list')?.addEventListener('click', (e) => {
+  const btn = e.target.closest?.('[data-log-id]')
+  if (!btn) return
+  const id = btn.getAttribute('data-log-id')
+  const entry = openaiLogsCache.find((x) => String(x.id) === String(id))
+  renderOpenaiLogDetail(entry || null)
+})
+
+setupViewRouter()
+
 loadObservability().catch(() => {})
+loadFashionAi().catch(() => {})
+loadOpenaiPrompt().catch(() => {})
 loadBundles().catch((e) => {
   const app = document.getElementById('bundle-list')
   if (app) app.innerHTML = `<p class="text-sm text-red-600">Błąd: ${e.message}</p>`

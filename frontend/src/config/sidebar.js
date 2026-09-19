@@ -40,6 +40,7 @@ export const sidebarNavigation = [
     icon: SwatchIcon,
     subItems: [
       { labelKey: 'style.nav.outfits', href: '/style', activeMatch: 'exact' },
+      { labelKey: 'style.nav.brands', href: '/style/brands', activeMatch: 'exact' },
       { labelKey: 'nav.collection', href: '/collection', activeMatch: 'collection' },
     ],
   },
@@ -82,8 +83,14 @@ export const sidebarAccountNavigation = [
     href: '/account/backend',
     icon: CpuChipIcon,
     activeMatch: 'prefix',
+    adminOnly: true,
   },
 ]
+
+/** Account nav filtered for the signed-in user (hides admin-only entries). */
+export function sidebarAccountNavigationForUser({ isAdmin = false } = {}) {
+  return sidebarAccountNavigation.filter((item) => !item.adminOnly || isAdmin)
+}
 
 // ——— Wymiary i layout —————————————————————————————————————————————————————
 

@@ -719,7 +719,6 @@ async function confirmDeleteEvent() {
 
 function openCreateOutfit() {
   const query = {}
-  if (selectedDate.value) query.date = selectedDate.value
   const activePrim = personasStore.activePrim
   if (activePrim?.id) {
     query.entity_id = String(activePrim.id)

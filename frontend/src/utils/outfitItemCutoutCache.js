@@ -104,6 +104,70 @@ export function peekOutfitItemCutout(item) {
   return cache.get(itemCacheKey(item))?.previewUrl ?? null
 }
 
+/**
+ * Cutout without soft outline — for picker grids on white tiles
+ * where the halo would show as a white fringe.
+ */
+export async function getOutfitItemPlainCutout(item) {
+  const raw = item?.image_url ?? item?.images?.[0]?.url ?? ''
+  const url = resolveStorageUrl(raw) ?? raw
+  const key = `plain-v1::${item?.id ?? 'x'}::${url}`
+  if (cache.has(key)) {
+    return cache.get(key)
+  }
+  if (inflight.has(key)) {
+    return inflight.get(key)
+  }
+
+  const job = (async () => {
+    let piece = await prepareSetItemCutout(item, {
+      forceRegenerate: true,
+      skipOutline: true,
+      colorHint: item?.color ?? null,
+    })
+
+    let ratio = await estimateCutoutOpaqueRatio(piece.previewUrl)
+
+    if (!isCutoutOpaqueRatioOk(ratio) || ratio > 0.68) {
+      URL.revokeObjectURL(piece.previewUrl)
+      piece = await prepareSetItemCutout(item, {
+        forceRegenerate: true,
+        skipOutline: true,
+        colorHint: item?.color ?? 'white',
+        forceLight: true,
+      })
+      ratio = await estimateCutoutOpaqueRatio(piece.previewUrl)
+    }
+
+    if (!isCutoutOpaqueRatioOk(ratio) && ratio > 0.72) {
+      URL.revokeObjectURL(piece.previewUrl)
+      piece = await prepareSetItemCutout(item, {
+        forceRegenerate: true,
+        skipOutline: true,
+        forceStudioGray: true,
+      })
+    }
+
+    const entry = { previewUrl: piece.previewUrl, file: piece.file }
+    cache.set(key, entry)
+    return entry
+  })()
+
+  inflight.set(key, job)
+  try {
+    return await job
+  } finally {
+    inflight.delete(key)
+  }
+}
+
+export function peekOutfitItemPlainCutout(item) {
+  const raw = item?.image_url ?? item?.images?.[0]?.url ?? ''
+  const url = resolveStorageUrl(raw) ?? raw
+  const key = `plain-v1::${item?.id ?? 'x'}::${url}`
+  return cache.get(key)?.previewUrl ?? null
+}
+
 export function clearOutfitItemCutoutCache() {
   for (const entry of cache.values()) {
     if (entry.previewUrl?.startsWith('blob:')) {

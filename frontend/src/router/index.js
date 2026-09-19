@@ -31,9 +31,11 @@ import Wardrobe from '../components/wardrobe.vue'
 import AccountSettings from '../views/AccountSettings.vue'
 import AccountModelAssistant from '../views/AccountModelAssistant.vue'
 import Style from '../views/Style.vue'
+import StyleBrands from '../views/StyleBrands.vue'
 import StyleOutfitEditor from '../views/StyleOutfitEditor.vue'
 import Login from '../views/Login.vue'
 import { useAuthStore } from '../stores/auth'
+import { useUserStore } from '../stores/user'
 
 const routes = [
   {
@@ -170,6 +172,14 @@ const routes = [
             },
         },
         {
+            path: '/style/brands',
+            name: 'StyleBrands',
+            component: StyleBrands,
+            meta: {
+                layout: 'default'
+            },
+        },
+        {
             path: '/style/outfits/new',
             name: 'StyleOutfitCreate',
             component: StyleOutfitEditor,
@@ -246,7 +256,7 @@ const routes = [
             path: '/account/backend',
             name: 'AccountBackend',
             component: AccountModelAssistant,
-            meta: { layout: 'default' },
+            meta: { layout: 'default', requiresAdmin: true },
         },
         { path: '/account/model-assistant', redirect: '/account/backend' },
         {
@@ -290,6 +300,7 @@ router.beforeEach(async (to) => {
 
   const requiresAuth = to.matched.some((record) => record.meta.requiresAuth)
   const guestOnly = to.matched.some((record) => record.meta.guestOnly)
+  const requiresAdmin = to.matched.some((record) => record.meta.requiresAdmin)
 
   if (requiresAuth && !authStore.isAuthenticated) {
     return {
@@ -300,6 +311,13 @@ router.beforeEach(async (to) => {
 
   if (guestOnly && authStore.isAuthenticated) {
     return { path: '/home' }
+  }
+
+  if (requiresAdmin) {
+    const userStore = useUserStore()
+    if (!userStore.isAdmin) {
+      return { path: '/account' }
+    }
   }
 
   return true

@@ -25,10 +25,44 @@ class AuthController extends Controller
             'avatar' => $user->avatar,
             'bio' => $user->bio,
             'netSalaryPln' => $user->net_salary_pln !== null ? (float) $user->net_salary_pln : 0.0,
+            'fashionStores' => $this->normalizeFashionStores($user->fashion_stores),
             'role' => 'creator',
+            'isAdmin' => $user->isAdmin(),
             /** Only this account may claim pre-auth browser localStorage into its workspace. */
             'isLegacyOwner' => $legacyOwnerId !== null && (int) $user->id === (int) $legacyOwnerId,
         ];
+    }
+
+    /**
+     * @param  mixed  $raw
+     * @return list<array{id: string, name: string, brand: ?string, url: string}>
+     */
+    private function normalizeFashionStores(mixed $raw): array
+    {
+        if (! is_array($raw)) {
+            return [];
+        }
+        $out = [];
+        foreach ($raw as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $name = trim((string) ($row['name'] ?? ''));
+            $url = trim((string) ($row['url'] ?? ''));
+            if ($name === '' || $url === '') {
+                continue;
+            }
+            $out[] = [
+                'id' => (string) ($row['id'] ?? uniqid('fs_', true)),
+                'name' => mb_substr($name, 0, 80),
+                'brand' => isset($row['brand']) && trim((string) $row['brand']) !== ''
+                    ? mb_substr(trim((string) $row['brand']), 0, 80)
+                    : null,
+                'url' => mb_substr($url, 0, 2048),
+            ];
+        }
+
+        return array_slice($out, 0, 30);
     }
 
     public function register(Request $request)
@@ -105,6 +139,11 @@ class AuthController extends Controller
             'avatar' => ['nullable', 'string', 'max:2048'],
             'bio' => ['nullable', 'string', 'max:2000'],
             'netSalaryPln' => ['nullable', 'numeric', 'min:0', 'max:999999999'],
+            'fashionStores' => ['sometimes', 'array', 'max:30'],
+            'fashionStores.*.id' => ['nullable', 'string', 'max:64'],
+            'fashionStores.*.name' => ['required_with:fashionStores', 'string', 'max:80'],
+            'fashionStores.*.brand' => ['nullable', 'string', 'max:80'],
+            'fashionStores.*.url' => ['required_with:fashionStores', 'url', 'max:2048'],
         ]);
 
         $user->fill([
@@ -116,7 +155,13 @@ class AuthController extends Controller
             'net_salary_pln' => array_key_exists('netSalaryPln', $data)
                 ? ($data['netSalaryPln'] === null ? null : (float) $data['netSalaryPln'])
                 : $user->net_salary_pln,
-        ])->save();
+        ]);
+
+        if (array_key_exists('fashionStores', $data)) {
+            $user->fashion_stores = $this->normalizeFashionStores($data['fashionStores']);
+        }
+
+        $user->save();
 
         return response()->json([
             'user' => $this->toApi($user->fresh()),

@@ -326,7 +326,7 @@ account:
     backend: Backend
   backend:
     title: Backend
-    subtitle: Katalog modeli ComfyUI, Langfuse (trace’y importu) i konfiguracja usług.
+    subtitle: Linki do Backend Settings (:8190), modeli ComfyUI, Langfuse i connectora Fashion AI.
     openLink: Otwórz w nowej karcie
     links:
       home: Backend Settings
@@ -339,6 +339,26 @@ account:
       langfuseHint: UI observability — trace’y product-parser i Ollama.
       langfuseGuide: Langfuse w przewodniku
       langfuseGuideHint: Opis i status usług w Backend Settings.
+      fashionAi: Connector Fashion AI
+      fashionAiHint: Klucz OpenAI dla stylisty AI — otwiera Backend Settings (:8190).
+
+fashionStylist:
+  open: Stylista AI
+  title: Stylista AI
+  subtitle: Ile outfitów złożysz z szafy — i co dokupić (Zara, H&M…).
+  notes: Preferencje
+  notesPlaceholder: np. cieplejsze warstwy, bez szpilek…
+  suggest: Przeanalizuj szafę
+  thinking: Myślę…
+  analysisTitle: Twoja szafa
+  possibleSets: Około {count} kompletnych outfitów z tego, co masz
+  results: Propozycje z Twojej szafy
+  shoppingTitle: Co dokupić
+  shoppingSubtitle: Rzeczy, które odblokują więcej zestawów z tym, co już masz — szukaj ich w tych sklepach.
+  shoppingNoStoresHint: Wskazówka — dodaj ulubione sklepy w Style → Marki, żeby propozycje trafiały w Twoje marki.
+  stores: Sklepy
+  untitled: Proponowany look
+  save: Zapisz outfit
 
 auth:
   loginTitle: Logowanie
@@ -803,6 +823,19 @@ item:
 style:
   nav:
     outfits: Outfity
+    brands: Marki
+  brands:
+    title: Marki i sklepy
+    subtitle: Sklepy i marki, które lubisz — stylista AI będzie je preferował przy propozycjach zakupów. Dodaj sklep, wklejając link.
+    empty: Brak sklepów — wklej URL sklepu poniżej (np. Zara, H&M).
+    url: Link do sklepu
+    name: Nazwa
+    brand: Marka
+    brandPlaceholder: opcjonalnie
+    add: Dodaj sklep
+    remove: Usuń
+    saved: Zapisano.
+    saveError: Nie udało się zapisać sklepów.
   subtitle: Planuj zestawy dla Prima według okazji — szkoła, praca, dom i inne.
   generateSet: Generuj set
   generatingSet: Wycinam itemy…

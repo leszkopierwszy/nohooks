@@ -15,7 +15,7 @@
       },
     }
   </script>
-  <link rel="stylesheet" href="static/app.css" />
+  <link rel="stylesheet" href="/static/app.css?v=openai-logs-2" />
 </head>
 <body>
   <div id="sidebar-backdrop" class="sidebar-backdrop" aria-hidden="true"></div>
@@ -32,6 +32,10 @@
       <a href="#intro" class="nav-link active" data-section="intro">Wprowadzenie</a>
       <p class="nav-group-title">Observability</p>
       <a href="#langfuse" class="nav-link" data-section="langfuse">Langfuse</a>
+      <p class="nav-group-title">Fashion AI</p>
+      <a href="#fashion-ai" class="nav-link" data-section="fashion-ai" data-view="fashion-ai">OpenAI connector</a>
+      <a href="#openai-prompt" class="nav-link" data-section="openai-prompt" data-view="openai-prompt">OpenAI prompt</a>
+      <a href="#openai-logs" class="nav-link" data-section="openai-logs" data-view="openai-logs">OpenAI logs</a>
       <p class="nav-group-title">Modele</p>
       <a href="#getting-started" class="nav-link" data-section="getting-started">Pierwsze kroki</a>
       <a href="#add-model" class="nav-link" data-section="add-model">Dodaj model</a>
@@ -64,6 +68,7 @@
       </div>
     </header>
 
+    <div id="view-home" class="app-view" data-app-view="home">
     <section class="hero-protocol relative">
       <svg class="hero-mesh" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" viewBox="0 0 1200 400" aria-hidden="true">
         <defs>
@@ -125,7 +130,7 @@
             <h3>Cofanie</h3>
             <p>„Cofnij instalację” usuwa pobrane pliki z manifestu — bezpieczny rollback.</p>
             <a href="#bundles" class="themed-link text-sm">Zarządzaj →</a>
-          </motion.div>
+          </div>
           <div class="guide-card">
             <h3>Langfuse</h3>
             <p>Trace’y parsera produktów i Ollama — logi importu i rankingu zdjęć.</p>
@@ -229,11 +234,195 @@
         </div>
       </section>
     </div>
+    </div>
+
+    <div id="view-fashion-ai" class="app-view" data-app-view="fashion-ai" hidden>
+      <div class="page-view-wrap">
+        <section id="fashion-ai" class="prose-section prose-section--page">
+          <h2>Fashion AI — OpenAI connector</h2>
+          <p>
+            Klucze API dla stylisty AI w aplikacji (propozycje outfitów z szafy).
+            Ustawienia są tylko tutaj — end user w panelu ich nie widzi.
+            Aktywny klucz jest używany przez Laravel przy sugestiach.
+          </p>
+          <div class="mt-4 flex flex-wrap items-center gap-3">
+            <span id="fashion-ai-badge" class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium" style="background: var(--tag-bg); color: var(--text)">
+              …
+            </span>
+            <button type="button" class="btn-outline inline-flex rounded-lg px-3 py-1.5 text-sm font-semibold" id="btn-refresh-fashion-ai">
+              Odśwież
+            </button>
+          </div>
+
+          <h3 class="mt-8 text-sm font-semibold" style="color: var(--text)">Zapisane klucze</h3>
+          <div id="fashion-keys-list" class="mt-3 space-y-2" aria-live="polite">
+            <p class="text-sm themed-muted">Ładowanie…</p>
+          </div>
+
+          <form id="fashion-ai-form" class="mt-8 grid gap-4 max-w-xl">
+            <h3 class="text-sm font-semibold" style="color: var(--text)">Dodaj klucz</h3>
+            <div>
+              <label for="fashion-key-label" class="block text-sm font-medium" style="color: var(--text)">Nazwa</label>
+              <input
+                id="fashion-key-label"
+                type="text"
+                class="mt-1 block w-full rounded-lg border px-3 py-2 text-sm"
+                style="background: var(--card-bg); border-color: var(--card-border); color: var(--text)"
+                placeholder="np. personal / work"
+              />
+            </div>
+            <div>
+              <label for="fashion-api-key" class="block text-sm font-medium" style="color: var(--text)">OpenAI API key</label>
+              <input
+                id="fashion-api-key"
+                type="password"
+                autocomplete="off"
+                class="mt-1 block w-full rounded-lg border px-3 py-2 text-sm"
+                style="background: var(--card-bg); border-color: var(--card-border); color: var(--text)"
+                placeholder="sk-…"
+                required
+              />
+            </div>
+            <div>
+              <label for="fashion-model" class="block text-sm font-medium" style="color: var(--text)">Model</label>
+              <input
+                id="fashion-model"
+                type="text"
+                class="mt-1 block w-full rounded-lg border px-3 py-2 text-sm"
+                style="background: var(--card-bg); border-color: var(--card-border); color: var(--text)"
+                value="gpt-4o-mini"
+              />
+            </div>
+            <div>
+              <label for="fashion-base-url" class="block text-sm font-medium" style="color: var(--text)">API base URL</label>
+              <input
+                id="fashion-base-url"
+                type="url"
+                class="mt-1 block w-full rounded-lg border px-3 py-2 text-sm"
+                style="background: var(--card-bg); border-color: var(--card-border); color: var(--text)"
+                value="https://api.openai.com/v1"
+              />
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button type="submit" class="btn-primary inline-flex rounded-lg px-4 py-2.5 text-sm font-semibold text-white">
+                Dodaj i aktywuj
+              </button>
+              <button type="button" id="btn-save-fashion-meta" class="btn-outline inline-flex rounded-lg px-4 py-2.5 text-sm font-semibold">
+                Zapisz model / URL
+              </button>
+            </div>
+            <p id="fashion-ai-msg" class="text-sm themed-muted" aria-live="polite"></p>
+          </form>
+        </section>
+      </div>
+    </div>
+
+    <div id="view-openai-prompt" class="app-view" data-app-view="openai-prompt" hidden>
+      <div class="page-view-wrap page-view-wrap--wide">
+        <section id="openai-prompt" class="prose-section prose-section--page">
+          <h2>OpenAI — instrukcja (system prompt)</h2>
+          <p>
+            Podgląd tego, co Laravel wysyła do OpenAI jako <code class="text-sm px-1 py-0.5 rounded" style="background: var(--tag-bg)">role=system</code>
+            przy sugestiach stylisty. Możesz edytować i zapisać — aktywny tekst jest brany z tego miejsca przy każdym requestcie.
+          </p>
+          <div class="mt-4 flex flex-wrap items-center gap-3">
+            <span id="openai-prompt-badge" class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium" style="background: var(--tag-bg); color: var(--text)">
+              …
+            </span>
+            <button type="button" class="btn-outline inline-flex rounded-lg px-3 py-1.5 text-sm font-semibold" id="btn-refresh-openai-prompt">
+              Odśwież
+            </button>
+          </div>
+
+          <div class="mt-6 max-w-3xl space-y-4">
+            <div>
+              <label for="openai-system-prompt" class="block text-sm font-medium" style="color: var(--text)">System prompt</label>
+              <textarea
+                id="openai-system-prompt"
+                rows="14"
+                class="mt-1 block w-full rounded-lg border px-3 py-2 font-mono text-xs leading-relaxed"
+                style="background: var(--card-bg); border-color: var(--card-border); color: var(--text)"
+                spellcheck="false"
+              ></textarea>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button type="button" id="btn-save-openai-prompt" class="btn-primary inline-flex rounded-lg px-4 py-2.5 text-sm font-semibold text-white">
+                Zapisz prompt
+              </button>
+              <button type="button" id="btn-reset-openai-prompt" class="btn-outline inline-flex rounded-lg px-4 py-2.5 text-sm font-semibold">
+                Przywróć domyślny
+              </button>
+            </div>
+            <p id="openai-prompt-msg" class="text-sm themed-muted" aria-live="polite"></p>
+
+            <div>
+              <h3 class="text-sm font-semibold" style="color: var(--text)">User message (szablon)</h3>
+              <p class="mt-1 text-sm themed-muted">
+                Budowany dynamicznie w Laravel z szafy Prima. Poniżej kształt JSON-a w <code class="text-sm">role=user</code>.
+              </p>
+              <pre
+                id="openai-user-template"
+                class="mt-2 max-h-64 overflow-auto rounded-lg border p-3 font-mono text-xs leading-relaxed whitespace-pre-wrap"
+                style="background: var(--card-bg); border-color: var(--card-border); color: var(--text)"
+              ></pre>
+            </div>
+
+            <div>
+              <h3 class="text-sm font-semibold" style="color: var(--text)">Request shape</h3>
+              <pre
+                id="openai-request-shape"
+                class="mt-2 max-h-48 overflow-auto rounded-lg border p-3 font-mono text-xs leading-relaxed whitespace-pre-wrap"
+                style="background: var(--card-bg); border-color: var(--card-border); color: var(--text)"
+              ></pre>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <div id="view-openai-logs" class="app-view" data-app-view="openai-logs" hidden>
+      <div class="page-view-wrap page-view-wrap--wide">
+        <section id="openai-logs" class="prose-section prose-section--page">
+          <h2>OpenAI — logi zapytań</h2>
+          <p>
+            Ostatnie requesty stylisty AI (system + user message) i odpowiedzi modelu.
+            Laravel zapisuje tu każdy call po sugestii z aplikacji.
+          </p>
+          <div class="mt-4 flex flex-wrap items-center gap-3">
+            <span id="openai-logs-badge" class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium" style="background: var(--tag-bg); color: var(--text)">
+              …
+            </span>
+            <button type="button" class="btn-outline inline-flex rounded-lg px-3 py-1.5 text-sm font-semibold" id="btn-refresh-openai-logs">
+              Odśwież
+            </button>
+            <button type="button" class="btn-outline inline-flex rounded-lg px-3 py-1.5 text-sm font-semibold" id="btn-clear-openai-logs">
+              Wyczyść
+            </button>
+          </div>
+          <p id="openai-logs-msg" class="mt-3 text-sm themed-muted" aria-live="polite"></p>
+
+          <div class="mt-6 grid gap-4 lg:grid-cols-2">
+            <div>
+              <h3 class="text-sm font-semibold" style="color: var(--text)">Historia</h3>
+              <div id="openai-logs-list" class="mt-3 space-y-2" aria-live="polite">
+                <p class="text-sm themed-muted">Ładowanie…</p>
+              </div>
+            </div>
+            <div>
+              <h3 class="text-sm font-semibold" style="color: var(--text)">Szczegóły</h3>
+              <div id="openai-log-detail" class="mt-3 rounded-lg border p-3" style="border-color: var(--card-border); background: var(--card-bg)">
+                <p class="text-sm themed-muted">Wybierz wpis z listy.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
   </div>
   </div>
 
   <div id="toast" class="hidden" role="status"></div>
 
-  <script type="module" src="static/app.js"></script>
+  <script type="module" src="/static/app.js?v=openai-logs-2"></script>
 </body>
 </html>

@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\SavingsTargetController;
 use App\Http\Controllers\Api\TimelineEventController;
 use App\Http\Controllers\Api\OutfitController;
 use App\Http\Controllers\Api\WorkspaceDocumentController;
+use App\Http\Controllers\Api\FashionStylistController;
 
 Route::post('auth/register', [AuthController::class, 'register']);
 Route::post('auth/login', [AuthController::class, 'login']);
@@ -59,6 +60,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('item/{item}/duplicate', [ItemController::class, 'duplicate']);
     Route::apiResource('item', ItemController::class);
     Route::apiResource('outfit', OutfitController::class);
+
+    Route::get('fashion-stylist/status', [FashionStylistController::class, 'status']);
+    Route::post('fashion-stylist/suggest', [FashionStylistController::class, 'suggest']);
+
     Route::apiResource('timeline-event', TimelineEventController::class);
     Route::get('savings-target', [SavingsTargetController::class, 'index']);
     Route::post('savings-target', [SavingsTargetController::class, 'store']);

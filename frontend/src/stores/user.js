@@ -18,6 +18,8 @@ export const useUserStore = defineStore('user', {
     }),
 
     isCreator: (state) => state.user?.role === 'creator',
+
+    isAdmin: (state) => Boolean(state.user?.isAdmin),
   },
 
   actions: {

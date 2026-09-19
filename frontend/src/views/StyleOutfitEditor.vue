@@ -72,7 +72,7 @@
               class="mt-1 block w-full rounded-md border-0 py-2.5 pl-3 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
             />
           </div>
-          <div>
+          <div class="sm:col-span-2 lg:col-span-2">
             <label
               for="outfit-prim"
               class="block text-sm font-medium text-gray-700"
@@ -95,7 +95,10 @@
               </option>
             </select>
           </div>
-          <div>
+          <div
+            v-if="isEditing"
+            class="sm:col-span-2 lg:col-span-2"
+          >
             <label
               for="outfit-date"
               class="block text-sm font-medium text-gray-700"
@@ -229,12 +232,13 @@
             "
             @click="toggleItem(item.id)"
           >
-            <div class="relative aspect-square w-full shrink-0 overflow-hidden bg-neutral-50">
+            <div class="relative aspect-square w-full shrink-0 overflow-hidden bg-white">
               <img
                 v-if="itemThumb(item)"
                 :src="itemThumb(item)"
                 :alt="item.name"
-                class="absolute inset-0 size-full object-contain p-2"
+                class="absolute inset-0 size-full object-contain p-2.5 transition"
+                :class="isCutoutThumb(item) ? '' : 'opacity-55'"
                 draggable="false"
               />
               <div
@@ -248,7 +252,7 @@
                 :class="
                   isItemSelected(item.id)
                     ? 'bg-indigo-600 text-white'
-                    : 'bg-white/90 text-gray-400 ring-1 ring-gray-200'
+                    : 'bg-white/95 text-gray-400 ring-1 ring-gray-200'
                 "
                 aria-hidden="true"
               >
@@ -299,7 +303,7 @@
                     v-if="itemThumb(item)"
                     :src="itemThumb(item)"
                     alt=""
-                    class="size-full object-cover"
+                    class="size-full object-contain p-0.5"
                   />
                 </span>
                 <span class="truncate">{{ item.name }}</span>
@@ -336,6 +340,10 @@ import { useCollectionStore } from '../stores/collection'
 import { useOutfitsStore, wearDateKey } from '../stores/outfits'
 import { usePersonasStore } from '../stores/personas'
 import { toDateKey } from '../utils/calendarGrid'
+import {
+  getOutfitItemPlainCutout,
+  peekOutfitItemPlainCutout,
+} from '../utils/outfitItemCutoutCache'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -348,6 +356,8 @@ const loading = ref(true)
 const saving = ref(false)
 const pageError = ref('')
 const selectedCategoryIds = ref([])
+const cutouts = reactive({})
+let cutoutRunId = 0
 
 const form = reactive({
   entity_id: '',
@@ -389,9 +399,7 @@ const selectedItems = computed(() => {
   return fashionItems.value.filter((item) => set.has(Number(item.id)))
 })
 
-const canSave = computed(
-  () => Boolean(form.entity_id && form.wear_date),
-)
+const canSave = computed(() => Boolean(form.entity_id))
 
 function categoryItemCount(categoryId) {
   const id = String(categoryId)
@@ -427,14 +435,48 @@ function toggleItem(id) {
   }
 }
 
-function itemThumb(item) {
+function originalThumb(item) {
   const raw =
     item?.cover ??
     item?.image_url ??
-    item?.cutout_image_url ??
     item?.images?.[0]?.url ??
     null
   return resolveStorageUrl(raw) ?? raw
+}
+
+function itemThumb(item) {
+  const id = String(item.id)
+  return (
+    cutouts[id] ??
+    peekOutfitItemPlainCutout(item) ??
+    originalThumb(item)
+  )
+}
+
+function isCutoutThumb(item) {
+  return Boolean(
+    cutouts[String(item.id)] || peekOutfitItemPlainCutout(item),
+  )
+}
+
+async function processItemCutouts(items) {
+  const current = ++cutoutRunId
+  for (const item of items ?? []) {
+    if (current !== cutoutRunId) return
+    const id = String(item.id)
+    const peeked = peekOutfitItemPlainCutout(item)
+    if (peeked) {
+      cutouts[id] = peeked
+      continue
+    }
+    try {
+      const entry = await getOutfitItemPlainCutout(item)
+      if (current !== cutoutRunId) return
+      cutouts[id] = entry.previewUrl
+    } catch {
+      // keep original photo until cutout succeeds
+    }
+  }
 }
 
 function itemCollectionLabel(item) {
@@ -457,10 +499,7 @@ function applyOutfit(outfit) {
 
 function resetCreateDefaults() {
   form.entity_id = ''
-  form.wear_date =
-    typeof route.query.date === 'string' && route.query.date
-      ? route.query.date
-      : toDateKey(new Date())
+  form.wear_date = toDateKey(new Date())
   form.label = ''
   form.occasion =
     typeof route.query.occasion === 'string' ? route.query.occasion : ''
@@ -523,7 +562,9 @@ async function submit() {
   pageError.value = ''
   const payload = {
     entity_id: Number(form.entity_id),
-    wear_date: form.wear_date,
+    wear_date: isEditing.value
+      ? form.wear_date
+      : toDateKey(new Date()),
     label: form.label?.trim() || null,
     occasion: form.occasion || null,
     notes: form.notes?.trim() || null,
@@ -545,10 +586,21 @@ async function submit() {
 }
 
 watch(
-  () => [route.params.id, route.query.date, route.query.occasion, route.query.entity_id],
+  () => [route.params.id, route.query.occasion, route.query.entity_id],
   () => {
     loadPage()
   },
+)
+
+watch(
+  () =>
+    fashionItems.value
+      .map((i) => `${i.id}:${i.image_url ?? i.images?.[0]?.url ?? ''}`)
+      .join('|'),
+  () => {
+    processItemCutouts(fashionItems.value)
+  },
+  { immediate: true },
 )
 
 onMounted(loadPage)
