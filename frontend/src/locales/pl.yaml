@@ -369,6 +369,7 @@ fashionStylist:
   untitled: Proponowany look
   untitledNeed: Potrzeba
   save: Zapisz outfit
+  saveNoItems: Ta propozycja nie ma poprawnych elementów szafy do zapisania.
 
 auth:
   loginTitle: Logowanie

@@ -161,6 +161,114 @@ class GarmentAttributes
     }
 
     /**
+     * Slot used to validate outfit completeness.
+     *
+     * @return 'one_piece'|'top'|'bottom'|'footwear'|'outerwear'|'other'
+     */
+    public static function outfitSlot(
+        ?string $category = null,
+        ?string $bodyZone = null,
+        ?string $itemName = null,
+        ?string $collection = null,
+    ): string {
+        $type = ClothingBodyPlacement::resolveCanonicalType($category)
+            ?? ClothingBodyPlacement::resolveCanonicalType($itemName);
+
+        $onePiece = ['dress', 'jumpsuit', 'suit', 'tracksuit', 'pajamas'];
+        $tops = [
+            'shirt', 'blouse', 'top', 't-shirt', 'tshirt', 'polo',
+            'sweater', 'cardigan', 'hoodie', 'sweatshirt',
+        ];
+        $bottoms = ['skirt', 'pants', 'jeans', 'shorts', 'leggings', 'tights'];
+        $footwear = ['shoes', 'sneakers', 'boots'];
+        $outerwear = ['jacket', 'coat', 'blazer'];
+
+        if ($type !== null) {
+            if (in_array($type, $onePiece, true)) {
+                return 'one_piece';
+            }
+            if (in_array($type, $footwear, true)) {
+                return 'footwear';
+            }
+            if (in_array($type, $bottoms, true)) {
+                return 'bottom';
+            }
+            if (in_array($type, $outerwear, true)) {
+                return 'outerwear';
+            }
+            if (in_array($type, $tops, true)) {
+                return 'top';
+            }
+        }
+
+        $blob = ClothingBodyPlacement::normalizeKey(
+            trim(implode(' ', array_filter([(string) $category, (string) $itemName, (string) $collection])))
+        );
+
+        if ($blob !== '') {
+            if (preg_match('/sukienk|dress|jumpsuit|romper|kombinezon|garnitur|\bsuit\b/', $blob)) {
+                return 'one_piece';
+            }
+            if (preg_match('/pump|heel|sandal|sandal|botk|buty|czolenk|szpilk|loafer|mule|crocs|ankle|ankel|boot|sneaker|trampek|obuwie|footwear|\bshoes?\b|czolnek/', $blob)) {
+                return 'footwear';
+            }
+            if (preg_match('/spodnic|skirt|jeans|spodnie|pants|szort|shorts|leggins|rajstop|tights|pantyhose/', $blob)) {
+                return 'bottom';
+            }
+            if (preg_match('/kurtka|plaszcz|marynarka|blazer|jacket|coat/', $blob)) {
+                return 'outerwear';
+            }
+            if (preg_match('/koszulk|t-?shirt|blouse|bluzk|sweter|sweater|hoodie|polo|\btop\b|cardigan/', $blob)) {
+                return 'top';
+            }
+        }
+
+        $zone = strtolower(trim((string) $bodyZone));
+        if ($zone === '') {
+            $inferred = ClothingBodyPlacement::infer($category, $collection, $itemName);
+            $zone = strtolower(trim((string) ($inferred['body_zone'] ?? '')));
+        }
+
+        return match ($zone) {
+            'full' => 'one_piece',
+            'feet' => 'footwear',
+            'legs' => 'bottom',
+            'torso' => 'top',
+            default => 'other',
+        };
+    }
+
+    /**
+     * Complete wearable look: one_piece+footwear OR top+bottom+footwear.
+     * Outerwear/accessories alone never count as a full outfit.
+     *
+     * @param  list<array{category?: ?string, body_zone?: ?string, name?: ?string, collection?: ?string}>  $items
+     */
+    public static function isCompleteOutfit(array $items): bool
+    {
+        $slots = [];
+        foreach ($items as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+            $slot = self::outfitSlot(
+                $item['category'] ?? null,
+                $item['body_zone'] ?? null,
+                $item['name'] ?? null,
+                $item['collection'] ?? null,
+            );
+            $slots[$slot] = true;
+        }
+
+        $hasFootwear = isset($slots['footwear']);
+        if (isset($slots['one_piece'])) {
+            return $hasFootwear;
+        }
+
+        return isset($slots['top']) && isset($slots['bottom']) && $hasFootwear;
+    }
+
+    /**
      * @param  list<string>  $allowed
      */
     private static function nullableEnum(mixed $value, array $allowed): ?string

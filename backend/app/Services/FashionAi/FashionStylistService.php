@@ -4,9 +4,11 @@ namespace App\Services\FashionAi;
 
 use App\Models\Entity;
 use App\Models\Item;
+use App\Models\Outfit;
 use App\Models\User;
 use App\Support\FashionCollection;
 use App\Support\GarmentAttributes;
+use App\Support\ClothingBodyPlacement;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -67,6 +69,10 @@ class FashionStylistService
         $summary = $this->buildWardrobeSummary($catalog);
         $preferredStores = $this->preferredStoresFor($user);
         $allowedIds = array_map(fn ($row) => (int) $row['id'], $catalog);
+        $catalogById = [];
+        foreach ($catalog as $row) {
+            $catalogById[(int) $row['id']] = $row;
+        }
         $payload = $this->callOpenAi(
             catalog: $catalog,
             summary: $summary,
@@ -92,34 +98,79 @@ class FashionStylistService
                 $primary = $this->filterCatalogIds($row['item_ids'] ?? [], $allowedIds);
             }
 
-            if ($primary === [] && $supporting === [] && $accessory === []) {
-                continue;
-            }
-            // Require at least one primary piece when any roles were used correctly;
-            // if only supporting somehow arrived alone, reject.
-            if ($primary === []) {
+            $seedIds = array_values(array_unique([...$primary, ...$supporting, ...$accessory]));
+            if ($seedIds === []) {
                 continue;
             }
 
-            $itemIds = array_values(array_unique([...$primary, ...$supporting, ...$accessory]));
+            $repaired = $this->repairOutfitFromCatalog($seedIds, $catalogById, $catalog);
+            if ($repaired === null) {
+                continue;
+            }
+
+            $rawOccasion = isset($row['occasion']) && $row['occasion'] !== '' && $row['occasion'] !== null
+                ? trim((string) $row['occasion'])
+                : ($occasion ? trim((string) $occasion) : null);
+            $mappedFromRaw = Outfit::normalizeOccasion($rawOccasion);
+            $normalizedOccasion = $mappedFromRaw ?? Outfit::normalizeOccasion($occasion);
+            $occasionDetail = null;
+            if (is_string($rawOccasion) && $rawOccasion !== '') {
+                $sameAsEnum = $mappedFromRaw !== null
+                    && strcasecmp($rawOccasion, $mappedFromRaw) === 0;
+                if (! $sameAsEnum) {
+                    $occasionDetail = $rawOccasion;
+                }
+            }
 
             $suggestions[] = [
                 'label' => isset($row['label']) ? (string) $row['label'] : null,
-                'occasion' => isset($row['occasion']) && $row['occasion'] !== '' && $row['occasion'] !== null
-                    ? (string) $row['occasion']
-                    : ($occasion ?: null),
+                'occasion' => $normalizedOccasion,
+                'occasion_detail' => $occasionDetail,
                 'formality' => $this->clampFormality($row['formality'] ?? null),
                 'notes' => isset($row['notes']) && $row['notes'] !== null ? (string) $row['notes'] : null,
-                'primary_item_ids' => $primary,
-                'supporting_item_ids' => $supporting,
-                'accessory_item_ids' => $accessory,
-                'item_ids' => $itemIds,
+                'primary_item_ids' => $repaired['primary_item_ids'],
+                'supporting_item_ids' => $repaired['supporting_item_ids'],
+                'accessory_item_ids' => $repaired['accessory_item_ids'],
+                'item_ids' => $repaired['item_ids'],
                 'rationale' => isset($row['rationale']) ? (string) $row['rationale'] : null,
             ];
         }
 
         if (! $suggestions) {
-            throw new RuntimeException('Fashion AI returned no valid outfits from the wardrobe.');
+            $suggestions = $this->buildFallbackOutfits($catalog, $occasion);
+        }
+
+        if (! $suggestions) {
+            // Soft-fail: keep analysis / needs instead of hard-erroring the whole request.
+            $analysisRaw = is_array($payload['analysis'] ?? null) ? $payload['analysis'] : [];
+            $estimate = $analysisRaw['possible_sets_estimate'] ?? null;
+            $wardrobeNeeds = [];
+            foreach ($payload['wardrobe_needs'] ?? [] as $row) {
+                $normalized = $this->normalizeWardrobeNeed($row, $allowedIds, $preferredStores, $gender);
+                if ($normalized !== null) {
+                    $wardrobeNeeds[] = $normalized;
+                }
+            }
+
+            return [
+                'analysis' => [
+                    'wardrobe_overview' => isset($analysisRaw['wardrobe_overview'])
+                        ? (string) $analysisRaw['wardrobe_overview']
+                        : ($summary['narrative'] ?? null),
+                    'strengths' => $this->stringList($analysisRaw['strengths'] ?? []),
+                    'limitations' => array_values(array_unique([
+                        ...$this->stringList($analysisRaw['limitations'] ?? []),
+                        'No complete outfit proposals could be assembled from the wardrobe response.',
+                    ])),
+                    'possible_sets_estimate' => is_numeric($estimate) ? (int) $estimate : null,
+                    'possible_sets_note' => isset($analysisRaw['possible_sets_note'])
+                        ? (string) $analysisRaw['possible_sets_note']
+                        : null,
+                ],
+                'suggestions' => [],
+                'wardrobe_needs' => array_slice($wardrobeNeeds, 0, 8),
+                'warning' => 'Could not assemble complete outfits from the AI response. Try Analyze again.',
+            ];
         }
 
         $analysisRaw = is_array($payload['analysis'] ?? null) ? $payload['analysis'] : [];
@@ -167,6 +218,313 @@ class FashionStylistService
         }
 
         return array_values(array_unique($out));
+    }
+
+    /**
+     * Re-bucket AI IDs by real catalog slots and fill missing footwear/top/bottom.
+     *
+     * @param  list<int>  $seedIds
+     * @param  array<int, array<string, mixed>>  $catalogById
+     * @param  list<array<string, mixed>>  $catalog
+     * @return array{
+     *   primary_item_ids: list<int>,
+     *   supporting_item_ids: list<int>,
+     *   accessory_item_ids: list<int>,
+     *   item_ids: list<int>
+     * }|null
+     */
+    private function repairOutfitFromCatalog(array $seedIds, array $catalogById, array $catalog): ?array
+    {
+        $ids = [];
+        foreach ($seedIds as $id) {
+            $id = (int) $id;
+            if (isset($catalogById[$id])) {
+                $ids[] = $id;
+            }
+        }
+        $ids = array_values(array_unique($ids));
+        if ($ids === []) {
+            return null;
+        }
+
+        $bySlot = $this->catalogIdsBySlot($catalog);
+        $slotsPresent = $this->slotsForIds($ids, $catalogById);
+
+        // Fill missing structure pieces from the wardrobe.
+        if (isset($slotsPresent['one_piece']) && ! isset($slotsPresent['footwear'])) {
+            $pick = $this->pickComplement($bySlot['footwear'] ?? [], $ids, $catalogById);
+            if ($pick !== null) {
+                $ids[] = $pick;
+            }
+        } elseif (isset($slotsPresent['top']) && isset($slotsPresent['bottom']) && ! isset($slotsPresent['footwear'])) {
+            $pick = $this->pickComplement($bySlot['footwear'] ?? [], $ids, $catalogById);
+            if ($pick !== null) {
+                $ids[] = $pick;
+            }
+        } elseif (isset($slotsPresent['top']) && isset($slotsPresent['footwear']) && ! isset($slotsPresent['bottom'])) {
+            $pick = $this->pickComplement($bySlot['bottom'] ?? [], $ids, $catalogById, preferNonSupporting: true);
+            if ($pick !== null) {
+                $ids[] = $pick;
+            }
+        } elseif (isset($slotsPresent['bottom']) && isset($slotsPresent['footwear']) && ! isset($slotsPresent['top'])) {
+            $pick = $this->pickComplement($bySlot['top'] ?? [], $ids, $catalogById);
+            if ($pick !== null) {
+                $ids[] = $pick;
+            }
+        } elseif (isset($slotsPresent['footwear']) && ! isset($slotsPresent['one_piece']) && ! isset($slotsPresent['top'])) {
+            // Shoes-only (or shoes + irrelevant): prefer a dress, else top+bottom.
+            $dress = $this->pickComplement($bySlot['one_piece'] ?? [], $ids, $catalogById);
+            if ($dress !== null) {
+                $ids[] = $dress;
+            } else {
+                $top = $this->pickComplement($bySlot['top'] ?? [], $ids, $catalogById);
+                $bottom = $this->pickComplement($bySlot['bottom'] ?? [], $ids, $catalogById, preferNonSupporting: true);
+                if ($top !== null) {
+                    $ids[] = $top;
+                }
+                if ($bottom !== null) {
+                    $ids[] = $bottom;
+                }
+            }
+        } elseif (isset($slotsPresent['one_piece']) || (isset($slotsPresent['top']) && isset($slotsPresent['bottom']))) {
+            // already structured; footwear handled above
+        } elseif (isset($slotsPresent['top']) && ! isset($slotsPresent['bottom']) && ! isset($slotsPresent['footwear'])) {
+            $bottom = $this->pickComplement($bySlot['bottom'] ?? [], $ids, $catalogById, preferNonSupporting: true);
+            $shoes = $this->pickComplement($bySlot['footwear'] ?? [], $ids, $catalogById);
+            if ($bottom !== null) {
+                $ids[] = $bottom;
+            }
+            if ($shoes !== null) {
+                $ids[] = $shoes;
+            }
+        }
+
+        $ids = array_values(array_unique($ids));
+        $items = [];
+        foreach ($ids as $id) {
+            $items[] = $catalogById[$id];
+        }
+        if (! GarmentAttributes::isCompleteOutfit($items)) {
+            return null;
+        }
+
+        return $this->bucketIdsByCatalogRole($ids, $catalogById);
+    }
+
+    /**
+     * Deterministic complete looks when the model fails to propose any.
+     *
+     * @param  list<array<string, mixed>>  $catalog
+     * @return list<array<string, mixed>>
+     */
+    private function buildFallbackOutfits(array $catalog, ?string $occasion): array
+    {
+        $bySlot = $this->catalogIdsBySlot($catalog);
+        $catalogById = [];
+        foreach ($catalog as $row) {
+            $catalogById[(int) $row['id']] = $row;
+        }
+
+        $outfits = [];
+        $usedFingerprints = [];
+
+        foreach (array_slice($bySlot['one_piece'] ?? [], 0, 3) as $dressId) {
+            $shoes = $this->pickComplement($bySlot['footwear'] ?? [], [$dressId], $catalogById);
+            if ($shoes === null) {
+                continue;
+            }
+            $repaired = $this->repairOutfitFromCatalog([$dressId, $shoes], $catalogById, $catalog);
+            if ($repaired === null) {
+                continue;
+            }
+            $fp = implode('-', $repaired['item_ids']);
+            if (isset($usedFingerprints[$fp])) {
+                continue;
+            }
+            $usedFingerprints[$fp] = true;
+            $dressName = (string) ($catalogById[$dressId]['name'] ?? 'Dress');
+            $outfits[] = [
+                'label' => $dressName,
+                'occasion' => Outfit::normalizeOccasion($occasion),
+                'occasion_detail' => null,
+                'formality' => null,
+                'notes' => null,
+                'primary_item_ids' => $repaired['primary_item_ids'],
+                'supporting_item_ids' => $repaired['supporting_item_ids'],
+                'accessory_item_ids' => $repaired['accessory_item_ids'],
+                'item_ids' => $repaired['item_ids'],
+                'rationale' => 'Complete look from your wardrobe: dress + shoes.',
+            ];
+            if (count($outfits) >= 2) {
+                break;
+            }
+        }
+
+        foreach (array_slice($bySlot['top'] ?? [], 0, 3) as $topId) {
+            if (count($outfits) >= 3) {
+                break;
+            }
+            $bottom = $this->pickComplement($bySlot['bottom'] ?? [], [$topId], $catalogById, preferNonSupporting: true);
+            $shoes = $this->pickComplement($bySlot['footwear'] ?? [], [$topId], $catalogById);
+            if ($bottom === null || $shoes === null) {
+                continue;
+            }
+            $repaired = $this->repairOutfitFromCatalog([$topId, $bottom, $shoes], $catalogById, $catalog);
+            if ($repaired === null) {
+                continue;
+            }
+            $fp = implode('-', $repaired['item_ids']);
+            if (isset($usedFingerprints[$fp])) {
+                continue;
+            }
+            $usedFingerprints[$fp] = true;
+            $topName = (string) ($catalogById[$topId]['name'] ?? 'Top');
+            $bottomName = (string) ($catalogById[$bottom]['name'] ?? 'Bottom');
+            $outfits[] = [
+                'label' => $topName.' + '.$bottomName,
+                'occasion' => Outfit::normalizeOccasion($occasion),
+                'occasion_detail' => null,
+                'formality' => null,
+                'notes' => null,
+                'primary_item_ids' => $repaired['primary_item_ids'],
+                'supporting_item_ids' => $repaired['supporting_item_ids'],
+                'accessory_item_ids' => $repaired['accessory_item_ids'],
+                'item_ids' => $repaired['item_ids'],
+                'rationale' => 'Complete look from your wardrobe: top + bottom + shoes.',
+            ];
+        }
+
+        return array_slice($outfits, 0, 3);
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $catalog
+     * @return array<string, list<int>>
+     */
+    private function catalogIdsBySlot(array $catalog): array
+    {
+        $bySlot = [];
+        foreach ($catalog as $row) {
+            $slot = (string) ($row['outfit_slot'] ?? 'other');
+            $bySlot[$slot][] = (int) $row['id'];
+        }
+
+        return $bySlot;
+    }
+
+    /**
+     * @param  list<int>  $ids
+     * @param  array<int, array<string, mixed>>  $catalogById
+     * @return array<string, true>
+     */
+    private function slotsForIds(array $ids, array $catalogById): array
+    {
+        $slots = [];
+        foreach ($ids as $id) {
+            $row = $catalogById[$id] ?? null;
+            if (! $row) {
+                continue;
+            }
+            $slot = (string) ($row['outfit_slot'] ?? GarmentAttributes::outfitSlot(
+                $row['category'] ?? null,
+                $row['body_zone'] ?? null,
+                $row['name'] ?? null,
+                $row['collection'] ?? null,
+            ));
+            $slots[$slot] = true;
+        }
+
+        return $slots;
+    }
+
+    /**
+     * @param  list<int>  $candidates
+     * @param  list<int>  $exclude
+     * @param  array<int, array<string, mixed>>  $catalogById
+     */
+    private function pickComplement(
+        array $candidates,
+        array $exclude,
+        array $catalogById,
+        bool $preferNonSupporting = false,
+    ): ?int {
+        $excludeMap = array_fill_keys($exclude, true);
+        $fallback = null;
+        foreach ($candidates as $id) {
+            $id = (int) $id;
+            if (isset($excludeMap[$id]) || ! isset($catalogById[$id])) {
+                continue;
+            }
+            $role = (string) ($catalogById[$id]['visibility_role'] ?? 'primary');
+            if ($preferNonSupporting && $role === 'supporting') {
+                $fallback ??= $id;
+                continue;
+            }
+
+            return $id;
+        }
+
+        return $fallback;
+    }
+
+    /**
+     * @param  list<int>  $ids
+     * @param  array<int, array<string, mixed>>  $catalogById
+     * @return array{
+     *   primary_item_ids: list<int>,
+     *   supporting_item_ids: list<int>,
+     *   accessory_item_ids: list<int>,
+     *   item_ids: list<int>
+     * }
+     */
+    private function bucketIdsByCatalogRole(array $ids, array $catalogById): array
+    {
+        $primary = [];
+        $supporting = [];
+        $accessory = [];
+
+        foreach ($ids as $id) {
+            $row = $catalogById[$id] ?? null;
+            if (! $row) {
+                continue;
+            }
+            $slot = (string) ($row['outfit_slot'] ?? 'other');
+            $role = (string) ($row['visibility_role'] ?? 'primary');
+
+            if ($role === 'accessory' || $slot === 'other' && $role === 'accessory') {
+                $accessory[] = $id;
+                continue;
+            }
+            if ($role === 'supporting' || $slot === 'bottom' && $role === 'supporting') {
+                // Tights etc. stay supporting; structured bottoms stay primary.
+                if (in_array($slot, ['one_piece', 'top', 'bottom', 'footwear', 'outerwear'], true) && $role !== 'supporting') {
+                    $primary[] = $id;
+                } else {
+                    $supporting[] = $id;
+                }
+                continue;
+            }
+            if (in_array($slot, ['one_piece', 'top', 'bottom', 'footwear', 'outerwear'], true)) {
+                $primary[] = $id;
+                continue;
+            }
+            if ($role === 'supporting') {
+                $supporting[] = $id;
+            } else {
+                $primary[] = $id;
+            }
+        }
+
+        $primary = array_values(array_unique($primary));
+        $supporting = array_values(array_unique(array_diff($supporting, $primary)));
+        $accessory = array_values(array_unique(array_diff($accessory, $primary, $supporting)));
+
+        return [
+            'primary_item_ids' => $primary,
+            'supporting_item_ids' => $supporting,
+            'accessory_item_ids' => $accessory,
+            'item_ids' => array_values(array_unique([...$primary, ...$supporting, ...$accessory])),
+        ];
     }
 
     private function clampFormality(mixed $value): ?float
@@ -516,10 +874,24 @@ class FashionStylistService
                 $item->category,
                 is_array($item->garment_attributes) ? $item->garment_attributes : null
             );
-            $role = GarmentAttributes::visibilityRole(
+            $canonicalType = ClothingBodyPlacement::resolveCanonicalType($item->category)
+                ?? ClothingBodyPlacement::resolveCanonicalType($item->name);
+            $outfitSlot = GarmentAttributes::outfitSlot(
                 $item->category,
                 $item->body_zone,
-                $item->wear_layer
+                $item->name,
+                $groupName,
+            );
+
+            // Prefer inferred zone/layer in the catalog payload when DB fields are empty,
+            // so the model (and completeness checks) see usable structure.
+            $inferred = ClothingBodyPlacement::infer($item->category, $groupName, $item->name);
+            $bodyZone = $item->body_zone ?: ($inferred['body_zone'] ?? null);
+            $wearLayer = $item->wear_layer ?: ($inferred['wear_layer'] ?? null);
+            $role = GarmentAttributes::visibilityRole(
+                $canonicalType ?? $item->category,
+                $bodyZone,
+                $wearLayer
             );
 
             $row = [
@@ -528,9 +900,11 @@ class FashionStylistService
                 'brand' => $item->brand,
                 'color' => $item->color,
                 'category' => $item->category,
+                'canonical_type' => $canonicalType,
+                'outfit_slot' => $outfitSlot,
                 'collection' => $groupName,
-                'body_zone' => $item->body_zone,
-                'wear_layer' => $item->wear_layer,
+                'body_zone' => $bodyZone,
+                'wear_layer' => $wearLayer,
                 'visibility_role' => $role,
                 'season' => $item->season,
             ];
@@ -660,7 +1034,9 @@ class FashionStylistService
             'catalog' => $catalog,
             'ask' => [
                 'estimate_coherent_wearable_outfits_from_owned_items',
-                'propose_2_to_3_outfits_with_primary_supporting_accessory_roles',
+                'propose_2_to_3_COMPLETE_outfits_only_dress_plus_shoes_OR_top_plus_bottom_plus_shoes',
+                'never_propose_shoes_alone_or_single_garment_as_an_outfit',
+                'every_garment_named_in_rationale_must_appear_as_a_catalog_id_in_the_outfit',
                 'identify_meaningful_wardrobe_needs_only_when_gaps_exist',
             ],
         ];

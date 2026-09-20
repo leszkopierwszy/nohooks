@@ -369,6 +369,7 @@ fashionStylist:
   untitled: Suggested look
   untitledNeed: Wardrobe need
   save: Save outfit
+  saveNoItems: This suggestion has no valid wardrobe items to save.
 
 auth:
   loginTitle: Sign in

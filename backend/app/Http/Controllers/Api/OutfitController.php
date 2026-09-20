@@ -45,8 +45,7 @@ class OutfitController extends Controller
         }
 
         if (array_key_exists('occasion', $data)) {
-            $occasion = is_string($data['occasion']) ? trim($data['occasion']) : $data['occasion'];
-            $data['occasion'] = $occasion !== '' ? $occasion : null;
+            $data['occasion'] = Outfit::normalizeOccasion($data['occasion'] ?? null);
         }
 
         if (empty($data['source'])) {
@@ -54,6 +53,17 @@ class OutfitController extends Controller
         }
 
         return $data;
+    }
+
+    private function prepareOccasionInput(Request $request): void
+    {
+        if (! $request->has('occasion')) {
+            return;
+        }
+
+        $request->merge([
+            'occasion' => Outfit::normalizeOccasion($request->input('occasion')),
+        ]);
     }
 
     private function syncItems(Outfit $outfit, ?array $itemIds): void
@@ -71,7 +81,10 @@ class OutfitController extends Controller
         }
 
         if ($orderedIds !== []) {
-            $ownedCount = Item::query()->whereIn('id', $orderedIds)->count();
+            $ownedCount = Item::query()
+                ->where('user_id', auth()->id())
+                ->whereIn('id', $orderedIds)
+                ->count();
             if ($ownedCount !== count($orderedIds)) {
                 throw ValidationException::withMessages([
                     'item_ids' => ['One or more items were not found.'],
@@ -133,6 +146,7 @@ class OutfitController extends Controller
 
     public function store(Request $request)
     {
+        $this->prepareOccasionInput($request);
         $data = $this->normalizeInput($request->validate($this->rules()));
         $itemIds = $data['item_ids'] ?? [];
         unset($data['item_ids']);
@@ -169,6 +183,7 @@ class OutfitController extends Controller
 
     public function update(Request $request, Outfit $outfit)
     {
+        $this->prepareOccasionInput($request);
         $data = $this->normalizeInput($request->validate($this->rules(partial: true)));
         $itemIds = array_key_exists('item_ids', $data) ? $data['item_ids'] : null;
         unset($data['item_ids']);

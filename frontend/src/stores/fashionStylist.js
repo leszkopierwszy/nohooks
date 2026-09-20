@@ -10,6 +10,7 @@ export const useFashionStylistStore = defineStore('fashionStylist', {
     analysis: null,
     suggestions: [],
     wardrobeNeeds: [],
+    warning: '',
   }),
 
   actions: {
@@ -29,6 +30,7 @@ export const useFashionStylistStore = defineStore('fashionStylist', {
     async suggest({ entity_id, occasion, notes }) {
       this.suggesting = true
       this.error = ''
+      this.warning = ''
       this.analysis = null
       this.suggestions = []
       this.wardrobeNeeds = []
@@ -45,6 +47,7 @@ export const useFashionStylistStore = defineStore('fashionStylist', {
         this.analysis = data?.analysis ?? null
         this.suggestions = data?.suggestions ?? []
         this.wardrobeNeeds = data?.wardrobe_needs ?? []
+        this.warning = data?.warning ? String(data.warning) : ''
         return data
       } catch (err) {
         this.error = err.message ?? String(err)
@@ -58,6 +61,7 @@ export const useFashionStylistStore = defineStore('fashionStylist', {
       this.analysis = null
       this.suggestions = []
       this.wardrobeNeeds = []
+      this.warning = ''
       this.error = ''
     },
   },

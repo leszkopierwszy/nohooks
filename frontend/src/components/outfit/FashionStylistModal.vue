@@ -34,6 +34,12 @@
         >
           {{ error }}
         </p>
+        <p
+          v-else-if="warning"
+          class="rounded-md bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
+        >
+          {{ warning }}
+        </p>
 
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
@@ -365,7 +371,7 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { resolveStorageUrl } from '../../api/media'
 import { useI18n } from '../../composables/useI18n'
-import { OUTFIT_OCCASIONS } from '../../constants/outfitOccasions'
+import { OUTFIT_OCCASIONS, normalizeOutfitOccasion } from '../../constants/outfitOccasions'
 import { useCollectionStore } from '../../stores/collection'
 import { useFashionStylistStore } from '../../stores/fashionStylist'
 import { useOutfitsStore } from '../../stores/outfits'
@@ -401,6 +407,7 @@ const suggesting = computed(() => fashionStore.suggesting)
 const analysis = computed(() => fashionStore.analysis)
 const suggestions = computed(() => fashionStore.suggestions)
 const wardrobeNeeds = computed(() => fashionStore.wardrobeNeeds)
+const warning = computed(() => fashionStore.warning)
 const preferredStoresCount = computed(() => (userStore.user?.fashionStores || []).length)
 const error = computed(() => localError.value || fashionStore.error)
 
@@ -504,13 +511,36 @@ async function saveSuggestion(suggestion, idx) {
   savingIndex.value = idx
   localError.value = ''
   try {
+    const itemIds = derivedItemIds(suggestion).filter((id) => Number.isFinite(id) && id > 0)
+    if (!itemIds.length) {
+      localError.value = t('fashionStylist.saveNoItems')
+      return
+    }
+
+    const formOccasion = normalizeOutfitOccasion(form.occasion)
+    const suggestionOccasion = normalizeOutfitOccasion(suggestion.occasion)
+    const occasion = formOccasion || suggestionOccasion || null
+
+    const detail =
+      suggestion.occasion_detail ||
+      (suggestion.occasion && !suggestionOccasion ? String(suggestion.occasion) : null)
+
+    const noteParts = [
+      suggestion.notes || null,
+      suggestion.rationale || null,
+      detail ? `Occasion detail: ${detail}` : null,
+      suggestion.formality != null ? `Formality: ${suggestion.formality}/10` : null,
+    ].filter(Boolean)
+    // Prefer a single rationale line when notes duplicates it
+    const notes = [...new Set(noteParts)].join('\n') || null
+
     await outfitsStore.createOutfit({
       entity_id: Number(form.entity_id),
       wear_date: toDateKey(new Date()),
       label: suggestion.label?.trim() || null,
-      occasion: suggestion.occasion || form.occasion || null,
-      notes: suggestion.notes || suggestion.rationale || null,
-      item_ids: derivedItemIds(suggestion),
+      occasion,
+      notes,
+      item_ids: itemIds,
       source: 'llm',
     })
     emit('saved')

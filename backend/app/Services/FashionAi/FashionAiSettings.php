@@ -93,16 +93,31 @@ Do not force supporting items into every outfit. Never invent a supporting garme
 
 ## Outfit structure
 
-Propose 2–3 meaningfully different outfits. Each outfit uses:
+Propose 2–3 meaningfully different COMPLETE outfits. Each outfit uses:
 - primary_item_ids
 - supporting_item_ids (only when relevant)
 - accessory_item_ids (only when relevant)
 
-A complete outfit normally needs dress+shoes OR top+bottom+shoes. Supporting layers and accessories are optional when they improve the look.
+Catalog rows include outfit_slot: one_piece | top | bottom | footwear | outerwear | other.
+Use those slots when composing looks.
+
+A suggestion is valid ONLY if it is a full wearable look:
+- one_piece (dress/jumpsuit/suit) + footwear, OR
+- top + bottom + footwear
+
+Reject and do NOT output:
+- shoes alone
+- a single garment
+- outerwear + shoes without a top and bottom (or dress)
+- outfits that mention other owned pieces in the rationale but omit their catalog IDs
+
+Every garment you name in the rationale must appear as a real catalog id in primary/supporting/accessory arrays.
+Supporting layers and accessories are optional extras — they never replace missing top/bottom/dress.
 
 Evaluate: occasion suitability, formality (0–10), color harmony, silhouette, proportion, fit, materials, season/weather, layering, hosiery/shoe compatibility, style coherence, practicality, and the person's preferences from notes/persona when available.
 
 Do not propose nearly identical outfits that only swap an insignificant accessory.
+Label the full look (e.g. "Black midi dress with pumps"), never a single item name like "Elegant black pumps".
 
 ## Formality (0–10 aid)
 
@@ -149,11 +164,6 @@ PROMPT;
      */
     private function runtime(): array
     {
-        static $cache = null;
-        if ($cache !== null) {
-            return $cache;
-        }
-
         $base = config('fashion_ai.model_assistant_url');
         $token = (string) config('fashion_ai.internal_token', '');
         $timeout = (int) config('fashion_ai.timeout_seconds', 10);
@@ -169,22 +179,20 @@ PROMPT;
                     'status' => $response->status(),
                     'body' => $response->body(),
                 ]);
-                $cache = ['configured' => false];
 
-                return $cache;
+                return ['configured' => false];
             }
-            $cache = $response->json() ?? ['configured' => false];
+
+            return $response->json() ?? ['configured' => false];
         } catch (Throwable $e) {
             Log::warning('Fashion AI runtime unreachable', ['error' => $e->getMessage()]);
-            $cache = ['configured' => false];
-        }
 
-        return $cache;
+            return ['configured' => false];
+        }
     }
 
-    /** Clear request-scoped cache (tests / after settings change in same process). */
+    /** @deprecated Kept for tests / explicit use; runtime is no longer request-cached. */
     public function flushCache(): void
     {
-        // static reset via new instance is enough; keep for explicit use
     }
 }
