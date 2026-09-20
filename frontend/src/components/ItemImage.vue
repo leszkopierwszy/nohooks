@@ -83,16 +83,24 @@ const props = defineProps({
     default: 'bottom',
     validator: (v) => ['bottom', 'center'].includes(v),
   },
+  /** When set, skips edge detection and uses this solid background. */
+  fixedBackground: {
+    type: String,
+    default: null,
+  },
 })
 
 const resolvedSrc = computed(() => resolveStorageUrl(props.src) ?? props.src)
 
 const usesSurfaceBg = computed(
-  () => props.checkerboard || isPngLikeImageUrl(resolvedSrc.value)
+  () =>
+    !props.fixedBackground &&
+    (props.checkerboard || isPngLikeImageUrl(resolvedSrc.value))
 )
 
 const edgeColor = ref(
-  usesSurfaceBg.value ? ITEM_IMAGE_SURFACE_BG : props.fallbackBg
+  props.fixedBackground ??
+    (usesSurfaceBg.value ? ITEM_IMAGE_SURFACE_BG : props.fallbackBg)
 )
 
 const normalizeLayout = ref(null)
@@ -103,7 +111,9 @@ const imgRenderKey = computed(
 )
 
 const backgroundStyle = computed(() => ({
-  backgroundColor: usesSurfaceBg.value ? ITEM_IMAGE_SURFACE_BG : edgeColor.value,
+  backgroundColor:
+    props.fixedBackground ??
+    (usesSurfaceBg.value ? ITEM_IMAGE_SURFACE_BG : edgeColor.value),
 }))
 
 const computedImgClass = computed(() => {
@@ -127,6 +137,11 @@ const imgStyle = computed(() => {
 })
 
 async function refreshBackground() {
+  if (props.fixedBackground) {
+    edgeColor.value = props.fixedBackground
+    return
+  }
+
   if (!resolvedSrc.value) {
     edgeColor.value = props.fallbackBg
     return
@@ -170,4 +185,10 @@ watch(
   }
 )
 watch(usesSurfaceBg, refreshBackground)
+watch(
+  () => props.fixedBackground,
+  () => {
+    refreshBackground()
+  }
+)
 </script>

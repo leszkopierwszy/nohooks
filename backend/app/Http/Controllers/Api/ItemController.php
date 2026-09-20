@@ -215,6 +215,8 @@ class ItemController extends Controller
             'garment_attributes' => ($creating ? 'nullable' : 'sometimes|nullable').'|array',
             'description' => 'nullable|string',
             'color' => 'nullable|string|max:64',
+            'colors' => 'nullable|array|max:16',
+            'colors.*' => 'nullable|string|max:64',
             'season' => 'nullable|string|max:32',
             'size' => 'nullable|string|max:16',
             'size_system' => 'nullable|in:eu,us',
@@ -239,15 +241,70 @@ class ItemController extends Controller
         ];
 
         $this->prepareGarmentAttributesInput($request);
+        $this->prepareColorsInput($request);
 
         $data = $request->validate($rules);
 
-        return $this->applyGarmentAttributes(
-            $this->applyBodyPlacement(
-                $this->normalizePersonaFit($data),
-                $creating
+        return $this->applyColors(
+            $this->applyGarmentAttributes(
+                $this->applyBodyPlacement(
+                    $this->normalizePersonaFit($data),
+                    $creating
+                )
             )
         );
+    }
+
+    private function prepareColorsInput(Request $request): void
+    {
+        if (! $request->has('colors')) {
+            return;
+        }
+
+        $value = $request->input('colors');
+        if ($value === '' || $value === null) {
+            $request->merge(['colors' => []]);
+
+            return;
+        }
+
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            $request->merge(['colors' => is_array($decoded) ? $decoded : []]);
+        }
+    }
+
+    private function applyColors(array $data): array
+    {
+        if (array_key_exists('colors', $data)) {
+            $normalized = [];
+            foreach ($data['colors'] ?? [] as $raw) {
+                if (! is_string($raw)) {
+                    continue;
+                }
+                $value = strtolower(trim($raw));
+                if ($value === '' || in_array($value, $normalized, true)) {
+                    continue;
+                }
+                $normalized[] = $value;
+            }
+
+            $data['colors'] = $normalized === [] ? null : $normalized;
+            $data['color'] = $normalized[0] ?? null;
+
+            return $data;
+        }
+
+        if (array_key_exists('color', $data)) {
+            $color = is_string($data['color']) ? strtolower(trim($data['color'])) : null;
+            if ($color === '') {
+                $color = null;
+            }
+            $data['color'] = $color;
+            $data['colors'] = $color ? [$color] : null;
+        }
+
+        return $data;
     }
 
     private function prepareGarmentAttributesInput(Request $request): void

@@ -1,6 +1,6 @@
 import { getAllBrands, normalizeBrandForStorage } from '../constants/itemBrands'
 import { getAllClothingTypes, normalizeClothingTypeForStorage } from '../constants/itemClothingTypes'
-import { COLOR_OPTIONS, normalizeColorForStorage } from '../constants/itemColors'
+import { COLOR_OPTIONS, itemColorsList, normalizeColorForStorage } from '../constants/itemColors'
 import { LIKE_RATING_LEVELS, normalizeLikeRating } from '../constants/itemLikeRating'
 import { getAllSeasons, normalizeSeasonForStorage } from '../constants/itemSeasons'
 import { displayShoeSize, isShoesCollection } from '../constants/itemSizes'
@@ -61,8 +61,8 @@ function displaySizeLabel(key, collectionName) {
   return size
 }
 
-function itemColorKey(item) {
-  return normalizeColorForStorage(item?.color)
+function itemColorKeys(item) {
+  return itemColorsList(item)
 }
 
 function itemBrandKey(item) {
@@ -79,8 +79,8 @@ function itemCategoryKey(item) {
 
 export function itemMatchesFilters(item, filters) {
   if (filters.color.length) {
-    const key = itemColorKey(item)
-    if (!key || !filters.color.includes(key)) return false
+    const keys = itemColorKeys(item)
+    if (!keys.some((key) => filters.color.includes(key))) return false
   }
 
   if (filters.brand.length) {
@@ -147,7 +147,9 @@ export function buildFilterSections(items, query, collectionName) {
   const usedRatings = new Set()
 
   for (const item of items) {
-    if (item.color) usedColors.push(item.color)
+    for (const color of itemColorsList(item)) {
+      usedColors.push(color)
+    }
     if (item.brand) usedBrands.push(item.brand)
     const sk = sizeFilterKey(item)
     if (sk) usedSizes.set(sk, displaySizeLabel(sk, collectionName))
@@ -160,7 +162,7 @@ export function buildFilterSections(items, query, collectionName) {
   const sections = []
 
   const colorOptions = getAllColors(usedColors).filter((c) =>
-    items.some((i) => itemColorKey(i) === c.value)
+    items.some((i) => itemColorKeys(i).includes(c.value))
   )
   if (colorOptions.length) {
     sections.push({

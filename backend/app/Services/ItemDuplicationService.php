@@ -23,6 +23,7 @@ class ItemDuplicationService
         'category',
         'description',
         'color',
+        'colors',
         'season',
         'size',
         'size_system',

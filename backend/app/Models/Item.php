@@ -23,6 +23,7 @@ class Item extends Model
         'category',
         'description',
         'color',
+        'colors',
         'season',
         'size',
         'size_system',
@@ -46,6 +47,7 @@ class Item extends Model
         'fits_all_personas' => 'boolean',
         'fits_persona_ids' => 'array',
         'garment_attributes' => 'array',
+        'colors' => 'array',
         'like_rating' => 'integer',
     ];
 

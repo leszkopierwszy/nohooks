@@ -444,29 +444,47 @@
     </div>
 
     <div>
-      <label :for="`${idPrefix}-color`" class="block text-sm font-medium text-gray-700">Kolor</label>
-      <select
-        :id="`${idPrefix}-color`"
-        v-model="form.color"
-        class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-      >
-        <option value="">—</option>
-        <option v-for="option in COLOR_OPTIONS" :key="option.value" :value="option.value">
-          {{ option.label }}
-        </option>
-      </select>
+      <span class="block text-sm font-medium text-gray-700">Kolory</span>
+      <p class="mt-1 text-xs text-gray-500">
+        Zaznacz wszystkie dostępne warianty kolorystyczne tego samego itemu — bez powielania wpisu.
+      </p>
+      <div class="mt-3 flex flex-wrap gap-2" role="group" :aria-label="`${idPrefix}-colors`">
+        <button
+          v-for="option in COLOR_OPTIONS"
+          :key="option.value"
+          type="button"
+          :title="option.label"
+          :aria-pressed="form.colors.includes(option.value)"
+          :class="[
+            'group relative flex size-9 items-center justify-center rounded-full outline -outline-offset-1 outline-black/10 transition',
+            colorSwatchNeedsBorder(option.value) ? 'border border-gray-300' : 'border border-transparent',
+            form.colors.includes(option.value)
+              ? 'ring-2 ring-indigo-600 ring-offset-2'
+              : 'hover:ring-2 hover:ring-gray-300 hover:ring-offset-1',
+          ]"
+          :style="colorSwatchStyle(option.value) ?? undefined"
+          @click="toggleFormColor(option.value)"
+        >
+          <span class="sr-only">{{ option.label }}</span>
+        </button>
+      </div>
       <div
-        v-if="form.color"
-        class="mt-3 flex items-center gap-3 rounded-md border border-gray-100 bg-gray-50 px-3 py-2"
+        v-if="form.colors.length"
+        class="mt-3 flex flex-wrap items-center gap-2 rounded-md border border-gray-100 bg-gray-50 px-3 py-2"
       >
         <span
-          class="size-9 shrink-0 rounded-full outline -outline-offset-1 outline-black/10"
-          :class="colorSwatchNeedsBorder(form.color) ? 'border border-gray-300' : 'border border-transparent'"
-          :style="colorPreviewStyle ?? undefined"
-        />
-        <span class="text-sm font-medium text-gray-900">{{ colorPreviewLabel }}</span>
+          v-for="value in form.colors"
+          :key="value"
+          class="inline-flex items-center gap-1.5 rounded-full bg-white px-2 py-1 text-xs font-medium text-gray-800 ring-1 ring-inset ring-gray-200"
+        >
+          <span
+            class="size-3.5 shrink-0 rounded-full outline -outline-offset-1 outline-black/10"
+            :class="colorSwatchNeedsBorder(value) ? 'border border-gray-300' : ''"
+            :style="colorSwatchStyle(value) ?? undefined"
+          />
+          {{ displayColorName(value) }}
+        </span>
       </div>
-      <p class="mt-1 text-xs text-gray-500">Próbka koloru i nazwa — bez kodu hex</p>
     </div>
 
     <div>
@@ -898,6 +916,8 @@ import {
   COLOR_OPTIONS,
   colorSwatchNeedsBorder,
   colorSwatchStyle,
+  itemColorsList,
+  normalizeColorsForStorage,
   displayColorName,
   normalizeColorForStorage,
 } from '../constants/itemColors'
@@ -1080,7 +1100,7 @@ const form = reactive({
   wear_layer: '',
   hosiery: emptyHosieryFormAttrs(),
   description: '',
-  color: '',
+  colors: [],
   season: '',
   size: '',
   size_system: 'eu',
@@ -1115,8 +1135,13 @@ const sizeKind = computed(() => {
 
 const shoeSizeOptions = computed(() => getShoeSizeOptions(form.size_system))
 
-const colorPreviewStyle = computed(() => colorSwatchStyle(form.color))
-const colorPreviewLabel = computed(() => displayColorName(form.color))
+function toggleFormColor(value) {
+  if (form.colors.includes(value)) {
+    form.colors = form.colors.filter((c) => c !== value)
+    return
+  }
+  form.colors = [...form.colors, value]
+}
 
 const clothingTypeOptions = computed(() => {
   clothingTypesVersion.value
@@ -1439,7 +1464,7 @@ async function prepareImportedShoeImage(entry, { isCover = false } = {}) {
     const processed = await prepareShoeCoverImage(
       () => entryToProcessableFile(entry),
       {
-        colorHint: form.color || null,
+        colorHint: form.colors[0] || null,
         forceLight: /\b(bia[łl]|white|cream|ivory)\b/i.test(form.name ?? ''),
         trim: true,
       }
@@ -1557,7 +1582,7 @@ async function ensureEntryOutfitCutout(entry) {
       const current = imageEntries.value.find((e) => e.key === latest.key) ?? latest
       const alreadyCutout = Boolean(current.cutout && current.hasAlpha)
       const result = await preparePersistedOutfitCutout(source, {
-        colorHint: form.color || null,
+        colorHint: form.colors[0] || null,
         itemName: form.name || '',
         alreadyCutout,
       })
@@ -2145,7 +2170,16 @@ async function applyParsedProduct(data) {
     form.brand = brand ?? ''
   }
   if (data.color) {
-    form.color = normalizeColorForStorage(data.color) ?? ''
+    const value = normalizeColorForStorage(data.color)
+    if (value && !form.colors.includes(value)) {
+      form.colors = [...form.colors, value]
+    }
+  }
+  if (Array.isArray(data.colors) && data.colors.length) {
+    form.colors = normalizeColorsForStorage([
+      ...form.colors,
+      ...data.colors,
+    ])
   }
   if (data.season) {
     form.season = normalizeSeasonForStorage(data.season) ?? ''
@@ -2184,11 +2218,12 @@ async function applyParsedProduct(data) {
   }
 
   if (
-    !form.color &&
+    !form.colors.length &&
     data.name &&
     /\b(bia[łl]|white|cream|ivory|ecru)\b/i.test(data.name)
   ) {
-    form.color = normalizeColorForStorage('bialy') ?? 'bialy'
+    const white = normalizeColorForStorage('bialy') ?? 'bialy'
+    form.colors = [white]
   }
 
   const images = (data.image_urls ?? []).filter(Boolean).slice(0, IMPORT_CATALOG_MAX)
@@ -2266,7 +2301,7 @@ function reset() {
   form.wear_layer = ''
   form.hosiery = emptyHosieryFormAttrs()
   form.description = ''
-  form.color = ''
+  form.colors = []
   form.season = ''
   form.size = ''
   form.size_system = 'eu'
@@ -2310,7 +2345,7 @@ function loadFromItem(item) {
   form.current_value = item.current_value ?? ''
   form.notes = item.notes ?? ''
   form.description = item.description ?? ''
-  form.color = normalizeColorForStorage(item.color) ?? ''
+  form.colors = itemColorsList(item)
   form.season = normalizeSeasonForStorage(item.season) ?? ''
   form.size = item.size ?? ''
   form.size_system = item.size_system === 'us' ? 'us' : 'eu'
@@ -2357,6 +2392,8 @@ function buildPayload() {
     }
   }
 
+  const colors = normalizeColorsForStorage(form.colors)
+
   const payload = {
     fits_all_personas: form.fits_all_personas,
     fits_persona_ids: fitsPersonaIds,
@@ -2381,7 +2418,9 @@ function buildPayload() {
     ),
     source_url: form.source_url.trim() || null,
     description: form.description.trim() || null,
-    color: normalizeColorForStorage(form.color),
+    // JSON string so empty list clears colors even via FormData.
+    colors: JSON.stringify(colors),
+    color: colors[0] ?? null,
     season: normalizeSeasonForStorage(form.season),
     size: sizeKind.value && form.size.trim() ? form.size.trim() : null,
     size_system:
