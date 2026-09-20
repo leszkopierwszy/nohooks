@@ -31,7 +31,7 @@ import Wardrobe from '../components/wardrobe.vue'
 import AccountSettings from '../views/AccountSettings.vue'
 import AccountModelAssistant from '../views/AccountModelAssistant.vue'
 import Style from '../views/Style.vue'
-import StyleBrands from '../views/StyleBrands.vue'
+import StyleAiStylist from '../views/StyleAiStylist.vue'
 import StyleOutfitEditor from '../views/StyleOutfitEditor.vue'
 import Login from '../views/Login.vue'
 import { useAuthStore } from '../stores/auth'
@@ -172,12 +172,16 @@ const routes = [
             },
         },
         {
-            path: '/style/brands',
-            name: 'StyleBrands',
-            component: StyleBrands,
+            path: '/style/ai-stylist',
+            name: 'StyleAiStylist',
+            component: StyleAiStylist,
             meta: {
                 layout: 'default'
             },
+        },
+        {
+            path: '/style/brands',
+            redirect: { path: '/account', query: { tab: 'brands' } },
         },
         {
             path: '/style/outfits/new',

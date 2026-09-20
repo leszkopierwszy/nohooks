@@ -1,4 +1,4 @@
-import { apiRequest } from './client'
+import { apiFormRequest, apiRequest } from './client'
 
 export function loginRequest({ email, password }) {
   return apiRequest('/auth/login', {
@@ -27,6 +27,16 @@ export function updateProfileRequest(payload) {
     method: 'PUT',
     body: JSON.stringify(payload),
   })
+}
+
+export function uploadAvatarRequest(file) {
+  const formData = new FormData()
+  formData.append('photo', file)
+  return apiFormRequest('/auth/avatar', formData)
+}
+
+export function deleteAvatarRequest() {
+  return apiRequest('/auth/avatar', { method: 'DELETE' })
 }
 
 export function updatePasswordRequest(payload) {

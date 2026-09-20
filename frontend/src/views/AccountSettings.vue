@@ -5,7 +5,7 @@
       <p class="mt-1 text-sm text-gray-500 dark:text-zinc-400">{{ t('account.subtitle') }}</p>
     </header>
 
-    <TabGroup as="div">
+    <TabGroup as="div" :selected-index="selectedTabIndex" @change="onTabChange">
       <TabList class="-mb-px flex space-x-6 overflow-x-auto border-b border-gray-200 dark:border-zinc-800">
         <Tab
           v-for="tab in tabs"
@@ -34,21 +34,50 @@
               <img
                 :src="avatarPreview"
                 alt=""
-                class="size-16 rounded-full bg-gray-100 object-cover outline -outline-offset-1 outline-black/5"
+                class="size-16 shrink-0 rounded-full bg-gray-100 object-cover outline -outline-offset-1 outline-black/5 dark:bg-zinc-800"
               />
               <div class="min-w-0 flex-1">
-                <label for="account-avatar" class="block text-sm font-medium text-gray-700 dark:text-zinc-300">
-                  {{ t('account.avatarUrl') }}
-                </label>
+                <p class="text-sm font-medium text-gray-700 dark:text-zinc-300">
+                  {{ t('account.avatar.label') }}
+                </p>
+                <div class="mt-2 flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    class="rounded-lg bg-gray-900 px-3 py-1.5 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900"
+                    :disabled="avatarSaving"
+                    @click="pickAvatarFile"
+                  >
+                    {{ hasAvatar ? t('account.avatar.change') : t('account.avatar.upload') }}
+                  </button>
+                  <button
+                    v-if="hasAvatar"
+                    type="button"
+                    class="rounded-lg px-3 py-1.5 text-sm font-medium text-gray-700 ring-1 ring-inset ring-gray-200 hover:bg-gray-50 disabled:opacity-60 dark:text-zinc-300 dark:ring-zinc-700 dark:hover:bg-zinc-800"
+                    :disabled="avatarSaving"
+                    @click="removeAvatar"
+                  >
+                    {{ t('account.avatar.remove') }}
+                  </button>
+                </div>
                 <input
-                  id="account-avatar"
-                  v-model="form.avatar"
-                  type="url"
-                  class="mt-1 block w-full rounded-lg border-0 bg-gray-50 px-3 py-2 text-sm text-gray-900 ring-1 ring-inset ring-gray-200 focus:bg-white focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-900 dark:text-zinc-100 dark:ring-zinc-700"
-                  placeholder="https://…"
+                  ref="avatarFileInput"
+                  type="file"
+                  accept="image/*"
+                  class="sr-only"
+                  @change="onAvatarFileSelected"
                 />
+                <p v-if="avatarHint" class="mt-2 text-sm text-emerald-600">{{ avatarHint }}</p>
+                <p v-if="avatarError" class="mt-2 text-sm text-rose-600">{{ avatarError }}</p>
               </div>
             </section>
+
+            <AvatarCropModal
+              :open="cropOpen"
+              :file="cropFile"
+              :saving="avatarSaving"
+              @close="closeCrop"
+              @confirm="uploadCroppedAvatar"
+            />
 
             <section class="grid gap-5 sm:grid-cols-2">
               <div class="sm:col-span-2">
@@ -213,6 +242,20 @@
         </TabPanel>
 
         <TabPanel class="focus:outline-none">
+          <section class="space-y-4">
+            <div>
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-zinc-50">
+                {{ t('account.brands.title') }}
+              </h2>
+              <p class="mt-1 text-sm text-gray-500 dark:text-zinc-400">
+                {{ t('account.brands.subtitle') }}
+              </p>
+            </div>
+            <FashionPreferredStores />
+          </section>
+        </TabPanel>
+
+        <TabPanel class="focus:outline-none">
           <div class="rounded-lg border border-dashed border-gray-300 px-6 py-10 dark:border-zinc-700">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-zinc-50">{{ t('account.tabs.notifications') }}</h2>
             <p class="mt-2 max-w-lg text-sm text-gray-500 dark:text-zinc-400">{{ t('account.placeholders.notifications') }}</p>
@@ -232,15 +275,21 @@
 
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/vue'
 import AccountBackupSettings from '../components/account/AccountBackupSettings.vue'
+import AvatarCropModal from '../components/account/AvatarCropModal.vue'
+import FashionPreferredStores from '../components/account/FashionPreferredStores.vue'
+import { resolveStorageUrl } from '../api/media'
 import { useI18n } from '../composables/useI18n'
 import { useAuthStore } from '../stores/auth'
 import { useUserStore } from '../stores/user'
 import { userAvatarDataUrl } from '../utils/userAvatar'
 
 const { t } = useI18n()
+const route = useRoute()
+const router = useRouter()
 const authStore = useAuthStore()
 const userStore = useUserStore()
 const { user } = storeToRefs(userStore)
@@ -248,15 +297,30 @@ const { user } = storeToRefs(userStore)
 const tabs = computed(() => [
   { id: 'profile', label: t('account.tabs.profile') },
   { id: 'security', label: t('account.tabs.security') },
+  { id: 'brands', label: t('account.tabs.brands') },
   { id: 'notifications', label: t('account.tabs.notifications') },
   { id: 'payments', label: t('account.tabs.payments') },
 ])
+
+const selectedTabIndex = computed(() => {
+  const tab = String(route.query.tab || 'profile')
+  const idx = tabs.value.findIndex((item) => item.id === tab)
+  return idx >= 0 ? idx : 0
+})
+
+function onTabChange(index) {
+  const tab = tabs.value[index]
+  if (!tab) return
+  const query = { ...route.query }
+  if (tab.id === 'profile') delete query.tab
+  else query.tab = tab.id
+  router.replace({ query })
+}
 
 const form = reactive({
   displayName: '',
   username: '',
   email: '',
-  avatar: '',
   bio: '',
   netSalaryPln: '',
 })
@@ -277,9 +341,18 @@ const passwordHint = ref('')
 const passwordError = ref('')
 const passwordSaving = ref(false)
 
+const avatarFileInput = ref(null)
+const cropOpen = ref(false)
+const cropFile = ref(null)
+const avatarSaving = ref(false)
+const avatarHint = ref('')
+const avatarError = ref('')
+
+const hasAvatar = computed(() => Boolean(user.value?.avatar?.trim()))
+
 const avatarPreview = computed(() => {
-  if (form.avatar?.trim()) return form.avatar.trim()
-  if (user.value?.avatar) return user.value.avatar
+  const raw = user.value?.avatar?.trim()
+  if (raw) return resolveStorageUrl(raw) ?? raw
   return userAvatarDataUrl(user.value || { displayName: form.displayName || form.username })
 })
 
@@ -288,7 +361,6 @@ function profilePayload() {
     displayName: form.displayName.trim(),
     username: form.username.trim(),
     email: form.email.trim(),
-    avatar: form.avatar.trim(),
     bio: form.bio.trim(),
     netSalaryPln: form.netSalaryPln === '' ? 0 : Number(form.netSalaryPln),
   }
@@ -299,7 +371,6 @@ function syncFormFromUser() {
   form.displayName = user.value.displayName ?? ''
   form.username = user.value.username ?? ''
   form.email = user.value.email ?? ''
-  form.avatar = user.value.avatar ?? ''
   form.bio = user.value.bio ?? ''
   form.netSalaryPln =
     user.value.netSalaryPln != null && user.value.netSalaryPln !== ''
@@ -308,6 +379,66 @@ function syncFormFromUser() {
 }
 
 watch(user, syncFormFromUser, { immediate: true })
+
+function pickAvatarFile() {
+  avatarError.value = ''
+  avatarHint.value = ''
+  avatarFileInput.value?.click()
+}
+
+function onAvatarFileSelected(event) {
+  const file = event.target.files?.[0]
+  event.target.value = ''
+  if (!file) return
+  if (!file.type.startsWith('image/')) {
+    avatarError.value = t('account.avatar.uploadError')
+    return
+  }
+  cropFile.value = file
+  cropOpen.value = true
+}
+
+function closeCrop() {
+  if (avatarSaving.value) return
+  cropOpen.value = false
+  cropFile.value = null
+}
+
+async function uploadCroppedAvatar(file) {
+  avatarError.value = ''
+  avatarHint.value = ''
+  avatarSaving.value = true
+  try {
+    await authStore.uploadAvatar(file)
+    cropOpen.value = false
+    cropFile.value = null
+    avatarHint.value = t('account.avatar.saved')
+    window.setTimeout(() => {
+      avatarHint.value = ''
+    }, 2500)
+  } catch (err) {
+    avatarError.value = err?.message || t('account.avatar.uploadError')
+  } finally {
+    avatarSaving.value = false
+  }
+}
+
+async function removeAvatar() {
+  avatarError.value = ''
+  avatarHint.value = ''
+  avatarSaving.value = true
+  try {
+    await authStore.deleteAvatar()
+    avatarHint.value = t('account.avatar.removed')
+    window.setTimeout(() => {
+      avatarHint.value = ''
+    }, 2500)
+  } catch (err) {
+    avatarError.value = err?.message || t('account.avatar.removeError')
+  } finally {
+    avatarSaving.value = false
+  }
+}
 
 async function saveProfile() {
   profileError.value = ''

@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Services\TenantProvisioner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 
@@ -136,7 +137,6 @@ class AuthController extends Controller
             'displayName' => ['required', 'string', 'max:120'],
             'username' => ['required', 'string', 'max:60', 'alpha_dash', 'unique:users,username,'.$user->id],
             'email' => ['required', 'email', 'max:255', 'unique:users,email,'.$user->id],
-            'avatar' => ['nullable', 'string', 'max:2048'],
             'bio' => ['nullable', 'string', 'max:2000'],
             'netSalaryPln' => ['nullable', 'numeric', 'min:0', 'max:999999999'],
             'fashionStores' => ['sometimes', 'array', 'max:30'],
@@ -150,7 +150,6 @@ class AuthController extends Controller
             'name' => $data['displayName'],
             'username' => $data['username'],
             'email' => $data['email'],
-            'avatar' => $data['avatar'] ?: null,
             'bio' => $data['bio'] ?: null,
             'net_salary_pln' => array_key_exists('netSalaryPln', $data)
                 ? ($data['netSalaryPln'] === null ? null : (float) $data['netSalaryPln'])
@@ -166,6 +165,67 @@ class AuthController extends Controller
         return response()->json([
             'user' => $this->toApi($user->fresh()),
         ]);
+    }
+
+    /**
+     * POST /api/auth/avatar — multipart photo (preferably pre-cropped square).
+     */
+    public function uploadAvatar(Request $request)
+    {
+        $request->validate([
+            'photo' => ['required', 'image', 'max:5120'],
+        ]);
+
+        $user = $request->user();
+        $previous = $user->avatar;
+
+        $stored = Storage::disk('public')->putFile(
+            'avatars/'.date('Y/m'),
+            $request->file('photo')
+        );
+
+        $user->avatar = Storage::disk('public')->url($stored);
+        $user->save();
+
+        $this->deleteOwnedAvatarFile($previous);
+
+        return response()->json([
+            'user' => $this->toApi($user->fresh()),
+        ]);
+    }
+
+    /**
+     * DELETE /api/auth/avatar
+     */
+    public function deleteAvatar(Request $request)
+    {
+        $user = $request->user();
+        $previous = $user->avatar;
+        $user->avatar = null;
+        $user->save();
+
+        $this->deleteOwnedAvatarFile($previous);
+
+        return response()->json([
+            'user' => $this->toApi($user->fresh()),
+        ]);
+    }
+
+    private function deleteOwnedAvatarFile(?string $url): void
+    {
+        if (! $url) {
+            return;
+        }
+
+        $path = parse_url($url, PHP_URL_PATH) ?: $url;
+        if (! is_string($path) || ! str_starts_with($path, '/storage/avatars/')) {
+            return;
+        }
+
+        $relative = ltrim(substr($path, strlen('/storage/')), '/');
+        if ($relative !== '') {
+            Storage::disk('public')->delete($relative);
+        }
     }
 
     public function updatePassword(Request $request)

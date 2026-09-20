@@ -1,15 +1,26 @@
 <template>
   <div
-    v-if="open"
-    class="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center"
-    @click.self="emit('close')"
+    v-if="embedded || open"
+    :class="
+      embedded
+        ? ''
+        : 'fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center'
+    "
+    @click.self="!embedded && emit('close')"
   >
     <div
-      class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-xl dark:bg-zinc-900"
-      role="dialog"
-      aria-modal="true"
+      :class="
+        embedded
+          ? 'w-full'
+          : 'max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-xl dark:bg-zinc-900'
+      "
+      :role="embedded ? undefined : 'dialog'"
+      :aria-modal="embedded ? undefined : 'true'"
     >
-      <div class="flex items-start justify-between gap-3 border-b border-gray-100 px-5 py-4 dark:border-zinc-800">
+      <div
+        v-if="!embedded"
+        class="flex items-start justify-between gap-3 border-b border-gray-100 px-5 py-4 dark:border-zinc-800"
+      >
         <div>
           <h2 class="text-lg font-semibold text-gray-900 dark:text-zinc-100">
             {{ t('fashionStylist.title') }}
@@ -27,7 +38,7 @@
         </button>
       </div>
 
-      <div class="space-y-4 px-5 py-4">
+      <div :class="embedded ? 'space-y-4' : 'space-y-4 px-5 py-4'">
         <p
           v-if="error"
           class="rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300"
@@ -368,7 +379,7 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { resolveStorageUrl } from '../../api/media'
 import { useI18n } from '../../composables/useI18n'
 import { OUTFIT_OCCASIONS, normalizeOutfitOccasion } from '../../constants/outfitOccasions'
@@ -381,6 +392,7 @@ import { toDateKey } from '../../utils/calendarGrid'
 
 const props = defineProps({
   open: { type: Boolean, default: false },
+  embedded: { type: Boolean, default: false },
   entityId: { type: [String, Number], default: '' },
   occasion: { type: String, default: '' },
 })
@@ -483,16 +495,31 @@ function syncForm() {
   fashionStore.clearSuggestions()
 }
 
+async function bootstrap() {
+  syncForm()
+  await Promise.all([
+    personasStore.fetchPersonas().catch(() => {}),
+    collectionStore.allItemsList.length
+      ? Promise.resolve()
+      : collectionStore.fetchAllItems().catch(() => {}),
+    fashionStore.fetchStatus().catch(() => {}),
+  ])
+  if (!form.entity_id && prims.value[0]) {
+    form.entity_id = String(prims.value[0].id)
+  }
+}
+
 watch(
   () => props.open,
   async (open) => {
-    if (!open) return
-    syncForm()
-    if (!collectionStore.allItemsList.length) {
-      collectionStore.fetchAllItems().catch(() => {})
-    }
+    if (!open || props.embedded) return
+    await bootstrap()
   },
 )
+
+onMounted(async () => {
+  if (props.embedded) await bootstrap()
+})
 
 async function runSuggest() {
   localError.value = ''
@@ -544,7 +571,7 @@ async function saveSuggestion(suggestion, idx) {
       source: 'llm',
     })
     emit('saved')
-    emit('close')
+    if (!props.embedded) emit('close')
   } catch (err) {
     localError.value = err.message ?? String(err)
   } finally {

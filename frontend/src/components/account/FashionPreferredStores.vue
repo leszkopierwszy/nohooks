@@ -32,7 +32,7 @@
           class="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40"
           @click="removeStore(store.id)"
         >
-          {{ t('style.brands.remove') }}
+          {{ t('account.brands.remove') }}
         </button>
       </li>
     </ul>
@@ -40,7 +40,7 @@
       v-else
       class="rounded-lg border border-dashed border-gray-300 px-4 py-6 text-sm text-gray-500 dark:border-zinc-700 dark:text-zinc-400"
     >
-      {{ t('style.brands.empty') }}
+      {{ t('account.brands.empty') }}
     </p>
 
     <form
@@ -52,7 +52,7 @@
           for="fashion-store-url"
           class="block text-sm font-medium text-gray-700 dark:text-zinc-300"
         >
-          {{ t('style.brands.url') }}
+          {{ t('account.brands.url') }}
         </label>
         <input
           id="fashion-store-url"
@@ -69,7 +69,7 @@
           for="fashion-store-name"
           class="block text-sm font-medium text-gray-700 dark:text-zinc-300"
         >
-          {{ t('style.brands.name') }}
+          {{ t('account.brands.name') }}
         </label>
         <input
           id="fashion-store-name"
@@ -85,14 +85,14 @@
           for="fashion-store-brand"
           class="block text-sm font-medium text-gray-700 dark:text-zinc-300"
         >
-          {{ t('style.brands.brand') }}
+          {{ t('account.brands.brand') }}
         </label>
         <input
           id="fashion-store-brand"
           v-model="draft.brand"
           type="text"
           maxlength="80"
-          :placeholder="t('style.brands.brandPlaceholder')"
+          :placeholder="t('account.brands.brandPlaceholder')"
           class="mt-1 block w-full rounded-lg border-0 bg-gray-50 px-3 py-2 text-sm text-gray-900 ring-1 ring-inset ring-gray-200 focus:bg-white focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-900 dark:text-zinc-100 dark:ring-zinc-700"
         />
       </div>
@@ -102,7 +102,7 @@
           class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900"
           :disabled="saving"
         >
-          {{ t('style.brands.add') }}
+          {{ t('account.brands.add') }}
         </button>
         <p
           v-if="hint"
@@ -155,7 +155,6 @@ const profileBase = computed(() => ({
   displayName: user.value?.displayName ?? '',
   username: user.value?.username ?? '',
   email: user.value?.email ?? '',
-  avatar: user.value?.avatar ?? '',
   bio: user.value?.bio ?? '',
   netSalaryPln: user.value?.netSalaryPln ?? 0,
 }))
@@ -188,12 +187,12 @@ async function persist(next) {
       fashionStores: next,
     })
     stores.value = next
-    hint.value = t('style.brands.saved')
+    hint.value = t('account.brands.saved')
     window.setTimeout(() => {
       hint.value = ''
     }, 2000)
   } catch (err) {
-    error.value = err?.message || t('style.brands.saveError')
+    error.value = err?.message || t('account.brands.saveError')
   } finally {
     saving.value = false
   }

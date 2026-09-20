@@ -37,11 +37,18 @@ nav:
   souls: Souls
   prims: Prims
   collection: Kolekcja
-  style: Style
+  style: Outfity
   finance: Finanse
   growth: Rozwój
   calendar: Kalendarz
   items: Itemy
+
+collectionPage:
+  subtitle: Przeglądaj grupy w szafie — ubrania, buty i inne.
+  groupsTitle: Grupy
+  browseAll: Przeglądaj wszystkie itemy
+  newGroup: Nowa kolekcja
+  newGroupHint: Utwórz grupę na powiązane itemy.
 
 finance:
   pageTitle: Finanse
@@ -280,7 +287,22 @@ account:
   section: Konto
   title: Ustawienia konta
   subtitle: Profil zalogowanego użytkownika — niezależny od Souls (Prims).
-  avatarUrl: Adres awatara
+  avatar:
+    label: Awatar
+    change: Zmień zdjęcie
+    upload: Wrzuć zdjęcie
+    remove: Usuń
+    cropTitle: Dopasuj awatar
+    cropHint: Przeciągnij, żeby przesunąć. Powiększ tak, by twarz wypełniła okrąg.
+    zoom: Powiększenie
+    cancel: Anuluj
+    save: Użyj zdjęcia
+    saving: Zapisywanie…
+    saved: Awatar zaktualizowany.
+    removed: Awatar usunięty.
+    cropError: Nie udało się wykadrować obrazu.
+    uploadError: Nie udało się wgrać awatara.
+    removeError: Nie udało się usunąć awatara.
   displayName: Nazwa wyświetlana
   username: Nazwa użytkownika
   email: E-mail
@@ -293,8 +315,21 @@ account:
   tabs:
     profile: Profil
     security: Bezpieczeństwo
+    brands: Marki i sklepy
     notifications: Powiadomienia
     payments: Płatności
+  brands:
+    title: Marki i sklepy
+    subtitle: Sklepy i marki, które lubisz — stylista AI będzie je preferował przy propozycjach zakupów. Dodaj sklep, wklejając link.
+    empty: Brak sklepów — wklej URL sklepu poniżej (np. Zara, H&M).
+    url: Link do sklepu
+    name: Nazwa
+    brand: Marka
+    brandPlaceholder: opcjonalnie
+    add: Dodaj sklep
+    remove: Usuń
+    saved: Zapisano.
+    saveError: Nie udało się zapisać sklepów.
   emailSection:
     title: E-mail
     subtitle: Adres używany do logowania na to konto.
@@ -343,9 +378,10 @@ account:
       fashionAiHint: Klucz OpenAI dla stylisty AI — otwiera Backend Settings (:8190).
 
 fashionStylist:
-  open: Stylista AI
-  title: Stylista AI
+  open: Stylista
+  title: Stylista
   subtitle: Najpierw outfity z Twojej szafy — i strukturalne braki tylko wtedy, gdy czegoś naprawdę brakuje.
+  notConfigured: Stylista nie jest jeszcze skonfigurowany. Dodaj klucz OpenAI w Konto → Backend.
   notes: Preferencje
   notesPlaceholder: np. cieplejsze warstwy, bez szpilek, wieczorne wesele…
   suggest: Przeanalizuj szafę
@@ -359,7 +395,7 @@ fashionStylist:
   formality: Formalność {value}/10
   needsTitle: Braki w szafie
   needsSubtitle: Specyfikacje produktów do przyszłego wyszukiwania — nie twierdzenia, że sklep ma je teraz na stanie.
-  needsNoStoresHint: Wskazówka — dodaj ulubione sklepy w Style → Marki, żeby podpowiedzi wyszukiwania trafiały w Twoje marki.
+  needsNoStoresHint: Wskazówka — dodaj ulubione sklepy w Ustawienia konta → Marki i sklepy, żeby podpowiedzi wyszukiwania trafiały w Twoje marki.
   searchHint: Podpowiedź wyszukiwania w {store}
   openStore: Otwórz sklep
   priority:
@@ -852,19 +888,7 @@ item:
 style:
   nav:
     outfits: Outfity
-    brands: Marki
-  brands:
-    title: Marki i sklepy
-    subtitle: Sklepy i marki, które lubisz — stylista AI będzie je preferował przy propozycjach zakupów. Dodaj sklep, wklejając link.
-    empty: Brak sklepów — wklej URL sklepu poniżej (np. Zara, H&M).
-    url: Link do sklepu
-    name: Nazwa
-    brand: Marka
-    brandPlaceholder: opcjonalnie
-    add: Dodaj sklep
-    remove: Usuń
-    saved: Zapisano.
-    saveError: Nie udało się zapisać sklepów.
+    aiStylist: Stylista
   subtitle: Planuj zestawy dla Prima według okazji — szkoła, praca, dom i inne.
   generateSet: Generuj set
   generatingSet: Wycinam itemy…

@@ -42,11 +42,18 @@
     "souls": "Souls",
     "prims": "Prims",
     "collection": "Collection",
-    "style": "Style",
+    "style": "Outfits",
     "finance": "Finance",
     "growth": "Growth",
     "calendar": "Calendar",
     "items": "Items"
+  },
+  "collectionPage": {
+    "subtitle": "Browse your wardrobe groups — clothes, shoes, and more.",
+    "groupsTitle": "Groups",
+    "browseAll": "Browse all items",
+    "newGroup": "New collection",
+    "newGroupHint": "Create a group for related items."
   },
   "finance": {
     "pageTitle": "Finance",
@@ -299,7 +306,23 @@
     "section": "Account",
     "title": "Account settings",
     "subtitle": "Signed-in user profile — separate from Souls (Prims).",
-    "avatarUrl": "Avatar URL",
+    "avatar": {
+      "label": "Avatar",
+      "change": "Change photo",
+      "upload": "Upload photo",
+      "remove": "Remove",
+      "cropTitle": "Adjust avatar",
+      "cropHint": "Drag to reposition. Use zoom so the face fills the circle.",
+      "zoom": "Zoom",
+      "cancel": "Cancel",
+      "save": "Use photo",
+      "saving": "Saving…",
+      "saved": "Avatar updated.",
+      "removed": "Avatar removed.",
+      "cropError": "Could not crop the image.",
+      "uploadError": "Could not upload the avatar.",
+      "removeError": "Could not remove the avatar."
+    },
     "displayName": "Display name",
     "username": "Username",
     "email": "Email",
@@ -312,8 +335,22 @@
     "tabs": {
       "profile": "Profile",
       "security": "Security",
+      "brands": "Brands & stores",
       "notifications": "Notifications",
       "payments": "Payments"
+    },
+    "brands": {
+      "title": "Brands & stores",
+      "subtitle": "Shops and brands you like — the AI stylist prefers these when suggesting what to buy. Add a store by pasting its URL.",
+      "empty": "No stores yet — paste a shop URL below (e.g. Zara, H&M).",
+      "url": "Store URL",
+      "name": "Name",
+      "brand": "Brand",
+      "brandPlaceholder": "optional",
+      "add": "Add store",
+      "remove": "Remove",
+      "saved": "Saved.",
+      "saveError": "Could not save stores."
     },
     "emailSection": {
       "title": "Email",
@@ -370,9 +407,10 @@
     }
   },
   "fashionStylist": {
-    "open": "AI Stylist",
-    "title": "AI Stylist",
+    "open": "Stylist",
+    "title": "Stylist",
     "subtitle": "Outfits from your wardrobe first — and structured wardrobe needs only when something is missing.",
+    "notConfigured": "Stylist is not configured yet. Add an OpenAI API key in Account → Backend.",
     "notes": "Preferences",
     "notesPlaceholder": "e.g. warmer layers, no heels, evening wedding…",
     "suggest": "Analyze wardrobe",
@@ -386,7 +424,7 @@
     "formality": "Formality {value}/10",
     "needsTitle": "Wardrobe needs",
     "needsSubtitle": "Product specifications for a future search — not claims that a store currently has these items.",
-    "needsNoStoresHint": "Tip — add preferred stores under Style → Brands so search hints can prioritize shops you like.",
+    "needsNoStoresHint": "Tip — add preferred stores under Account settings → Brands & stores so search hints can prioritize shops you like.",
     "searchHint": "Search hint on {store}",
     "openStore": "Open store",
     "priority": {
@@ -921,20 +959,7 @@
   "style": {
     "nav": {
       "outfits": "Outfits",
-      "brands": "Brands"
-    },
-    "brands": {
-      "title": "Brands & stores",
-      "subtitle": "Shops and brands you like — the AI stylist prefers these when suggesting what to buy. Add a store by pasting its URL.",
-      "empty": "No stores yet — paste a shop URL below (e.g. Zara, H&M).",
-      "url": "Store URL",
-      "name": "Name",
-      "brand": "Brand",
-      "brandPlaceholder": "optional",
-      "add": "Add store",
-      "remove": "Remove",
-      "saved": "Saved.",
-      "saveError": "Could not save stores."
+      "aiStylist": "Stylist"
     },
     "subtitle": "Plan looks for each Prim by occasion — school, work, home, and more.",
     "generateSet": "Generate set",

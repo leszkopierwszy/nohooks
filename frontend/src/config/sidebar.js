@@ -40,7 +40,7 @@ export const sidebarNavigation = [
     icon: SwatchIcon,
     subItems: [
       { labelKey: 'style.nav.outfits', href: '/style', activeMatch: 'exact' },
-      { labelKey: 'style.nav.brands', href: '/style/brands', activeMatch: 'exact' },
+      { labelKey: 'style.nav.aiStylist', href: '/style/ai-stylist', activeMatch: 'exact' },
       { labelKey: 'nav.collection', href: '/collection', activeMatch: 'collection' },
     ],
   },
@@ -267,6 +267,7 @@ export function sidebarPageTitle(path) {
   if (path.startsWith('/finance')) return t('nav.finance')
   if (path.startsWith('/growth')) return t('nav.growth')
   if (path.startsWith('/collection')) return t('nav.collection')
+  if (path.startsWith('/style/ai-stylist')) return t('style.nav.aiStylist')
   if (path.startsWith('/style')) return t('nav.style')
   if (path.startsWith('/souls/animals')) return t('souls.animals.title')
   if (path.startsWith('/souls/prims') || /^\/souls\/prims\/\d+/.test(path)) return t('nav.prims')

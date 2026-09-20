@@ -28,6 +28,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('auth/logout', [AuthController::class, 'logout']);
     Route::get('auth/me', [AuthController::class, 'me']);
     Route::put('auth/profile', [AuthController::class, 'updateProfile']);
+    Route::post('auth/avatar', [AuthController::class, 'uploadAvatar']);
+    Route::delete('auth/avatar', [AuthController::class, 'deleteAvatar']);
     Route::put('auth/password', [AuthController::class, 'updatePassword']);
 
     Route::get('workspace', [WorkspaceDocumentController::class, 'index']);
