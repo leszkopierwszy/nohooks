@@ -3,6 +3,7 @@
  */
 
 import { toAbsoluteMediaUrl } from '../api/media'
+import { decontaminateFringeColors } from './imageCutoutFringe'
 
 const ANALYSIS_MAX = 1200
 
@@ -708,6 +709,8 @@ export async function cutoutToPng(
   } else if (sharpen) {
     hardenAlphaEdges(data, width, height)
   }
+
+  decontaminateFringeColors(data, width, height, { radius: lightProduct ? 1 : 2 })
 
   if (trim) {
     imageData = trimImageData(imageData, stats, width, height)

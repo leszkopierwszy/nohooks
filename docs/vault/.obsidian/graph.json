@@ -1,0 +1,24 @@
+{
+  "graph.json": {
+    "collapse-filter": false,
+    "search": "",
+    "showTags": true,
+    "showAttachments": false,
+    "hideUnresolved": false,
+    "showOrphans": true,
+    "colorGroups": [
+      {
+        "query": "tag:#database",
+        "color": { "a": 1, "rgb": 7911249 }
+      },
+      {
+        "query": "tag:#component",
+        "color": { "a": 1, "rgb": 5431470 }
+      },
+      {
+        "query": "tag:#flow",
+        "color": { "a": 1, "rgb": 14725458 }
+      }
+    ]
+  }
+}

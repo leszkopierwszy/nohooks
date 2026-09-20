@@ -31,6 +31,9 @@
               container-class="aspect-square w-full shrink-0 rounded-lg ring-1 ring-inset ring-black/5 group-hover:opacity-75"
               fixed-background="#f3f4f6"
               normalize-scale
+              normalize-align="center"
+              :normalize-fill="0.72"
+              clean-fringe
             />
             <div class="flex flex-1 flex-col pt-4 pb-2 text-center">
               <p
