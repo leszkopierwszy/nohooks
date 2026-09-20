@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\PersonaImageController;
 use App\Http\Controllers\Api\SavingsTargetController;
 use App\Http\Controllers\Api\TimelineEventController;
 use App\Http\Controllers\Api\OutfitController;
+use App\Http\Controllers\Api\CapsuleController;
 use App\Http\Controllers\Api\WorkspaceDocumentController;
 use App\Http\Controllers\Api\FashionStylistController;
 
@@ -63,8 +64,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('item', ItemController::class);
     Route::apiResource('outfit', OutfitController::class);
 
+    Route::post('capsule/analyze', [CapsuleController::class, 'analyze']);
+    Route::post('capsule/{capsule}/analyze', [CapsuleController::class, 'analyzeSaved']);
+    Route::apiResource('capsule', CapsuleController::class);
+
     Route::get('fashion-stylist/status', [FashionStylistController::class, 'status']);
     Route::post('fashion-stylist/suggest', [FashionStylistController::class, 'suggest']);
+    Route::post('fashion-stylist/base-wardrobe', [FashionStylistController::class, 'baseWardrobe']);
 
     Route::apiResource('timeline-event', TimelineEventController::class);
     Route::get('savings-target', [SavingsTargetController::class, 'index']);

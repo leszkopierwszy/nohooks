@@ -6,11 +6,13 @@ export const useFashionStylistStore = defineStore('fashionStylist', {
     configured: false,
     statusLoaded: false,
     suggesting: false,
+    analyzingBase: false,
     error: '',
     analysis: null,
     suggestions: [],
     wardrobeNeeds: [],
     warning: '',
+    baseWardrobe: null,
   }),
 
   actions: {
@@ -27,7 +29,7 @@ export const useFashionStylistStore = defineStore('fashionStylist', {
       }
     },
 
-    async suggest({ entity_id, occasion, notes }) {
+    async suggest({ entity_id, occasion, notes, anchor_item_id }) {
       this.suggesting = true
       this.error = ''
       this.warning = ''
@@ -41,6 +43,7 @@ export const useFashionStylistStore = defineStore('fashionStylist', {
             entity_id: Number(entity_id),
             occasion: occasion || null,
             notes: notes?.trim() || null,
+            anchor_item_id: anchor_item_id ? Number(anchor_item_id) : null,
           }),
           timeoutMs: 120000,
         })
@@ -54,6 +57,29 @@ export const useFashionStylistStore = defineStore('fashionStylist', {
         throw err
       } finally {
         this.suggesting = false
+      }
+    },
+
+    async fetchBaseWardrobe({ entity_id, occasion, season, style } = {}) {
+      this.analyzingBase = true
+      this.error = ''
+      try {
+        const data = await apiRequest('/fashion-stylist/base-wardrobe', {
+          method: 'POST',
+          body: JSON.stringify({
+            entity_id: Number(entity_id),
+            occasion: occasion || null,
+            season: season || null,
+            style: style || null,
+          }),
+        })
+        this.baseWardrobe = data
+        return data
+      } catch (err) {
+        this.error = err.message ?? String(err)
+        throw err
+      } finally {
+        this.analyzingBase = false
       }
     },
 

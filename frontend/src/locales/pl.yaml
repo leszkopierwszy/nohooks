@@ -381,7 +381,58 @@ fashionStylist:
   open: Stylista
   title: Stylista
   subtitle: Najpierw outfity z Twojej szafy — i strukturalne braki tylko wtedy, gdy czegoś naprawdę brakuje.
-  notConfigured: Stylista nie jest jeszcze skonfigurowany. Dodaj klucz OpenAI w Konto → Backend.
+  pageSubtitle: Twórz outfity i kapsuły z rzeczy, które już masz.
+  notConfigured: Stylista AI nie jest jeszcze skonfigurowany. Manualny builder, baza szafy i kapsuły działają. Dodaj klucz OpenAI w Konto → Backend dla outfitów AI.
+  modeOutfit: Złóż outfit
+  modeOutfitHint: Ręcznie albo z AI — tylko z Twojej szafy.
+  modeBase: Baza szafy
+  modeBaseHint: Ile kompletnych outfitów da się złożyć z tego, co masz.
+  modeCapsule: Zbuduj kapsułę
+  modeCapsuleHint: Wąski zestaw rzeczy, który odblokowuje wiele outfitów.
+  manual: Ręcznie
+  aiMode: AI Stylist
+  createOutfit: Stwórz outfit
+  saveLook: Zapisz look
+  lookSaved: Look zapisany.
+  capsuleSaved: Kapsuła zapisana.
+  saveError: Coś poszło nie tak. Spróbuj ponownie.
+  outfitComplete: Outfit kompletny (główne sloty pokryte).
+  outfitIncomplete: Dodaj top + dół + buty albo sukienkę + buty.
+  anchorItem: Opcjonalny kotwiczny item
+  anchorItemHint: Złóż outfit wokół jednej rzeczy, którą już masz.
+  editManually: Edytuj ręcznie
+  regenerate: Wygeneruj ponownie
+  analyzing: Analizuję…
+  analyzeWardrobe: Przeanalizuj szafę
+  yourWardrobe: Twoja szafa
+  itemCount: "{count} itemów"
+  completeOutfits: "{count} kompletnych outfitów"
+  truncatedNote: lista ograniczona — bez naiwnych kombinacji
+  browseOutfits: Wygenerowane outfity
+  showAllOutfits: Pokaż wszystkie
+  createAnother: Stwórz kolejny outfit
+  capsulePresets: Typ kapsuły
+  capsuleName: Nazwa kapsuły
+  targetOutfits: Docelowa liczba outfitów
+  season: Sezon
+  style: Styl
+  analyzeCapsule: Przeanalizuj szafę
+  capsuleComplete: Kompletna
+  capsuleAlmost: Prawie
+  roleCoverage: "{covered} / {required} wymaganych ról szafy pokrytych"
+  currentPotential: "Obecny potencjał: {count} outfitów"
+  missingRoles: Brakuje
+  unlockOutfits: "+{count} outfitów po dodaniu tej roli"
+  exampleOutfits: Przykładowe outfity z tej kapsuły
+  saveCapsule: Zapisz kapsułę
+  presets:
+    work: Praca
+    travel: Podróż
+    summer: Lato
+    winter: Zima
+    smart_casual: Smart casual
+    evening: Wieczór
+    custom: Własna
   notes: Preferencje
   notesPlaceholder: np. cieplejsze warstwy, bez szpilek, wieczorne wesele…
   suggest: Przeanalizuj szafę

@@ -6,7 +6,11 @@ function wearDateKey(outfit) {
 }
 
 function compareOutfits(a, b) {
-  const dateCmp = String(wearDateKey(a)).localeCompare(String(wearDateKey(b)))
+  const aDate = wearDateKey(a)
+  const bDate = wearDateKey(b)
+  if (!aDate && bDate) return 1
+  if (aDate && !bDate) return -1
+  const dateCmp = String(aDate).localeCompare(String(bDate))
   if (dateCmp !== 0) return dateCmp
   return Number(a.id) - Number(b.id)
 }
@@ -29,6 +33,8 @@ export const useOutfitsStore = defineStore('outfits', {
       }
       return map
     },
+
+    looks: (state) => state.outfits.filter((o) => !wearDateKey(o)),
   },
 
   actions: {
@@ -37,16 +43,17 @@ export const useOutfitsStore = defineStore('outfits', {
       if (index !== -1) {
         this.outfits[index] = outfit
       } else {
-        // Upsert may replace another row with same entity+date under a new id shape — drop conflicts
         const date = wearDateKey(outfit)
-        this.outfits = this.outfits.filter(
-          (o) =>
-            !(
-              Number(o.entity_id) === Number(outfit.entity_id) &&
-              wearDateKey(o) === date &&
-              Number(o.id) !== Number(outfit.id)
-            ),
-        )
+        if (date) {
+          this.outfits = this.outfits.filter(
+            (o) =>
+              !(
+                Number(o.entity_id) === Number(outfit.entity_id) &&
+                wearDateKey(o) === date &&
+                Number(o.id) !== Number(outfit.id)
+              ),
+          )
+        }
         this.outfits.push(outfit)
       }
       this.outfits.sort(compareOutfits)
@@ -69,7 +76,7 @@ export const useOutfitsStore = defineStore('outfits', {
       )
     },
 
-    async fetchOutfits({ from, to, entity_id } = {}) {
+    async fetchOutfits({ from, to, entity_id, looks_only, calendar_only } = {}) {
       this.loading = true
       this.error = null
 
@@ -77,6 +84,8 @@ export const useOutfitsStore = defineStore('outfits', {
       if (from) params.set('from', from)
       if (to) params.set('to', to)
       if (entity_id != null && entity_id !== '') params.set('entity_id', String(entity_id))
+      if (looks_only) params.set('looks_only', '1')
+      if (calendar_only) params.set('calendar_only', '1')
       const query = params.toString()
 
       try {

@@ -388,7 +388,6 @@ import { useFashionStylistStore } from '../../stores/fashionStylist'
 import { useOutfitsStore } from '../../stores/outfits'
 import { usePersonasStore } from '../../stores/personas'
 import { useUserStore } from '../../stores/user'
-import { toDateKey } from '../../utils/calendarGrid'
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -563,7 +562,7 @@ async function saveSuggestion(suggestion, idx) {
 
     await outfitsStore.createOutfit({
       entity_id: Number(form.entity_id),
-      wear_date: toDateKey(new Date()),
+      wear_date: null,
       label: suggestion.label?.trim() || null,
       occasion,
       notes,

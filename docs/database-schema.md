@@ -10,18 +10,22 @@ erDiagram
   users ||--o{ categories : owns
   users ||--o{ items : owns
   users ||--o{ outfits : owns
+  users ||--o{ capsules : owns
   users ||--o{ timeline_events : owns
   users ||--o{ savings_targets : owns
 
   entities ||--o{ characters : has
   entities ||--o{ entity_body_snapshots : has
   entities ||--o{ outfits : wears
+  entities ||--o{ capsules : "capsule for"
   entities ||--o{ items : "optional owner"
 
   categories ||--o{ items : "collection group"
   items ||--o{ item_images : has
   outfits ||--o{ outfit_item : links
   items ||--o{ outfit_item : links
+  capsules ||--o{ capsule_item : links
+  items ||--o{ capsule_item : links
 ```
 
 ---
@@ -159,10 +163,12 @@ Appendowane: `url`, `cutout_url` → `/storage/...`.
 
 ## `outfits` + `outfit_item`
 
+Looki (Stylist) i outfity kalendarzowe w jednej tabeli.
+
 | `outfits` | | |
 |---|---|---|
 | `user_id`, `entity_id` | FK | Persona + właściciel |
-| `wear_date` | date | Unique per (user, entity, date) |
+| `wear_date` | date **nullable** | `null` = reusable look; ustawiona data = wpis kalendarza. Partial unique `(user, entity, wear_date)` tylko gdy data ≠ null |
 | `label`, `notes` | | |
 | `occasion` | string | `school`, `work`, `home`, … |
 | `source` | `manual` \| `llm` | |
@@ -171,6 +177,27 @@ Appendowane: `url`, `cutout_url` → `/storage/...`.
 |---|---|---|
 | `outfit_id`, `item_id` | FK | Unique para |
 | `sort_order` | int | Kolejność warstw |
+
+Zobacz też: [stylist-outfit-capsule-flow.md](./stylist-outfit-capsule-flow.md).
+
+---
+
+## `capsules` + `capsule_item`
+
+Kapsuła = zapisany subset posiadanych itemów (analiza ról / potencjału outfitów w API).
+
+| `capsules` | | |
+|---|---|---|
+| `user_id`, `entity_id` | FK | |
+| `name` | string | |
+| `preset` | string | `work`, `travel`, `summer`, `winter`, `smart_casual`, `evening`, `custom` |
+| `occasion`, `season`, `style` | nullable | Parametry custom / filtry |
+| `target_outfit_count`, `item_limit` | int nullable | Cele analizy |
+
+| `capsule_item` | | |
+|---|---|---|
+| `capsule_id`, `item_id` | FK | Unique para |
+| `sort_order` | int | |
 
 ---
 

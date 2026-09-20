@@ -381,7 +381,58 @@ fashionStylist:
   open: Stylist
   title: Stylist
   subtitle: Outfits from your wardrobe first — and structured wardrobe needs only when something is missing.
-  notConfigured: Stylist is not configured yet. Add an OpenAI API key in Account → Backend.
+  pageSubtitle: Build outfits and capsules from the wardrobe you already own.
+  notConfigured: Stylist AI is not configured yet. Manual builder, base wardrobe, and capsules still work. Add an OpenAI API key in Account → Backend for AI outfits.
+  modeOutfit: Build an outfit
+  modeOutfitHint: Assemble looks manually or with AI — owned items only.
+  modeBase: Base wardrobe
+  modeBaseHint: See how many complete outfits your closet can make.
+  modeCapsule: Build a capsule
+  modeCapsuleHint: A focused subset of pieces that unlock many outfits.
+  manual: Manual
+  aiMode: AI Stylist
+  createOutfit: Create outfit
+  saveLook: Save look
+  lookSaved: Look saved.
+  capsuleSaved: Capsule saved.
+  saveError: Something went wrong. Try again.
+  outfitComplete: Looks complete (core slots covered).
+  outfitIncomplete: Add top + bottom + shoes, or a dress + shoes.
+  anchorItem: Optional anchor item
+  anchorItemHint: Build the outfit around one piece you already own.
+  editManually: Edit manually
+  regenerate: Regenerate
+  analyzing: Analyzing…
+  analyzeWardrobe: Analyze wardrobe
+  yourWardrobe: Your wardrobe
+  itemCount: "{count} items"
+  completeOutfits: "{count} complete outfits"
+  truncatedNote: capped list — not a combinatorial explosion
+  browseOutfits: Generated outfits
+  showAllOutfits: Show all outfits
+  createAnother: Create another outfit
+  capsulePresets: Capsule type
+  capsuleName: Capsule name
+  targetOutfits: Desired outfit count
+  season: Season
+  style: Style
+  analyzeCapsule: Analyze wardrobe
+  capsuleComplete: Complete
+  capsuleAlmost: Almost there
+  roleCoverage: "{covered} / {required} required wardrobe roles covered"
+  currentPotential: "Current potential: {count} outfits"
+  missingRoles: Missing
+  unlockOutfits: "+{count} outfits if you add this role"
+  exampleOutfits: Example outfits from this capsule
+  saveCapsule: Save capsule
+  presets:
+    work: Work
+    travel: Travel
+    summer: Summer
+    winter: Winter
+    smart_casual: Smart casual
+    evening: Evening
+    custom: Custom
   notes: Preferences
   notesPlaceholder: e.g. warmer layers, no heels, evening wedding…
   suggest: Analyze wardrobe
