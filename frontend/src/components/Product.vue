@@ -96,18 +96,26 @@
               <p class="mt-2 text-lg font-medium text-gray-900">{{ seasonLabel }}</p>
             </div>
 
-            <div v-if="item?.color" class="mt-8">
-              <h3 class="text-sm font-medium text-gray-900">Kolor</h3>
-              <div class="mt-3 flex items-center gap-3">
-                <span
-                  class="size-8 shrink-0 rounded-full outline -outline-offset-1 outline-black/10"
-                  :class="[
-                    colorSwatch ? '' : 'bg-gray-200',
-                    colorSwatchNeedsBorder(item.color) ? 'border border-gray-300' : 'border border-gray-200',
-                  ]"
-                  :style="colorSwatch ?? undefined"
-                />
-                <span class="text-sm text-gray-700">{{ colorLabel }}</span>
+            <div v-if="itemColors.length" class="mt-8">
+              <h3 class="text-sm font-medium text-gray-900">
+                {{ itemColors.length > 1 ? 'Kolory' : 'Kolor' }}
+              </h3>
+              <div class="mt-3 flex flex-wrap items-center gap-3">
+                <div
+                  v-for="color in itemColors"
+                  :key="color"
+                  class="flex items-center gap-2"
+                >
+                  <span
+                    class="size-8 shrink-0 rounded-full outline -outline-offset-1 outline-black/10"
+                    :class="[
+                      colorSwatchStyle(color) ? '' : 'bg-gray-200',
+                      colorSwatchNeedsBorder(color) ? 'border border-gray-300' : 'border border-gray-200',
+                    ]"
+                    :style="colorSwatchStyle(color) ?? undefined"
+                  />
+                  <span class="text-sm text-gray-700">{{ displayColorName(color) }}</span>
+                </div>
               </div>
             </div>
 
@@ -192,7 +200,7 @@
   import { useCollectionStore } from '../stores/collection'
   import { useItemsStore } from '../stores/items'
   import { itemGalleryUrls } from '../api/media'
-  import { colorSwatchNeedsBorder, colorSwatchStyle, displayColorName } from '../constants/itemColors'
+  import { colorSwatchNeedsBorder, colorSwatchStyle, displayColorName, itemColorsList } from '../constants/itemColors'
   import { displayBrandName } from '../constants/itemBrands'
   import { displaySeasonName } from '../constants/itemSeasons'
   import { displayRarityName } from '../constants/itemRarity'
@@ -361,8 +369,7 @@
   const brandLabel = computed(() => displayBrandName(item.value?.brand))
   const seasonLabel = computed(() => displaySeasonName(item.value?.season))
   const rarityLabel = computed(() => displayRarityName(item.value?.rarity))
-  const colorLabel = computed(() => displayColorName(item.value?.color))
-  const colorSwatch = computed(() => colorSwatchStyle(item.value?.color))
+  const itemColors = computed(() => itemColorsList(item.value))
 
   const displayPrice = computed(() => {
     if (!item.value) return null

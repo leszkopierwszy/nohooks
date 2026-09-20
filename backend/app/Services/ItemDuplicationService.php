@@ -23,10 +23,14 @@ class ItemDuplicationService
         'category',
         'description',
         'color',
+        'colors',
         'season',
         'size',
         'size_system',
         'category_id',
+        'body_zone',
+        'wear_layer',
+        'garment_attributes',
         'purchase_price',
         'purchase_currency',
         'purchase_price_pln',
@@ -75,6 +79,7 @@ class ItemDuplicationService
             'sort_order' => $image->sort_order,
             'image_path' => null,
             'external_url' => null,
+            'cutout_path' => null,
         ];
 
         if ($image->image_path && Storage::disk('public')->exists($image->image_path)) {
@@ -87,6 +92,14 @@ class ItemDuplicationService
             $data['external_url'] = $image->external_url;
         } else {
             return;
+        }
+
+        if ($image->cutout_path && Storage::disk('public')->exists($image->cutout_path)) {
+            $extension = pathinfo($image->cutout_path, PATHINFO_EXTENSION) ?: 'png';
+            $destination = 'items/cutouts/'.Str::uuid().'.'.strtolower($extension);
+
+            Storage::disk('public')->copy($image->cutout_path, $destination);
+            $data['cutout_path'] = $destination;
         }
 
         $copy->images()->create($data);

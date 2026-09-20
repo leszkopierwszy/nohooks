@@ -23,10 +23,14 @@ class Item extends Model
         'category',
         'description',
         'color',
+        'colors',
         'season',
         'size',
         'size_system',
         'category_id',
+        'body_zone',
+        'wear_layer',
+        'garment_attributes',
         'purchase_price',
         'purchase_currency',
         'purchase_price_pln',
@@ -42,11 +46,14 @@ class Item extends Model
         'gift' => 'boolean',
         'fits_all_personas' => 'boolean',
         'fits_persona_ids' => 'array',
+        'garment_attributes' => 'array',
+        'colors' => 'array',
         'like_rating' => 'integer',
     ];
 
     protected $appends = [
         'image_url',
+        'cutout_image_url',
     ];
 
     public function getImageUrlAttribute(): ?string
@@ -56,6 +63,15 @@ class Item extends Model
             : $this->images()->orderBy('sort_order')->first();
 
         return $image?->url;
+    }
+
+    public function getCutoutImageUrlAttribute(): ?string
+    {
+        $image = $this->relationLoaded('images')
+            ? $this->images->first()
+            : $this->images()->orderBy('sort_order')->first();
+
+        return $image?->cutout_url;
     }
 
     public function images()
@@ -101,5 +117,11 @@ class Item extends Model
     public function collectionGroup()
     {
         return $this->belongsTo(Category::class, 'category_id');
+    }
+
+    public function outfits()
+    {
+        return $this->belongsToMany(Outfit::class, 'outfit_item')
+            ->withPivot('sort_order');
     }
 }

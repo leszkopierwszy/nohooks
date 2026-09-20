@@ -37,6 +37,7 @@ nav:
   souls: Souls
   prims: Prims
   collection: Kolekcja
+  style: Style
   finance: Finanse
   growth: Rozwój
   calendar: Kalendarz
@@ -325,7 +326,7 @@ account:
     backend: Backend
   backend:
     title: Backend
-    subtitle: Katalog modeli ComfyUI, Langfuse (trace’y importu) i konfiguracja usług.
+    subtitle: Linki do Backend Settings (:8190), modeli ComfyUI, Langfuse i connectora Fashion AI.
     openLink: Otwórz w nowej karcie
     links:
       home: Backend Settings
@@ -338,6 +339,37 @@ account:
       langfuseHint: UI observability — trace’y product-parser i Ollama.
       langfuseGuide: Langfuse w przewodniku
       langfuseGuideHint: Opis i status usług w Backend Settings.
+      fashionAi: Connector Fashion AI
+      fashionAiHint: Klucz OpenAI dla stylisty AI — otwiera Backend Settings (:8190).
+
+fashionStylist:
+  open: Stylista AI
+  title: Stylista AI
+  subtitle: Najpierw outfity z Twojej szafy — i strukturalne braki tylko wtedy, gdy czegoś naprawdę brakuje.
+  notes: Preferencje
+  notesPlaceholder: np. cieplejsze warstwy, bez szpilek, wieczorne wesele…
+  suggest: Przeanalizuj szafę
+  thinking: Myślę…
+  analysisTitle: Twoja szafa
+  possibleSets: Około {count} spójnych outfitów z tego, co masz
+  results: Propozycje z Twojej szafy
+  rolePrimary: Główne elementy
+  roleSupporting: Wspierające
+  roleAccessory: Akcesoria
+  formality: Formalność {value}/10
+  needsTitle: Braki w szafie
+  needsSubtitle: Specyfikacje produktów do przyszłego wyszukiwania — nie twierdzenia, że sklep ma je teraz na stanie.
+  needsNoStoresHint: Wskazówka — dodaj ulubione sklepy w Style → Marki, żeby podpowiedzi wyszukiwania trafiały w Twoje marki.
+  searchHint: Podpowiedź wyszukiwania w {store}
+  openStore: Otwórz sklep
+  priority:
+    low: Niski
+    medium: Średni
+    high: Wysoki
+  untitled: Proponowany look
+  untitledNeed: Potrzeba
+  save: Zapisz outfit
+  saveNoItems: Ta propozycja nie ma poprawnych elementów szafy do zapisania.
 
 auth:
   loginTitle: Logowanie
@@ -725,6 +757,141 @@ userMenu:
   displaySettings: Ustawienia wyświetlania
   zoom: Powiększenie {label}
   logout: Wyloguj się
+
+outfit:
+  title: Outfit
+  titlePlural: Outfity
+  sectionDay: Outfity na ten dzień
+  emptyDay: Brak outfitów na ten dzień.
+  add: Dodaj outfit
+  edit: Edytuj outfit
+  delete: Usuń outfit
+  deleteConfirm: Usunąć outfit dla {prim} w dniu {date}?
+  formCreate: Nowy outfit
+  formEdit: Edytuj outfit
+  prim: Prim
+  primPlaceholder: Wybierz Prima…
+  wearDate: Data
+  label: Etykieta
+  labelPlaceholder: Opcjonalna nazwa
+  name: Nazwa outfitu
+  namePlaceholder: np. Look do szkoły — poniedziałek
+  editorSubtitle: Wybierz kategorie ubrań, potem zaznacz itemy do outfitu.
+  categoriesTitle: Kategorie ubrań
+  categoriesHint: Tylko ubrania, obuwie i akcesoria — bez elektroniki i książek.
+  categoriesEmpty: Brak kolekcji fashion. Dodaj ubrania lub buty w Collection.
+  clearCategories: Wyczyść filtry
+  itemsEmptyFiltered: Brak itemów w wybranych kategoriach (lub nie pasują do Prima).
+  selectedStrip: '{count} w outficie'
+  removeItem: Usuń z outfitu
+  occasion: Okazja
+  occasionNone: Bez okazji
+  occasions:
+    school: Szkoła
+    work: Praca
+    home: Dom
+    outing: Wyjścia
+    sport: Sport
+    formal: Formalne
+    casual: Casual
+    travel: Podróż
+  notes: Notatki
+  notesPlaceholder: Opcjonalne notatki…
+  items: Itemy
+  itemsHint: Wybierz itemy z kolekcji pasujące do tego Prima.
+  itemsEmpty: Brak pasujących itemów.
+  itemsSelected: '{count} wybranych'
+  save: Zapisz outfit
+  cancel: Anuluj
+  saving: Zapisywanie…
+  upcoming: Najbliższe outfity
+  upcomingEmpty: Brak zaplanowanych outfitów w ciągu 7 dni.
+  viewCalendar: Otwórz kalendarz
+  itemCount: '{count} itemów'
+  outfitCount: '{count} outfitów'
+  sourceManual: Ręczny
+  sourceLlm: Sugerowany
+
+item:
+  bodyZone: Strefa ciała
+  bodyZoneAuto: Automatycznie (z typu)
+  bodyZoneHint: Gdzie noszone — wpływa na układ na karcie outfit.
+  wearLayer: Warstwa
+  wearLayerAuto: Automatycznie (z typu)
+  wearLayerHint: outer = wierzch (płaszcz), base = spód (koszulka).
+  hosiery:
+    title: Szczegóły rajstop
+    hint: Opcjonalne właściwości strukturalne rajstop (dla stylisty AI).
+    denier: Denier (DEN)
+    opacityLabel: Krycie
+    finishLabel: Wykończenie
+    pattern: Wzór
+    toe: Nosek
+    waist: Pas
+    opacity:
+      ultra_sheer: Ultra sheer
+      sheer: Sheer
+      semi_opaque: Półkryjące
+      opaque: Kryjące
+    finish:
+      matte: Matowe
+      satin: Satyna
+      glossy: Błyszczące
+  bodyZones:
+    head: Góra (głowa / szyja)
+    torso: Środek (tors)
+    legs: Nogi
+    feet: Stopy
+    full: Całość (sukienka / kombinezon)
+  wearLayers:
+    outer: Wierzch
+    mid: Środkowa
+    base: Spód / baza
+    accent: Akcent / dodatek
+
+style:
+  nav:
+    outfits: Outfity
+    brands: Marki
+  brands:
+    title: Marki i sklepy
+    subtitle: Sklepy i marki, które lubisz — stylista AI będzie je preferował przy propozycjach zakupów. Dodaj sklep, wklejając link.
+    empty: Brak sklepów — wklej URL sklepu poniżej (np. Zara, H&M).
+    url: Link do sklepu
+    name: Nazwa
+    brand: Marka
+    brandPlaceholder: opcjonalnie
+    add: Dodaj sklep
+    remove: Usuń
+    saved: Zapisano.
+    saveError: Nie udało się zapisać sklepów.
+  subtitle: Planuj zestawy dla Prima według okazji — szkoła, praca, dom i inne.
+  generateSet: Generuj set
+  generatingSet: Wycinam itemy…
+  generateSetError: Nie udało się utworzyć setu.
+  setPreview: Podgląd setu
+  clearSetPreview: Pokaż oryginały
+  cuttingItems: Wycinam ubrania…
+  allPrims: Wszystkie Primy
+  empty: Brak outfitów dla tego Prima. Dodaj pierwszy lub wybierz kafelek okazji.
+  emptyOccasion: Brak outfitów w tej okazji.
+  openDay: Otwórz w kalendarzu
+  openPrim: Otwórz profil Prima
+  noPrim: Wybierz Prima
+  pickPrim: Wybierz Prima po lewej, aby zobaczyć outfity.
+  occasionsTitle: Okazje
+  clearOccasion: Pokaż wszystkie
+  silhouetteEmpty: Wgraj zdjęcie Prima, aby zbudować sylwetkę.
+  silhouetteNeedPhoto: Najpierw wgraj zdjęcie tego Prima.
+  silhouetteNeedGenerate: Zdjęcie gotowe — wygeneruj sylwetkę Comfy do stylizacji.
+  silhouetteReady: Sylwetka ze zdjęcia Prima
+  silhouetteSourceOnly: Zdjęcie wgrane — wygeneruj sylwetkę
+  silhouetteMissing: Brak zdjęcia
+  uploadPhoto: Wgraj zdjęcie
+  generateSilhouette: Generuj sylwetkę
+  regenerateSilhouette: Generuj ponownie
+  photoUploaded: Zdjęcie zapisane. Możesz wygenerować sylwetkę.
+  silhouetteGenerated: Sylwetka gotowa.
 
 common:
   loading: Ładowanie…

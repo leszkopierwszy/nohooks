@@ -68,11 +68,20 @@
     >
       + Dodaj wpis
     </button>
+
+    <OutfitDaySection
+      :selected-date="selectedDate"
+      :outfits="outfits"
+      @create="$emit('create-outfit')"
+      @edit="$emit('edit-outfit', $event)"
+      @remove="$emit('remove-outfit', $event)"
+    />
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
+import OutfitDaySection from '../outfit/OutfitDaySection.vue'
 import { timelineEventTypeMeta } from '../../constants/timelineEventTypes'
 import { formatEventDate, formatTimeRange, parseDateKey } from '../../utils/calendarGrid'
 import { formatMoney } from '../../utils/currency'
@@ -82,11 +91,12 @@ import { isYearlyRecurring, yearlyRecurrenceLabel } from '../../utils/timelineRe
 const props = defineProps({
   selectedDate: { type: String, required: true },
   events: { type: Array, required: true },
+  outfits: { type: Array, default: () => [] },
   searchActive: { type: Boolean, default: false },
   highlightedEventId: { type: [Number, String], default: null },
 })
 
-defineEmits(['select-event', 'edit', 'remove', 'create'])
+defineEmits(['select-event', 'edit', 'remove', 'create', 'create-outfit', 'edit-outfit', 'remove-outfit'])
 
 const dayTitle = computed(() =>
   new Intl.DateTimeFormat('pl-PL', {

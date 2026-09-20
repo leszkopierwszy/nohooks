@@ -31,6 +31,7 @@ import {
   LANGFUSE_UI_URL,
   MODEL_ASSISTANT_ADD_MODEL,
   MODEL_ASSISTANT_CATALOG,
+  MODEL_ASSISTANT_FASHION_AI,
   MODEL_ASSISTANT_HOME,
   MODEL_ASSISTANT_LANGFUSE_SECTION,
 } from '../config/backendServices'
@@ -39,6 +40,13 @@ import { useI18n } from '../composables/useI18n'
 const { t } = useI18n()
 
 const quickLinks = computed(() => [
+  {
+    id: 'fashion-ai',
+    label: t('account.backend.links.fashionAi'),
+    description: t('account.backend.links.fashionAiHint'),
+    url: MODEL_ASSISTANT_FASHION_AI,
+    urlDisplay: MODEL_ASSISTANT_FASHION_AI,
+  },
   {
     id: 'home',
     label: t('account.backend.links.home'),

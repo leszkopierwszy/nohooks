@@ -12,7 +12,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['name', 'username', 'email', 'password', 'avatar', 'bio', 'net_salary_pln'])]
+#[Fillable(['name', 'username', 'email', 'password', 'avatar', 'bio', 'net_salary_pln', 'fashion_stores'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -30,6 +30,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'net_salary_pln' => 'float',
+            'fashion_stores' => 'array',
         ];
     }
 
@@ -61,5 +62,12 @@ class User extends Authenticatable
     public function workspaceDocuments(): HasMany
     {
         return $this->hasMany(UserWorkspaceDocument::class);
+    }
+
+    public function isAdmin(): bool
+    {
+        $ids = config('admin.user_ids', []);
+
+        return in_array((int) $this->id, $ids, true);
     }
 }

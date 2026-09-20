@@ -81,17 +81,19 @@ class PersonaImageController extends Controller
     public function generateAvatar(Request $request, Entity $entity)
     {
         $request->validate([
-            'photo_url' => 'nullable|url|max:2048',
+            'photo_url' => 'nullable|string|max:2048',
             'photo' => 'nullable|image|max:10240',
             'prompt' => 'nullable|string|max:2000',
         ]);
 
         try {
-            $source = $request->file('photo') ?? $request->input('photo_url');
+            $source = $request->file('photo')
+                ?? $request->input('photo_url')
+                ?? $entity->avatar_source_url;
 
             if (! $source) {
                 return response()->json([
-                    'message' => 'Prześlij pole photo (plik) lub photo_url (URL).',
+                    'message' => 'Najpierw wgraj zdjęcie Prima, albo prześlij photo / photo_url.',
                 ], 422);
             }
 

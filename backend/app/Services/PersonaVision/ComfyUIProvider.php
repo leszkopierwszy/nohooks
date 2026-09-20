@@ -116,7 +116,17 @@ class ComfyUIProvider
             throw new PersonaVisionException("Nie można odczytać pliku: {$absolutePath}");
         }
 
-        $exchangeDir = $this->exchangeInputDir();
+        // Native: --input-directory …/comfyui-exchange/input
+        // Docker: …/input/persona → /opt/ComfyUI/input/persona
+        // LoadImage dostaje ścieżkę względem katalogu input: persona/{filename}
+        $personaDir = $this->exchangeInputDir()
+            .DIRECTORY_SEPARATOR.'input'
+            .DIRECTORY_SEPARATOR.'persona';
+
+        if (! is_dir($personaDir) && ! mkdir($personaDir, 0755, true) && ! is_dir($personaDir)) {
+            throw new PersonaVisionException("Nie można utworzyć katalogu wymiany: {$personaDir}");
+        }
+
         $ext = pathinfo($absolutePath, PATHINFO_EXTENSION) ?: 'png';
         $filename = sprintf(
             '%s_%s.%s',
@@ -125,13 +135,12 @@ class ComfyUIProvider
             strtolower($ext)
         );
 
-        $target = $exchangeDir.DIRECTORY_SEPARATOR.$filename;
+        $target = $personaDir.DIRECTORY_SEPARATOR.$filename;
 
         if (! copy($absolutePath, $target)) {
             throw new PersonaVisionException('Nie udało się skopiować obrazu do wymiany ComfyUI.');
         }
 
-        // Volume → ComfyUI/input/persona/ — w LoadImage ścieżka względem katalogu input.
         return 'persona/'.$filename;
     }
 
@@ -197,8 +206,20 @@ class ComfyUIProvider
         } catch (PersonaVisionException $e) {
             throw $e;
         } catch (RequestException $e) {
-            $detail = $e->response?->json('error') ?? $e->response?->body() ?? $e->getMessage();
-            throw new PersonaVisionException('Błąd ComfyUI API: '.$detail, (int) $e->getCode(), $e);
+            $detail = $e->response?->json('error')
+                ?? $e->response?->json()
+                ?? $e->response?->body()
+                ?? $e->getMessage();
+
+            if (is_array($detail)) {
+                $detail = json_encode($detail, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            }
+
+            throw new PersonaVisionException(
+                'Błąd ComfyUI API: '.(string) $detail,
+                (int) $e->getCode(),
+                $e
+            );
         } catch (ConnectionException $e) {
             throw new PersonaVisionException(
                 'Brak połączenia z ComfyUI ('.$this->baseUrl().'). Mac: ./scripts/start-comfyui-native.sh',

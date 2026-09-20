@@ -21,9 +21,13 @@ function mapApiItem(item) {
     collection_group: item.collection_group?.name ?? null,
     description: item.description ?? null,
     color: item.color ?? null,
+    colors: Array.isArray(item.colors) ? item.colors : null,
     season: item.season ?? null,
     size: item.size ?? null,
     size_system: item.size_system ?? null,
+    body_zone: item.body_zone ?? null,
+    wear_layer: item.wear_layer ?? null,
+    garment_attributes: item.garment_attributes ?? null,
     notes: item.notes ?? null,
     rarity: item.rarity ?? 'common',
     like_rating: item.like_rating ?? null,
@@ -267,7 +271,13 @@ export const useCollectionStore = defineStore('collection', {
       if (item.notes) payload.notes = item.notes
       if (item.source_url) payload.source_url = item.source_url
       if (item.description) payload.description = item.description
-      if (item.color) payload.color = item.color
+      if (item.colors?.length) {
+        payload.colors = item.colors
+        payload.color = item.colors[0]
+      } else if (item.color) {
+        payload.color = item.color
+        payload.colors = [item.color]
+      }
       if (item.size) payload.size = item.size
       if (item.size_system) payload.size_system = item.size_system
 

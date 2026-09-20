@@ -25,6 +25,7 @@
             :selected-date="selectedDate"
             :search-active="searchActive"
             :events-for-day="eventsOnDay"
+            :outfits-for-day="outfitsOnDay"
             @select-day="selectDay"
             @create="openCreate"
           />
@@ -43,12 +44,16 @@
             v-else
             :selected-date="selectedDate"
             :events="selectedDayEvents"
+            :outfits="selectedDayOutfits"
             :search-active="searchActive"
             :highlighted-event-id="detailEvent?.id ?? null"
             @select-event="showEventDetail"
             @edit="openEdit"
             @remove="requestRemoveEvent"
             @create="openCreate"
+            @create-outfit="openCreateOutfit"
+            @edit-outfit="openEditOutfit"
+            @remove-outfit="requestRemoveOutfit"
           />
         </TimelineCalendarShell>
 
@@ -59,12 +64,16 @@
         <TimelineSelectedDayAside
           :selected-date="selectedDate"
           :events="selectedDayEvents"
+          :outfits="selectedDayOutfits"
           :search-active="searchActive"
           :highlighted-event-id="detailEvent?.id ?? null"
           @select-event="showEventDetail"
           @edit="openEdit"
           @remove="requestRemoveEvent"
           @create="openCreate"
+          @create-outfit="openCreateOutfit"
+          @edit-outfit="openEditOutfit"
+          @remove-outfit="requestRemoveOutfit"
         />
       </aside>
     </div>
@@ -113,6 +122,17 @@
       @delete="onFormDelete"
       @goal-change="onFormGoalChange"
     />
+
+    <ConfirmDialog
+      :open="outfitDeleteModalOpen"
+      :title="t('outfit.delete')"
+      :message="outfitDeleteMessage"
+      confirm-label="Usuń"
+      variant="danger"
+      :loading="outfitDeleting"
+      @close="closeOutfitDeleteModal"
+      @confirm="confirmDeleteOutfit"
+    />
   </div>
 </template>
 
@@ -131,7 +151,10 @@ import TimelineSelectedDayAside from '../components/timeline/TimelineSelectedDay
 import TimelineUpcomingTable from '../components/timeline/TimelineUpcomingTable.vue'
 import TimelineWeekGrid from '../components/timeline/TimelineWeekGrid.vue'
 import { useTimelineStore } from '../stores/timeline'
+import { useOutfitsStore } from '../stores/outfits'
+import { usePersonasStore } from '../stores/personas'
 import { useGrowthGoalsStore } from '../stores/growthGoals'
+import { useI18n } from '../composables/useI18n'
 import { formatWorkDuration } from '../utils/growthGoalWork'
 import { timelineEventTypeMeta } from '../constants/timelineEventTypes'
 import {
@@ -166,10 +189,14 @@ import {
 } from '../utils/timelineRecurrence'
 
 const timelineStore = useTimelineStore()
+const outfitsStore = useOutfitsStore()
+const personasStore = usePersonasStore()
 const growthGoalsStore = useGrowthGoalsStore()
 const appSearch = useAppSearchStore()
+const { t } = useI18n()
 
 const activeGrowthGoals = computed(() => growthGoalsStore.activeGoals)
+const prims = computed(() => personasStore.prims)
 const route = useRoute()
 const router = useRouter()
 
@@ -193,11 +220,24 @@ const deleteModalOpen = ref(false)
 const deleteTarget = ref(null)
 const deleting = ref(false)
 
+const outfitDeleteModalOpen = ref(false)
+const outfitDeleteTarget = ref(null)
+const outfitDeleting = ref(false)
+
 const deleteMessage = computed(() => {
   const event = deleteTarget.value
   if (!event) return ''
   const typeLabel = timelineEventTypeMeta(event.type).label
   return `Czy na pewno chcesz usunąć „${event.label}” (${typeLabel})? Tej operacji nie można cofnąć.`
+})
+
+const outfitDeleteMessage = computed(() => {
+  const outfit = outfitDeleteTarget.value
+  if (!outfit) return ''
+  return t('outfit.deleteConfirm', {
+    prim: outfit.entity?.name ?? t('outfit.prim'),
+    date: formatEventDate(outfit.wear_date?.slice?.(0, 10) ?? outfit.wear_date),
+  })
 })
 
 const emptyForm = () => ({
@@ -333,6 +373,15 @@ function eventsOnDay(dateKey) {
 const selectedDayEvents = computed(() => {
   if (!selectedDate.value) return []
   return eventsOnDay(selectedDate.value)
+})
+
+function outfitsOnDay(dateKey) {
+  return outfitsStore.outfitsForDay(dateKey)
+}
+
+const selectedDayOutfits = computed(() => {
+  if (!selectedDate.value) return []
+  return outfitsOnDay(selectedDate.value)
 })
 
 const importantUpcomingEvents = computed(() => {
@@ -668,6 +717,48 @@ async function confirmDeleteEvent() {
   }
 }
 
+function openCreateOutfit() {
+  const query = {}
+  const activePrim = personasStore.activePrim
+  if (activePrim?.id) {
+    query.entity_id = String(activePrim.id)
+  } else if (prims.value[0]) {
+    query.entity_id = String(prims.value[0].id)
+  }
+  router.push({ name: 'StyleOutfitCreate', query })
+}
+
+function openEditOutfit(outfit) {
+  router.push({
+    name: 'StyleOutfitEdit',
+    params: { id: String(outfit.id) },
+  })
+}
+
+function requestRemoveOutfit(outfit) {
+  outfitDeleteTarget.value = outfit
+  outfitDeleteModalOpen.value = true
+}
+
+function closeOutfitDeleteModal() {
+  outfitDeleteModalOpen.value = false
+  outfitDeleteTarget.value = null
+}
+
+async function confirmDeleteOutfit() {
+  const outfit = outfitDeleteTarget.value
+  if (!outfit || outfitDeleting.value) return
+  outfitDeleting.value = true
+  try {
+    await outfitsStore.deleteOutfit(outfit.id)
+    closeOutfitDeleteModal()
+  } catch (err) {
+    console.error(err)
+  } finally {
+    outfitDeleting.value = false
+  }
+}
+
 async function loadEvents() {
   const today = toDateKey(new Date())
   const horizon = addDaysToDateKey(today, upcomingHorizonDays)
@@ -686,7 +777,10 @@ async function loadEvents() {
   }
   const fetchFrom = from < today ? from : today
   const fetchTo = to > horizon ? to : horizon
-  await timelineStore.fetchEvents({ from: fetchFrom, to: fetchTo })
+  await Promise.all([
+    timelineStore.fetchEvents({ from: fetchFrom, to: fetchTo }),
+    outfitsStore.fetchOutfits({ from: fetchFrom, to: fetchTo }),
+  ])
 }
 
 watch(() => form.type, (type) => {
@@ -779,6 +873,7 @@ watch(
 
 onMounted(() => {
   growthGoalsStore.reload()
+  personasStore.fetchPersonas().catch(() => {})
   applyDateFromRouteQuery()
   loadEvents()
     .then(() => {

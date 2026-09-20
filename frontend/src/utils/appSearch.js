@@ -50,6 +50,9 @@ export function buildStaticPageEntries() {
     entry('page:collection', APP_SEARCH_KIND.PAGE, t('nav.collection'), t('nav.collection'), 'collection', {
       route: { name: 'collection' },
     }),
+    entry('page:style', APP_SEARCH_KIND.PAGE, t('nav.style'), t('nav.style'), 'style outfits fashion', {
+      route: { name: 'Style' },
+    }),
     entry('page:souls-prims', APP_SEARCH_KIND.PAGE, t('nav.prims'), t('nav.souls'), 'souls prims', {
       route: { name: 'SoulsPrims' },
     }),

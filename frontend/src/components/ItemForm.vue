@@ -256,7 +256,7 @@
     </div>
 
     <div v-if="sizeKind === 'clothing'">
-      <label :for="`${idPrefix}-clothing-type`" class="block text-sm font-medium text-gray-700">Typ ubrania</label>
+      <label :for="`${idPrefix}-clothing-type`" class="block text-sm font-medium text-gray-700">Clothing type</label>
       <select
         :id="`${idPrefix}-clothing-type`"
         v-model="form.category"
@@ -272,7 +272,7 @@
           :id="`${idPrefix}-new-clothing-type`"
           v-model="newClothingType"
           type="text"
-          placeholder="Nowy typ, np. kombinezon"
+          placeholder="New type, e.g. jumpsuit"
           class="min-w-0 flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
           @keydown.enter.prevent="addClothingTypeFromInput"
         />
@@ -281,10 +281,10 @@
           class="shrink-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
           @click="addClothingTypeFromInput"
         >
-          Dodaj typ
+          Add type
         </button>
       </div>
-      <p class="mt-1 text-xs text-gray-500">Wybierz z listy lub dodaj własny typ (zapis na tej przeglądarce).</p>
+      <p class="mt-1 text-xs text-gray-500">Pick from the list or add a custom English type (saved in this browser).</p>
     </div>
 
     <div v-else>
@@ -296,6 +296,140 @@
         placeholder="np. audio, gaming"
         class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
       />
+    </div>
+
+    <div v-if="sizeKind === 'clothing' || sizeKind === 'shoes'" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div>
+        <label :for="`${idPrefix}-body-zone`" class="block text-sm font-medium text-gray-700">
+          {{ t('item.bodyZone') }}
+        </label>
+        <select
+          :id="`${idPrefix}-body-zone`"
+          v-model="form.body_zone"
+          class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        >
+          <option value="">{{ t('item.bodyZoneAuto') }}</option>
+          <option v-for="zone in BODY_ZONES" :key="zone.value" :value="zone.value">
+            {{ t(zone.labelKey) }}
+          </option>
+        </select>
+        <p class="mt-1 text-xs text-gray-500">{{ t('item.bodyZoneHint') }}</p>
+      </div>
+      <div>
+        <label :for="`${idPrefix}-wear-layer`" class="block text-sm font-medium text-gray-700">
+          {{ t('item.wearLayer') }}
+        </label>
+        <select
+          :id="`${idPrefix}-wear-layer`"
+          v-model="form.wear_layer"
+          class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        >
+          <option value="">{{ t('item.wearLayerAuto') }}</option>
+          <option v-for="layer in WEAR_LAYERS" :key="layer.value" :value="layer.value">
+            {{ t(layer.labelKey) }}
+          </option>
+        </select>
+        <p class="mt-1 text-xs text-gray-500">{{ t('item.wearLayerHint') }}</p>
+      </div>
+    </div>
+
+    <div
+      v-if="showHosieryAttrs"
+      class="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4"
+    >
+      <p class="text-sm font-medium text-gray-800">{{ t('item.hosiery.title') }}</p>
+      <p class="text-xs text-gray-500">{{ t('item.hosiery.hint') }}</p>
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div>
+          <label :for="`${idPrefix}-denier`" class="block text-sm font-medium text-gray-700">
+            {{ t('item.hosiery.denier') }}
+          </label>
+          <input
+            :id="`${idPrefix}-denier`"
+            v-model="form.hosiery.denier"
+            type="number"
+            min="0"
+            max="200"
+            step="1"
+            placeholder="20"
+            class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          />
+        </div>
+        <div>
+          <label :for="`${idPrefix}-opacity`" class="block text-sm font-medium text-gray-700">
+            {{ t('item.hosiery.opacityLabel') }}
+          </label>
+          <select
+            :id="`${idPrefix}-opacity`"
+            v-model="form.hosiery.opacity"
+            class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          >
+            <option value="">—</option>
+            <option
+              v-for="opt in HOSIERY_OPACITY_OPTIONS"
+              :key="opt.value"
+              :value="opt.value"
+            >
+              {{ t(opt.labelKey) }}
+            </option>
+          </select>
+        </div>
+        <div>
+          <label :for="`${idPrefix}-finish`" class="block text-sm font-medium text-gray-700">
+            {{ t('item.hosiery.finishLabel') }}
+          </label>
+          <select
+            :id="`${idPrefix}-finish`"
+            v-model="form.hosiery.finish"
+            class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          >
+            <option value="">—</option>
+            <option
+              v-for="opt in HOSIERY_FINISH_OPTIONS"
+              :key="opt.value"
+              :value="opt.value"
+            >
+              {{ t(opt.labelKey) }}
+            </option>
+          </select>
+        </div>
+        <div>
+          <label :for="`${idPrefix}-hosiery-pattern`" class="block text-sm font-medium text-gray-700">
+            {{ t('item.hosiery.pattern') }}
+          </label>
+          <input
+            :id="`${idPrefix}-hosiery-pattern`"
+            v-model="form.hosiery.pattern"
+            type="text"
+            maxlength="64"
+            class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          />
+        </div>
+        <div>
+          <label :for="`${idPrefix}-hosiery-toe`" class="block text-sm font-medium text-gray-700">
+            {{ t('item.hosiery.toe') }}
+          </label>
+          <input
+            :id="`${idPrefix}-hosiery-toe`"
+            v-model="form.hosiery.toe"
+            type="text"
+            maxlength="64"
+            class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          />
+        </div>
+        <div>
+          <label :for="`${idPrefix}-hosiery-waist`" class="block text-sm font-medium text-gray-700">
+            {{ t('item.hosiery.waist') }}
+          </label>
+          <input
+            :id="`${idPrefix}-hosiery-waist`"
+            v-model="form.hosiery.waist"
+            type="text"
+            maxlength="64"
+            class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          />
+        </div>
+      </div>
     </div>
 
     <div>
@@ -310,29 +444,47 @@
     </div>
 
     <div>
-      <label :for="`${idPrefix}-color`" class="block text-sm font-medium text-gray-700">Kolor</label>
-      <select
-        :id="`${idPrefix}-color`"
-        v-model="form.color"
-        class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-      >
-        <option value="">—</option>
-        <option v-for="option in COLOR_OPTIONS" :key="option.value" :value="option.value">
-          {{ option.label }}
-        </option>
-      </select>
+      <span class="block text-sm font-medium text-gray-700">Kolory</span>
+      <p class="mt-1 text-xs text-gray-500">
+        Zaznacz wszystkie dostępne warianty kolorystyczne tego samego itemu — bez powielania wpisu.
+      </p>
+      <div class="mt-3 flex flex-wrap gap-2" role="group" :aria-label="`${idPrefix}-colors`">
+        <button
+          v-for="option in COLOR_OPTIONS"
+          :key="option.value"
+          type="button"
+          :title="option.label"
+          :aria-pressed="form.colors.includes(option.value)"
+          :class="[
+            'group relative flex size-9 items-center justify-center rounded-full outline -outline-offset-1 outline-black/10 transition',
+            colorSwatchNeedsBorder(option.value) ? 'border border-gray-300' : 'border border-transparent',
+            form.colors.includes(option.value)
+              ? 'ring-2 ring-indigo-600 ring-offset-2'
+              : 'hover:ring-2 hover:ring-gray-300 hover:ring-offset-1',
+          ]"
+          :style="colorSwatchStyle(option.value) ?? undefined"
+          @click="toggleFormColor(option.value)"
+        >
+          <span class="sr-only">{{ option.label }}</span>
+        </button>
+      </div>
       <div
-        v-if="form.color"
-        class="mt-3 flex items-center gap-3 rounded-md border border-gray-100 bg-gray-50 px-3 py-2"
+        v-if="form.colors.length"
+        class="mt-3 flex flex-wrap items-center gap-2 rounded-md border border-gray-100 bg-gray-50 px-3 py-2"
       >
         <span
-          class="size-9 shrink-0 rounded-full outline -outline-offset-1 outline-black/10"
-          :class="colorSwatchNeedsBorder(form.color) ? 'border border-gray-300' : 'border border-transparent'"
-          :style="colorPreviewStyle ?? undefined"
-        />
-        <span class="text-sm font-medium text-gray-900">{{ colorPreviewLabel }}</span>
+          v-for="value in form.colors"
+          :key="value"
+          class="inline-flex items-center gap-1.5 rounded-full bg-white px-2 py-1 text-xs font-medium text-gray-800 ring-1 ring-inset ring-gray-200"
+        >
+          <span
+            class="size-3.5 shrink-0 rounded-full outline -outline-offset-1 outline-black/10"
+            :class="colorSwatchNeedsBorder(value) ? 'border border-gray-300' : ''"
+            :style="colorSwatchStyle(value) ?? undefined"
+          />
+          {{ displayColorName(value) }}
+        </span>
       </div>
-      <p class="mt-1 text-xs text-gray-500">Próbka koloru i nazwa — bez kodu hex</p>
     </div>
 
     <div>
@@ -764,6 +916,8 @@ import {
   COLOR_OPTIONS,
   colorSwatchNeedsBorder,
   colorSwatchStyle,
+  itemColorsList,
+  normalizeColorsForStorage,
   displayColorName,
   normalizeColorForStorage,
 } from '../constants/itemColors'
@@ -778,6 +932,19 @@ import {
   getAllClothingTypes,
   normalizeClothingTypeForStorage,
 } from '../constants/itemClothingTypes'
+import {
+  BODY_ZONES,
+  WEAR_LAYERS,
+  inferBodyPlacement,
+} from '../constants/itemBodyPlacement'
+import {
+  HOSIERY_FINISH_OPTIONS,
+  HOSIERY_OPACITY_OPTIONS,
+  emptyHosieryFormAttrs,
+  hosieryFormFromAttributes,
+  isHosieryType,
+  normalizeGarmentAttributesForStorage,
+} from '../constants/itemGarmentAttributes'
 import {
   CLOTHING_SIZES,
   isClothingCollection,
@@ -800,10 +967,14 @@ import {
 import { cutoutToPng, detectObjectMask } from '../utils/imageBackgroundCutout'
 import { resolveCutoutOptions } from '../utils/imageCutoutTuning'
 import { prepareShoeCoverImage } from '../utils/prepareShoeCoverImage'
+import { preparePersistedOutfitCutout } from '../utils/preparePersistedOutfitCutout'
 import { normalizeUploadImageFile } from '../utils/normalizeUploadImage'
 import { hasImageChanges, useItemsStore } from '../stores/items'
 import { useCollectionStore } from '../stores/collection'
 import { usePersonasStore } from '../stores/personas'
+import { useI18n } from '../composables/useI18n'
+
+const { t } = useI18n()
 
 const props = defineProps({
   idPrefix: {
@@ -925,8 +1096,11 @@ const form = reactive({
   brand: '',
   category_id: '',
   category: '',
+  body_zone: '',
+  wear_layer: '',
+  hosiery: emptyHosieryFormAttrs(),
   description: '',
-  color: '',
+  colors: [],
   season: '',
   size: '',
   size_system: 'eu',
@@ -961,13 +1135,22 @@ const sizeKind = computed(() => {
 
 const shoeSizeOptions = computed(() => getShoeSizeOptions(form.size_system))
 
-const colorPreviewStyle = computed(() => colorSwatchStyle(form.color))
-const colorPreviewLabel = computed(() => displayColorName(form.color))
+function toggleFormColor(value) {
+  if (form.colors.includes(value)) {
+    form.colors = form.colors.filter((c) => c !== value)
+    return
+  }
+  form.colors = [...form.colors, value]
+}
 
 const clothingTypeOptions = computed(() => {
   clothingTypesVersion.value
   return getAllClothingTypes(form.category ? [form.category] : [])
 })
+
+const showHosieryAttrs = computed(
+  () => sizeKind.value === 'clothing' && isHosieryType(form.category),
+)
 
 const defaultPersonaOptions = computed(() => {
   if (form.fits_all_personas) {
@@ -1020,6 +1203,14 @@ function addClothingTypeFromInput() {
   clothingTypesVersion.value += 1
   form.category = option.value
   newClothingType.value = ''
+  applyInferredPlacement(true)
+}
+
+function applyInferredPlacement(force = false) {
+  if (!force && form.body_zone && form.wear_layer) return
+  const inferred = inferBodyPlacement(form.category, selectedCollectionName.value)
+  if (!form.body_zone || force) form.body_zone = inferred.body_zone ?? ''
+  if (!form.wear_layer || force) form.wear_layer = inferred.wear_layer ?? ''
 }
 
 watch(sizeKind, (kind, prev) => {
@@ -1031,8 +1222,19 @@ watch(sizeKind, (kind, prev) => {
     if (kind !== 'shoes') {
       form.size_system = 'eu'
     }
+    applyInferredPlacement(false)
+    if (kind === 'clothing' || kind === 'shoes') {
+      void ensureAllOutfitCutouts()
+    }
   }
 })
+
+watch(
+  () => form.category,
+  () => {
+    applyInferredPlacement(false)
+  },
+)
 
 watch(
   () => props.defaultCategoryId,
@@ -1088,6 +1290,9 @@ function revokeEntryPreview(entry) {
   if (entry.previewUrl?.startsWith('blob:')) {
     URL.revokeObjectURL(entry.previewUrl)
   }
+  if (entry.cutoutPreviewUrl?.startsWith('blob:')) {
+    URL.revokeObjectURL(entry.cutoutPreviewUrl)
+  }
 }
 
 function clearImageState() {
@@ -1127,6 +1332,10 @@ function applyProcessedCoverFile(entryKey, { file, previewUrl, hasAlpha = false,
     fetchBusy: false,
     id: undefined,
     url: undefined,
+    cutoutFile: undefined,
+    cutoutPreviewUrl: undefined,
+    cutoutDirty: true,
+    persistedCutoutUrl: undefined,
     ...extra,
   })
 }
@@ -1225,12 +1434,13 @@ async function cutoutCoverToPng() {
   cutoutFeedback.value = null
   try {
     const result = await cutoutCoverEntry()
-    applyProcessedCoverFile(entry.key, {
+    const updated = applyProcessedCoverFile(entry.key, {
       file: result.file,
       previewUrl: result.previewUrl,
       hasAlpha: true,
       cutout: true,
     })
+    await ensureEntryOutfitCutout(updated ?? entry)
     const pct = Math.round(result.foregroundRatio * 100)
 
     if (editingItemId.value) {
@@ -1254,7 +1464,7 @@ async function prepareImportedShoeImage(entry, { isCover = false } = {}) {
     const processed = await prepareShoeCoverImage(
       () => entryToProcessableFile(entry),
       {
-        colorHint: form.color || null,
+        colorHint: form.colors[0] || null,
         forceLight: /\b(bia[łl]|white|cream|ivory)\b/i.test(form.name ?? ''),
         trim: true,
       }
@@ -1276,7 +1486,9 @@ async function prepareImportedShoeImage(entry, { isCover = false } = {}) {
         `Auto: para butów — wycięto PNG, skierowano w prawo (~${pct}% kadru)${lightNote}.`
       )
     }
-    return updated ?? entry
+    const next = updated ?? entry
+    await ensureEntryOutfitCutout(next)
+    return next
   } catch (err) {
     console.warn('Auto-obróbka obuwia nie powiodła się:', err)
     if (isCover) {
@@ -1286,6 +1498,7 @@ async function prepareImportedShoeImage(entry, { isCover = false } = {}) {
         false
       )
     }
+    await ensureEntryOutfitCutout(entry)
     return entry
   } finally {
     patchImageEntry(entry.key, { orientationBusy: false })
@@ -1297,12 +1510,13 @@ async function maybeAutoCutoutCoverEntry(entry) {
   if (coverEntry()?.key !== entry.key) return
   try {
     const result = await cutoutCoverEntry()
-    applyProcessedCoverFile(entry.key, {
+    const updated = applyProcessedCoverFile(entry.key, {
       file: result.file,
       previewUrl: result.previewUrl,
       hasAlpha: true,
       cutout: true,
     })
+    await ensureEntryOutfitCutout(updated ?? entry)
     if (editingItemId.value) {
       await persistCoverImageChanges()
     }
@@ -1325,6 +1539,81 @@ function patchImageEntry(entryKey, patch) {
   }
   imageEntries.value[idx] = next
   return next
+}
+
+function shouldPersistOutfitCutout() {
+  return sizeKind.value === 'clothing' || sizeKind.value === 'shoes'
+}
+
+function revokeCutoutPreview(entry) {
+  if (entry?.cutoutPreviewUrl?.startsWith('blob:')) {
+    URL.revokeObjectURL(entry.cutoutPreviewUrl)
+  }
+}
+
+/** @type {Map<string, Promise<object|null>>} */
+const outfitCutoutJobs = new Map()
+
+/**
+ * Generate cutout+outline sidecar on image add (clothing/shoes).
+ * Stored separately from the gallery original so Style can load without re-cutting.
+ */
+async function ensureEntryOutfitCutout(entry) {
+  if (!entry || !shouldPersistOutfitCutout()) return entry
+
+  const latest = imageEntries.value.find((e) => e.key === entry.key) ?? entry
+  if (latest.cutoutFile instanceof Blob && latest.cutoutFile.size > 0) return latest
+  if (latest.persistedCutoutUrl && !latest.cutoutDirty) return latest
+
+  if (outfitCutoutJobs.has(latest.key)) {
+    return outfitCutoutJobs.get(latest.key)
+  }
+
+  const job = (async () => {
+    patchImageEntry(latest.key, { cutoutBusy: true })
+    try {
+      const source = await entryToProcessableFile(
+        imageEntries.value.find((e) => e.key === latest.key) ?? latest
+      )
+      if (!source) {
+        throw new Error('Brak źródła do wycinki.')
+      }
+
+      const current = imageEntries.value.find((e) => e.key === latest.key) ?? latest
+      const alreadyCutout = Boolean(current.cutout && current.hasAlpha)
+      const result = await preparePersistedOutfitCutout(source, {
+        colorHint: form.colors[0] || null,
+        itemName: form.name || '',
+        alreadyCutout,
+      })
+
+      const prev = imageEntries.value.find((e) => e.key === latest.key)
+      revokeCutoutPreview(prev)
+
+      return patchImageEntry(latest.key, {
+        cutoutFile: result.file,
+        cutoutPreviewUrl: result.previewUrl,
+        cutoutBusy: false,
+        cutoutDirty: true,
+      })
+    } catch (err) {
+      console.warn('Outfit cutout nie powiodło się:', err)
+      return patchImageEntry(latest.key, { cutoutBusy: false })
+    } finally {
+      outfitCutoutJobs.delete(latest.key)
+    }
+  })()
+
+  outfitCutoutJobs.set(latest.key, job)
+  return job
+}
+
+async function ensureAllOutfitCutouts() {
+  if (!shouldPersistOutfitCutout()) return
+  for (const entry of [...imageEntries.value]) {
+    if (!isImageEntryReady(entry)) continue
+    await ensureEntryOutfitCutout(entry)
+  }
 }
 
 function setOrientationFeedback(text, ok = true) {
@@ -1531,6 +1820,9 @@ async function onImagesSelected(event) {
     if (isCover) {
       await maybeAutoOrientCoverEntry(entry)
     }
+    await ensureEntryOutfitCutout(
+      imageEntries.value.find((e) => e.key === entry.key) ?? entry
+    )
   }
 }
 
@@ -1560,6 +1852,9 @@ async function addImageFromUrl() {
     if (isCover) {
       await maybeAutoOrientCoverEntry(materialized)
     }
+    await ensureEntryOutfitCutout(
+      imageEntries.value.find((e) => e.key === entryKey) ?? materialized
+    )
   } catch (err) {
     imageEntries.value = imageEntries.value.filter((e) => e.key !== entryKey)
     setOrientationFeedback(
@@ -1609,6 +1904,9 @@ async function buildImageFileOptions() {
   const imageOrderSlots = buildImageOrderSlots()
   const newImages = []
   const newImageUrls = []
+  const newCutoutImages = []
+  const newUrlCutoutImages = []
+  const existingCutoutImages = {}
 
   for (const entry of imageEntries.value) {
     if (!isImageEntryReady(entry)) continue
@@ -1618,8 +1916,26 @@ async function buildImageFileOptions() {
         preferPng: Boolean(entry.hasAlpha || entry.cutout),
       })
       newImages.push(normalized)
+      newCutoutImages.push(
+        entry.cutoutFile instanceof Blob && entry.cutoutFile.size > 0
+          ? entry.cutoutFile
+          : null
+      )
     } else if (entry.kind === 'url') {
       newImageUrls.push(entry.url.trim())
+      newUrlCutoutImages.push(
+        entry.cutoutFile instanceof Blob && entry.cutoutFile.size > 0
+          ? entry.cutoutFile
+          : null
+      )
+    } else if (
+      entry.kind === 'existing' &&
+      entry.id &&
+      entry.cutoutDirty &&
+      entry.cutoutFile instanceof Blob &&
+      entry.cutoutFile.size > 0
+    ) {
+      existingCutoutImages[entry.id] = entry.cutoutFile
     }
   }
 
@@ -1629,6 +1945,9 @@ async function buildImageFileOptions() {
   return {
     newImages,
     newImageUrls,
+    newCutoutImages,
+    newUrlCutoutImages,
+    existingCutoutImages,
     removeImageIds: [...removedImageIds.value],
     imageOrderSlots,
     imageOrderChanged,
@@ -1639,6 +1958,8 @@ function hasPendingImageEntries() {
   return imageEntries.value.some(
     (entry) =>
       entry.fetchBusy ||
+      entry.cutoutBusy ||
+      entry.orientationBusy ||
       (entry.kind === 'file' && !(entry.file instanceof Blob && entry.file.size > 0)) ||
       (entry.kind === 'url' && !entry.url?.trim())
   )
@@ -1819,6 +2140,8 @@ async function applySelectedImportToGallery() {
       true
     )
 
+    await ensureAllOutfitCutouts()
+
     await nextTick()
     document.getElementById(`${props.idPrefix}-images`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
   } finally {
@@ -1847,7 +2170,16 @@ async function applyParsedProduct(data) {
     form.brand = brand ?? ''
   }
   if (data.color) {
-    form.color = normalizeColorForStorage(data.color) ?? ''
+    const value = normalizeColorForStorage(data.color)
+    if (value && !form.colors.includes(value)) {
+      form.colors = [...form.colors, value]
+    }
+  }
+  if (Array.isArray(data.colors) && data.colors.length) {
+    form.colors = normalizeColorsForStorage([
+      ...form.colors,
+      ...data.colors,
+    ])
   }
   if (data.season) {
     form.season = normalizeSeasonForStorage(data.season) ?? ''
@@ -1886,11 +2218,12 @@ async function applyParsedProduct(data) {
   }
 
   if (
-    !form.color &&
+    !form.colors.length &&
     data.name &&
     /\b(bia[łl]|white|cream|ivory|ecru)\b/i.test(data.name)
   ) {
-    form.color = normalizeColorForStorage('bialy') ?? 'bialy'
+    const white = normalizeColorForStorage('bialy') ?? 'bialy'
+    form.colors = [white]
   }
 
   const images = (data.image_urls ?? []).filter(Boolean).slice(0, IMPORT_CATALOG_MAX)
@@ -1964,8 +2297,11 @@ function reset() {
   form.fits_persona_ids = []
   form.default_persona_id = personasStore.prims.find((p) => p.gender === 'female')?.id ?? ''
   form.category = ''
+  form.body_zone = ''
+  form.wear_layer = ''
+  form.hosiery = emptyHosieryFormAttrs()
   form.description = ''
-  form.color = ''
+  form.colors = []
   form.season = ''
   form.size = ''
   form.size_system = 'eu'
@@ -1998,6 +2334,9 @@ function loadFromItem(item) {
     sizeKind.value === 'clothing'
       ? normalizeClothingTypeForStorage(item.category) ?? ''
       : item.category ?? ''
+  form.body_zone = item.body_zone ?? ''
+  form.wear_layer = item.wear_layer ?? ''
+  form.hosiery = hosieryFormFromAttributes(item.garment_attributes)
   form.gift = Boolean(item.gift)
   form.purchase_price = item.gift ? '' : (item.purchase_price ?? '')
   form.purchase_currency = item.gift
@@ -2006,7 +2345,7 @@ function loadFromItem(item) {
   form.current_value = item.current_value ?? ''
   form.notes = item.notes ?? ''
   form.description = item.description ?? ''
-  form.color = normalizeColorForStorage(item.color) ?? ''
+  form.colors = itemColorsList(item)
   form.season = normalizeSeasonForStorage(item.season) ?? ''
   form.size = item.size ?? ''
   form.size_system = item.size_system === 'us' ? 'us' : 'eu'
@@ -2017,18 +2356,28 @@ function loadFromItem(item) {
   form.fits_persona_ids = normalizeFitsPersonaIds(item.fits_persona_ids ?? [])
   form.default_persona_id = item.default_persona_id ?? ''
   clearImageState()
-  imageEntries.value = (item.images ?? []).map((img) => ({
-    key: nextImageKey(),
-    kind: 'existing',
-    id: img.id,
-    previewUrl: resolveItemImageUrl(img),
-    orientationBusy: false,
-    facing: null,
-    orientation: null,
-  }))
+  imageEntries.value = (item.images ?? []).map((img) => {
+    const cutoutRaw = img.cutout_url ?? null
+    const persistedCutoutUrl = resolveStorageUrl(cutoutRaw) ?? cutoutRaw
+    return {
+      key: nextImageKey(),
+      kind: 'existing',
+      id: img.id,
+      previewUrl: resolveItemImageUrl(img),
+      persistedCutoutUrl: persistedCutoutUrl || null,
+      cutoutDirty: false,
+      orientationBusy: false,
+      facing: null,
+      orientation: null,
+    }
+  })
   initialImageOrderSlots.value = buildImageOrderSlots()
   const input = document.getElementById(`${props.idPrefix}-image`)
   if (input) input.value = ''
+
+  if (shouldPersistOutfitCutout()) {
+    void ensureAllOutfitCutouts()
+  }
 }
 
 function buildPayload() {
@@ -2042,6 +2391,8 @@ function buildPayload() {
       defaultPersonaId = null
     }
   }
+
+  const colors = normalizeColorsForStorage(form.colors)
 
   const payload = {
     fits_all_personas: form.fits_all_personas,
@@ -2057,9 +2408,19 @@ function buildPayload() {
       sizeKind.value === 'clothing'
         ? normalizeClothingTypeForStorage(form.category)
         : form.category.trim() || null,
+    body_zone: form.body_zone || null,
+    wear_layer: form.wear_layer || null,
+    // JSON string so FormData does not coerce objects; null clears attrs for non-hosiery.
+    garment_attributes: JSON.stringify(
+      sizeKind.value === 'clothing'
+        ? normalizeGarmentAttributesForStorage(form.category, form.hosiery)
+        : null,
+    ),
     source_url: form.source_url.trim() || null,
     description: form.description.trim() || null,
-    color: normalizeColorForStorage(form.color),
+    // JSON string so empty list clears colors even via FormData.
+    colors: JSON.stringify(colors),
+    color: colors[0] ?? null,
     season: normalizeSeasonForStorage(form.season),
     size: sizeKind.value && form.size.trim() ? form.size.trim() : null,
     size_system:
@@ -2082,7 +2443,17 @@ function buildPayload() {
 async function handleSubmit() {
   if (hasPendingImageEntries()) {
     setProductImportFeedback(
-      'Poczekaj, aż wszystkie zdjęcia się pobiorą (lub usuń niedokończone wpisy).',
+      'Poczekaj, aż wszystkie zdjęcia się pobiorą i wytną (lub usuń niedokończone wpisy).',
+      false
+    )
+    return
+  }
+
+  await ensureAllOutfitCutouts()
+
+  if (hasPendingImageEntries()) {
+    setProductImportFeedback(
+      'Poczekaj, aż wycinka zdjęć się skończy.',
       false
     )
     return

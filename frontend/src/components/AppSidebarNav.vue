@@ -62,24 +62,30 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import SidebarNavLink from './SidebarNavLink.vue'
 import SidebarSubNavLink from './SidebarSubNavLink.vue'
 import UserAccountMenu from './UserAccountMenu.vue'
 import { useI18n } from '../composables/useI18n'
+import { useUserStore } from '../stores/user'
 import {
   sidebarBrandText,
   sidebarClasses,
   sidebarNavigation,
-  sidebarAccountNavigation,
+  sidebarAccountNavigationForUser,
   isNavGroupActive,
 } from '../config/sidebar'
 
 const { t } = useI18n()
 const emit = defineEmits(['navigate'])
 const route = useRoute()
+const userStore = useUserStore()
+
+const sidebarAccountNavigation = computed(() =>
+  sidebarAccountNavigationForUser({ isAdmin: userStore.isAdmin }),
+)
 
 /** labelKey → true (wymuszone otwarte) | false (wymuszone zamknięte) */
 const groupOverrides = ref({})
