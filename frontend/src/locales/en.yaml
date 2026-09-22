@@ -900,6 +900,7 @@ outfit:
   sourceLlm: Suggested
 
 item:
+  noImageLoaded: No image loaded
   bodyZone: Body zone
   bodyZoneAuto: Automatic (from type)
   bodyZoneHint: Where it is worn — drives outfit card layout.

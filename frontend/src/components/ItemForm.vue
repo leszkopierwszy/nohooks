@@ -122,27 +122,22 @@
     </div>
 
     <div>
-      <span class="block text-sm font-medium text-gray-700">Dopasowanie do person</span>
+      <span class="block text-sm font-medium text-gray-700">
+        Persony
+        <span class="text-rose-600">*</span>
+      </span>
       <p class="mt-1 text-xs text-gray-500">
-        Sugestia stylu — item nie należy do jednej persony. Może pasować do wielu; domyślna to podpowiedź (np. sukienka → kobieta).
+        Wybierz jedną lub więcej person. Domyślnie zaznaczona jest aktywna persona z aplikacji.
       </p>
-
-      <label class="mt-3 flex items-center gap-2">
-        <input
-          :id="`${idPrefix}-fits-all`"
-          v-model="form.fits_all_personas"
-          type="checkbox"
-          class="size-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-        />
-        <span class="text-sm text-gray-700">Pasuje do wszystkich person</span>
-      </label>
-
-      <div v-if="!form.fits_all_personas" class="mt-3 space-y-2 rounded-md border border-gray-200 bg-gray-50 p-3">
-        <p class="text-xs font-medium text-gray-600">Pasuje do wybranych person:</p>
+      <div
+        class="mt-2 max-h-48 space-y-1 overflow-y-auto rounded-md border border-gray-300 bg-white p-2 shadow-sm"
+        role="group"
+        :aria-label="'Persony'"
+      >
         <label
           v-for="persona in personasStore.prims"
           :key="persona.id"
-          class="flex cursor-pointer items-center gap-2 text-sm text-gray-700"
+          class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-gray-800 hover:bg-gray-50"
         >
           <input
             v-model="form.fits_persona_ids"
@@ -150,34 +145,21 @@
             :value="Number(persona.id)"
             class="size-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
           />
-          {{ persona.name }}
-          <span v-if="persona.gender" class="text-xs text-gray-400">({{ genderLabel(persona.gender) }})</span>
+          <span>{{ persona.name }}</span>
         </label>
       </div>
-
-      <div class="mt-4">
-        <label :for="`${idPrefix}-default-persona`" class="block text-sm font-medium text-gray-700">
-          Domyślnie pasuje do
-        </label>
-        <select
-          :id="`${idPrefix}-default-persona`"
-          v-model="form.default_persona_id"
-          class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-        >
-          <option value="">— brak sugestii —</option>
-          <option
-            v-for="persona in defaultPersonaOptions"
-            :key="persona.id"
-            :value="persona.id"
-          >
-            {{ persona.name }}
-          </option>
-        </select>
-        <p class="mt-1 text-xs text-gray-500">
-          Tylko podpowiedź w kolekcji — nie decyduje, na czyim widoku persony item się pojawi.
-          Widoczność ustawiasz checkboxami powyżej.
-        </p>
-      </div>
+      <p
+        v-if="!form.fits_persona_ids.length"
+        class="mt-1.5 text-xs text-rose-600"
+      >
+        Wybierz co najmniej jedną personę.
+      </p>
+      <p
+        v-else
+        class="mt-1.5 text-xs text-gray-500"
+      >
+        Wybrane: {{ selectedPersonaNames }}
+      </p>
     </div>
 
     <div>
@@ -1087,7 +1069,6 @@ const exchangeRates = ref({ PLN: 1 })
 let imageEntryKey = 0
 
 const form = reactive({
-  fits_all_personas: true,
   fits_persona_ids: [],
   default_persona_id: '',
   name: '',
@@ -1152,19 +1133,35 @@ const showHosieryAttrs = computed(
   () => sizeKind.value === 'clothing' && isHosieryType(form.category),
 )
 
-const defaultPersonaOptions = computed(() => {
-  if (form.fits_all_personas) {
-    return personasStore.prims
-  }
+function resolveDefaultPersonaId() {
+  return (
+    personasStore.activePrim?.id ??
+    personasStore.activePersonaId ??
+    personasStore.prims[0]?.id ??
+    ''
+  )
+}
 
+const selectedPersonaNames = computed(() => {
   const ids = new Set(form.fits_persona_ids.map(Number))
-  return personasStore.prims.filter((p) => ids.has(Number(p.id)))
+  return personasStore.prims
+    .filter((p) => ids.has(Number(p.id)))
+    .map((p) => p.name)
+    .join(', ')
 })
 
-function genderLabel(gender) {
-  if (gender === 'female') return 'kobieta'
-  if (gender === 'male') return 'mężczyzna'
-  return gender
+function syncDefaultPersonaFromSelection() {
+  const ids = normalizeFitsPersonaIds(form.fits_persona_ids)
+  if (!ids.length) {
+    form.default_persona_id = ''
+    return
+  }
+
+  const current = form.default_persona_id ? Number(form.default_persona_id) : null
+  if (current && ids.includes(current)) return
+
+  const active = Number(resolveDefaultPersonaId())
+  form.default_persona_id = ids.includes(active) ? active : ids[0]
 }
 
 const brandOptions = computed(() => {
@@ -1245,34 +1242,11 @@ watch(
 )
 
 watch(
-  () => form.fits_all_personas,
-  (fitsAll) => {
-    if (fitsAll) {
-      form.fits_persona_ids = []
-      return
-    }
-
-    syncDefaultPersonaWithSelection()
-  }
-)
-
-watch(
   () => [...form.fits_persona_ids],
   () => {
-    if (!form.fits_all_personas) {
-      syncDefaultPersonaWithSelection()
-    }
+    syncDefaultPersonaFromSelection()
   }
 )
-
-function syncDefaultPersonaWithSelection() {
-  if (!form.default_persona_id) return
-
-  const selected = new Set(normalizeFitsPersonaIds(form.fits_persona_ids))
-  if (!selected.has(Number(form.default_persona_id))) {
-    form.default_persona_id = ''
-  }
-}
 
 watch(
   () => form.gift,
@@ -2293,9 +2267,9 @@ function reset() {
   form.rarity = 'common'
   form.like_rating = null
   form.brand = ''
-  form.fits_all_personas = true
-  form.fits_persona_ids = []
-  form.default_persona_id = personasStore.prims.find((p) => p.gender === 'female')?.id ?? ''
+  const personaId = resolveDefaultPersonaId()
+  form.fits_persona_ids = personaId ? [Number(personaId)] : []
+  form.default_persona_id = personaId || ''
   form.category = ''
   form.body_zone = ''
   form.wear_layer = ''
@@ -2352,9 +2326,23 @@ function loadFromItem(item) {
   form.source_url = item.source_url ?? ''
   productImportUrl.value = item.source_url ?? ''
   productImportFeedback.value = null
-  form.fits_all_personas = item.fits_all_personas ?? true
-  form.fits_persona_ids = normalizeFitsPersonaIds(item.fits_persona_ids ?? [])
-  form.default_persona_id = item.default_persona_id ?? ''
+  const loadedIds = normalizeFitsPersonaIds(item.fits_persona_ids ?? [])
+  if (loadedIds.length) {
+    form.fits_persona_ids = loadedIds
+  } else if (item.default_persona_id) {
+    form.fits_persona_ids = [Number(item.default_persona_id)]
+  } else if (item.fits_all_personas) {
+    form.fits_persona_ids = personasStore.prims.map((p) => Number(p.id))
+  } else {
+    const fallback = resolveDefaultPersonaId()
+    form.fits_persona_ids = fallback ? [Number(fallback)] : []
+  }
+  form.default_persona_id =
+    item.default_persona_id &&
+    form.fits_persona_ids.map(Number).includes(Number(item.default_persona_id))
+      ? Number(item.default_persona_id)
+      : ''
+  syncDefaultPersonaFromSelection()
   clearImageState()
   imageEntries.value = (item.images ?? []).map((img) => {
     const cutoutRaw = img.cutout_url ?? null
@@ -2381,21 +2369,21 @@ function loadFromItem(item) {
 }
 
 function buildPayload() {
-  const fitsPersonaIds = form.fits_all_personas
-    ? null
-    : normalizeFitsPersonaIds(form.fits_persona_ids)
+  const fitsPersonaIds = normalizeFitsPersonaIds(form.fits_persona_ids)
 
-  let defaultPersonaId = form.default_persona_id ? Number(form.default_persona_id) : null
-  if (!form.fits_all_personas && defaultPersonaId) {
-    if (!fitsPersonaIds?.includes(defaultPersonaId)) {
-      defaultPersonaId = null
-    }
+  if (!fitsPersonaIds.length) {
+    throw new Error('Wybierz co najmniej jedną personę.')
   }
+
+  syncDefaultPersonaFromSelection()
+  const defaultPersonaId = form.default_persona_id
+    ? Number(form.default_persona_id)
+    : fitsPersonaIds[0]
 
   const colors = normalizeColorsForStorage(form.colors)
 
   const payload = {
-    fits_all_personas: form.fits_all_personas,
+    fits_all_personas: false,
     fits_persona_ids: fitsPersonaIds,
     default_persona_id: defaultPersonaId,
     name: form.name.trim(),
@@ -2474,9 +2462,12 @@ onMounted(async () => {
   await Promise.all([
     itemsStore.fetchEntities(),
     collectionStore.fetchCollections(),
+    personasStore.fetchPersonas().catch(() => {}),
   ])
-  if (!form.default_persona_id && personasStore.activePersonaId) {
-    form.default_persona_id = personasStore.activePersonaId
+  if (!form.fits_persona_ids.length) {
+    const personaId = resolveDefaultPersonaId()
+    form.fits_persona_ids = personaId ? [Number(personaId)] : []
+    syncDefaultPersonaFromSelection()
   }
   if (props.defaultCategoryId) {
     form.category_id = String(props.defaultCategoryId)

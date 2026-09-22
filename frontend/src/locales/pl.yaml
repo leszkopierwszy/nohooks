@@ -900,6 +900,7 @@ outfit:
   sourceLlm: Sugerowany
 
 item:
+  noImageLoaded: Brak załadowanego zdjęcia
   bodyZone: Strefa ciała
   bodyZoneAuto: Automatycznie (z typu)
   bodyZoneHint: Gdzie noszone — wpływa na układ na karcie outfit.
