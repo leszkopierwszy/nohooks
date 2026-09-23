@@ -87,6 +87,8 @@
               <option value="">{{ t('admin.styleModules.genderAll') }}</option>
               <option value="female">female</option>
               <option value="male">male</option>
+              <option value="nonbinary">nonbinary</option>
+              <option value="gay">gay</option>
             </select>
           </div>
           <div>
@@ -95,8 +97,8 @@
               v-model="moduleForm.completion_mode"
               class="mt-1 block w-full rounded-md border-0 py-2 pl-3 text-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600"
             >
-              <option value="auto">auto</option>
-              <option value="manual">manual</option>
+              <option value="auto">{{ t('style.journey.modeAuto') }}</option>
+              <option value="manual">{{ t('style.journey.modeManual') }}</option>
             </select>
           </div>
           <div>
@@ -168,7 +170,21 @@
               >(inactive)</span>
             </p>
             <p class="mt-0.5 text-xs text-gray-500">
-              {{ mod.completion_mode }} · XP {{ mod.xp_reward }}
+              <span
+                class="mr-1 inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+                :class="
+                  mod.completion_mode === 'manual'
+                    ? 'bg-violet-100 text-violet-800'
+                    : 'bg-sky-100 text-sky-800'
+                "
+              >
+                {{
+                  mod.completion_mode === 'manual'
+                    ? t('style.journey.modeManual')
+                    : t('style.journey.modeAuto')
+                }}
+              </span>
+              XP {{ mod.xp_reward }}
               · {{ mod.gender || 'all' }} · #{{ mod.sort_order }}
             </p>
           </div>

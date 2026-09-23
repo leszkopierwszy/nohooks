@@ -14,7 +14,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->unsignedInteger('sort_order')->default(0);
             $table->boolean('is_active')->default(true);
-            $table->string('gender', 16)->nullable(); // null = all, female|male
+            $table->string('gender', 16)->nullable(); // null = all; female|male|nonbinary|gay
             $table->unsignedInteger('xp_reward')->default(25);
             $table->string('completion_mode', 16)->default('auto'); // auto|manual
             $table->json('requirements')->nullable();

@@ -540,6 +540,8 @@ souls:
     genderUnknown: Nie ustawiono
     genderFemale: Kobieta
     genderMale: Mężczyzna
+    genderNonbinary: Nonbinary
+    genderGay: Gay
     edit: Edytuj
     delete: Usuń
     save: Zapisz
@@ -974,6 +976,7 @@ style:
     inProgress: W trakcie
     modeAuto: Auto
     modeManual: Manual
+    filterAll: Wszystkie
     checklist: Checklist
     stillNeeded: Nadal brakuje
     backToStyles: Wróć do Style
@@ -985,6 +988,7 @@ style:
     moduleCompleted: Moduł ukończony — XP przyznane.
     checksSaved: Postęp zapisany — dokończ wszystkie punkty.
     noModules: Brak modułów dla tej Primy. Admin może je dodać w Backend.
+    noModulesInFilter: Brak modułów w tym filtrze.
     loadError: Nie udało się wczytać journey stylu.
     needSlot: "Potrzeba {need}× {slot} (masz {have})"
     needCategory: "Potrzeba {need}× {category} (masz {have})"

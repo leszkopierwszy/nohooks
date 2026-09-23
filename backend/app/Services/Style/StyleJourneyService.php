@@ -183,8 +183,7 @@ class StyleJourneyService
             abort(404, 'Module not found.');
         }
 
-        $gender = $entity->gender ? strtolower(trim((string) $entity->gender)) : null;
-        if ($module->gender && $gender && $module->gender !== $gender) {
+        if (! $module->isVisibleToEntityGender($entity->gender)) {
             abort(403, 'Module not available for this Prim.');
         }
 

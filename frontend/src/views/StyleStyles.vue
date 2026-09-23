@@ -161,12 +161,29 @@
         <h2 class="text-sm font-semibold text-gray-900">{{ t('style.journey.modules') }}</h2>
         <p class="mt-1 text-sm text-gray-500">{{ t('style.journey.modulesHint') }}</p>
 
+        <div class="mt-3 flex flex-wrap gap-2">
+          <button
+            v-for="opt in modeFilters"
+            :key="opt.id"
+            type="button"
+            class="rounded-full px-3 py-1 text-xs font-medium transition"
+            :class="
+              modeFilter === opt.id
+                ? 'bg-gray-900 text-white'
+                : 'bg-white text-gray-700 ring-1 ring-inset ring-gray-200 hover:bg-gray-50'
+            "
+            @click="modeFilter = opt.id"
+          >
+            {{ opt.label }}
+          </button>
+        </div>
+
         <div
-          v-if="journeyStore.modules.length"
+          v-if="filteredModules.length"
           class="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3"
         >
           <RouterLink
-            v-for="mod in journeyStore.modules"
+            v-for="mod in filteredModules"
             :key="mod.id"
             :to="moduleLink(mod)"
             class="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-md"
@@ -184,16 +201,24 @@
                   <p class="text-xs text-gray-500">{{ modeLabel(mod) }}</p>
                 </div>
               </div>
-              <span
-                class="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium"
-                :class="
-                  mod.completed
-                    ? 'bg-emerald-100 text-emerald-800'
-                    : 'bg-gray-100 text-gray-600'
-                "
-              >
-                {{ mod.completed ? t('style.journey.done') : t('style.journey.inProgress') }}
-              </span>
+              <div class="flex shrink-0 flex-col items-end gap-1">
+                <span
+                  class="rounded-full px-2 py-0.5 text-[11px] font-medium"
+                  :class="modeBadgeClass(mod)"
+                >
+                  {{ modeLabel(mod) }}
+                </span>
+                <span
+                  class="rounded-full px-2 py-0.5 text-[11px] font-medium"
+                  :class="
+                    mod.completed
+                      ? 'bg-emerald-100 text-emerald-800'
+                      : 'bg-gray-100 text-gray-600'
+                  "
+                >
+                  {{ mod.completed ? t('style.journey.done') : t('style.journey.inProgress') }}
+                </span>
+              </div>
             </div>
 
             <div
@@ -218,7 +243,10 @@
               </p>
 
               <div class="mt-3 flex flex-wrap gap-1.5">
-                <span class="rounded-full border border-gray-200 bg-white px-2 py-0.5 text-[11px] font-medium text-gray-600">
+                <span
+                  class="rounded-full border px-2 py-0.5 text-[11px] font-medium"
+                  :class="modeChipClass(mod)"
+                >
                   {{ modeLabel(mod) }}
                 </span>
                 <span
@@ -260,6 +288,12 @@
         </div>
 
         <p
+          v-else-if="!journeyStore.loading && journeyStore.modules.length"
+          class="mt-4 text-sm text-gray-500"
+        >
+          {{ t('style.journey.noModulesInFilter') }}
+        </p>
+        <p
           v-else-if="!journeyStore.loading"
           class="mt-4 text-sm text-gray-500"
         >
@@ -284,8 +318,26 @@ const journeyStore = useStyleJourneyStore()
 
 const entityId = ref('')
 const pageError = ref('')
+const modeFilter = ref('all')
 
 const prims = computed(() => personasStore.prims)
+
+const modeFilters = computed(() => [
+  { id: 'all', label: t('style.journey.filterAll') },
+  { id: 'auto', label: t('style.journey.modeAuto') },
+  { id: 'manual', label: t('style.journey.modeManual') },
+])
+
+const filteredModules = computed(() => {
+  const list = journeyStore.modules || []
+  if (modeFilter.value === 'auto') {
+    return list.filter((m) => m.completion_mode !== 'manual')
+  }
+  if (modeFilter.value === 'manual') {
+    return list.filter((m) => m.completion_mode === 'manual')
+  }
+  return list
+})
 
 const activePrimName = computed(() => {
   const p = prims.value.find((x) => String(x.id) === entityId.value)
@@ -322,6 +374,18 @@ function modeLabel(mod) {
   return mod.completion_mode === 'manual'
     ? t('style.journey.modeManual')
     : t('style.journey.modeAuto')
+}
+
+function modeBadgeClass(mod) {
+  return mod.completion_mode === 'manual'
+    ? 'bg-violet-100 text-violet-800'
+    : 'bg-sky-100 text-sky-800'
+}
+
+function modeChipClass(mod) {
+  return mod.completion_mode === 'manual'
+    ? 'border-violet-200 bg-violet-50 text-violet-800'
+    : 'border-sky-200 bg-sky-50 text-sky-800'
 }
 
 function tileAccent(mod) {

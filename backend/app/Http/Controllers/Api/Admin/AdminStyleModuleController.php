@@ -18,7 +18,7 @@ class AdminStyleModuleController extends Controller
             'description' => 'nullable|string',
             'sort_order' => 'nullable|integer|min:0|max:9999',
             'is_active' => 'sometimes|boolean',
-            'gender' => ['nullable', 'string', Rule::in(['female', 'male'])],
+            'gender' => ['nullable', 'string', Rule::in(StyleModule::GENDERS)],
             'xp_reward' => 'nullable|integer|min:0|max:10000',
             'completion_mode' => ['nullable', 'string', Rule::in(['auto', 'manual'])],
             'requirements' => 'nullable|array',

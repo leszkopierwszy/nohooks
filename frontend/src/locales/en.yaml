@@ -540,6 +540,8 @@ souls:
     genderUnknown: Not set
     genderFemale: Female
     genderMale: Male
+    genderNonbinary: Nonbinary
+    genderGay: Gay
     edit: Edit
     delete: Delete
     save: Save
@@ -974,6 +976,7 @@ style:
     inProgress: In progress
     modeAuto: Auto
     modeManual: Manual
+    filterAll: All
     checklist: Checklist
     stillNeeded: Still needed
     backToStyles: Back to Styles
@@ -985,6 +988,7 @@ style:
     moduleCompleted: Module completed — XP awarded.
     checksSaved: Progress saved — finish all checks to complete.
     noModules: No modules for this Prim yet. An admin can add them in Backend.
+    noModulesInFilter: No modules in this filter.
     loadError: Could not load style journey.
     needSlot: "Need {need}× {slot} (have {have})"
     needCategory: "Need {need}× {category} (have {have})"
