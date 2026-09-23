@@ -45,3 +45,10 @@ export function updatePasswordRequest(payload) {
     body: JSON.stringify(payload),
   })
 }
+
+export function resendVerificationRequest(email) {
+  return apiRequest('/auth/email/resend', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  })
+}

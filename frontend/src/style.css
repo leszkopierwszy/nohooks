@@ -1,9 +1,22 @@
 @import "tailwindcss";
 
+@theme {
+  --font-landing-display: "Fraunces", ui-serif, Georgia, serif;
+  --font-landing-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+}
+
 @custom-variant dark (&:where(.dark, .dark *));
 
 html {
   font-size: 16px;
+}
+
+.font-landing-display {
+  font-family: var(--font-landing-display);
+}
+
+.font-landing-sans {
+  font-family: var(--font-landing-sans);
 }
 
 /* Skalowanie tylko kolumny treści (sidebar bez zmian). */

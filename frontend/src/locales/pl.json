@@ -500,7 +500,84 @@
     "registerSubmit": "Utwórz konto",
     "switchToRegister": "Nie masz konta? Zarejestruj się",
     "switchToLogin": "Masz już konto? Zaloguj się",
-    "errorGeneric": "Coś poszło nie tak. Spróbuj ponownie."
+    "errorGeneric": "Coś poszło nie tak. Spróbuj ponownie.",
+    "verifyEmailSent": "Sprawdź e-mail, potwierdź konto, a potem się zaloguj.",
+    "verifiedSuccess": "E-mail potwierdzony. Możesz się zalogować.",
+    "resendVerification": "Wyślij ponownie mail weryfikacyjny",
+    "resendVerificationSent": "Jeśli istnieje niepotwierdzone konto, wysłaliśmy nowy link."
+  },
+  "landing": {
+    "nav": {
+      "login": "Zaloguj się",
+      "cta": "Zacznij"
+    },
+    "hero": {
+      "headline": "To nie kolejny zwykły tracker — to AI-featured character development system.",
+      "sub": "{name} to aplikacja skupiona na rozwoju — Styl, Finanse i Wellbeing — z AI Primami, które zamieniają pracę nad sobą w żywą historię postaci.",
+      "ctaPrimary": "Utwórz konto",
+      "ctaSecondary": "Zaloguj się"
+    },
+    "features": {
+      "title": "Trzy filary. Jedna postać.",
+      "subtitle": "Śledź to, co ważne — a AI zamieni postęp w spójną historię rozwoju.",
+      "style": {
+        "eyebrow": "Style",
+        "title": "Garderoba, outfity, AI stylista",
+        "body": "Buduj świadomość stylu przez moduły, kapsuły i przymiarki — Twój Prim uczy się, jak się ubierasz i jak chcesz wyglądać."
+      },
+      "finance": {
+        "eyebrow": "Finance",
+        "title": "Oszczędności z celem",
+        "body": "Priorytetowe cele, portfolio i wydarzenia finansowe — pieniądze jako paliwo życia, które budujesz, nie jako arkusz z wyrzutami sumienia."
+      },
+      "wellbeing": {
+        "eyebrow": "Wellbeing",
+        "title": "Cele, sen, zdrowie",
+        "body": "Zapisuj samopoczucie, sen i regenerację. Rozwój nabiera tempa, gdy wellbeing stoi obok stylu i finansów — nie w osobnej aplikacji."
+      },
+      "prim": {
+        "eyebrow": "AI Prim",
+        "title": "Character development",
+        "body": "Prim to wyróżniona postać — tożsamość wspierana AI, która ewoluuje wraz z podróżą stylu, celami i codziennymi sygnałami."
+      }
+    },
+    "footerCta": {
+      "title": "Zacznij rozwój w {name}",
+      "body": "Rejestracja w kilka sekund. Domyślnie bez maila potwierdzającego — od razu do panelu.",
+      "cta": "Zacznij"
+    },
+    "footer": {
+      "copyright": "© {year} {name}. Wszelkie prawa zastrzeżone.",
+      "product": {
+        "title": "Produkt",
+        "style": "Style",
+        "finance": "Finance",
+        "wellbeing": "Wellbeing",
+        "prims": "AI Prims"
+      },
+      "account": {
+        "title": "Konto",
+        "login": "Zaloguj się",
+        "register": "Utwórz konto"
+      },
+      "company": {
+        "title": "Firma",
+        "about": "O nas",
+        "growth": "Rozwój"
+      },
+      "legal": {
+        "title": "Prawne",
+        "terms": "Regulamin",
+        "privacy": "Polityka prywatności"
+      },
+      "social": {
+        "facebook": "Facebook",
+        "instagram": "Instagram",
+        "x": "X",
+        "github": "GitHub",
+        "youtube": "YouTube"
+      }
+    }
   },
   "display": {
     "theme": {
@@ -1075,7 +1152,7 @@
     },
     "stylesPage": {
       "title": "Style",
-      "subtitle": "Zobacz, jak łączyć rzeczy, które już masz — formuły i kompletne looki dla tej persony.",
+      "subtitle": "Zobacz, jak łączyć rzeczy, które już masz.",
       "pickPrim": "Wybierz Primę, żeby zobaczyć style łączenia."
     },
     "subtitle": "Planuj zestawy dla Prima według okazji — szkoła, praca, dom i inne.",

@@ -500,7 +500,84 @@
     "registerSubmit": "Create account",
     "switchToRegister": "Need an account? Register",
     "switchToLogin": "Already have an account? Sign in",
-    "errorGeneric": "Something went wrong. Try again."
+    "errorGeneric": "Something went wrong. Try again.",
+    "verifyEmailSent": "Check your email to verify your account, then sign in.",
+    "verifiedSuccess": "Email verified. You can sign in now.",
+    "resendVerification": "Resend verification email",
+    "resendVerificationSent": "If an unverified account exists, a new link was sent."
+  },
+  "landing": {
+    "nav": {
+      "login": "Sign in",
+      "cta": "Get started"
+    },
+    "hero": {
+      "headline": "Not another habit tracker — an AI-featured character development system.",
+      "sub": "{name} is built around growth — Style, Finance, and Wellbeing — with AI Prims that turn self-work into a living character journey.",
+      "ctaPrimary": "Create your account",
+      "ctaSecondary": "Sign in"
+    },
+    "features": {
+      "title": "Three pillars. One character.",
+      "subtitle": "Track what matters — then let AI turn progress into a coherent development story.",
+      "style": {
+        "eyebrow": "Style",
+        "title": "Wardrobe, outfits, AI stylist",
+        "body": "Build style awareness with modules, capsules, and try-ons — your Prim learns how you dress and how you want to show up."
+      },
+      "finance": {
+        "eyebrow": "Finance",
+        "title": "Savings with intent",
+        "body": "Priority targets, portfolio, and money events — finance as fuel for the life you are building, not a spreadsheet guilt trip."
+      },
+      "wellbeing": {
+        "eyebrow": "Wellbeing",
+        "title": "Goals, sleep, health",
+        "body": "Log how you feel, sleep, and recover. Growth compounds when wellbeing sits next to style and money — not in a separate app."
+      },
+      "prim": {
+        "eyebrow": "AI Prim",
+        "title": "Character development",
+        "body": "Your Prim is the featured character — an AI-backed identity that evolves with your style journey, goals, and daily signals."
+      }
+    },
+    "footerCta": {
+      "title": "Start developing in {name}",
+      "body": "Register in seconds. No confirmation email required by default — jump straight into the panel.",
+      "cta": "Get started"
+    },
+    "footer": {
+      "copyright": "© {year} {name}. All rights reserved.",
+      "product": {
+        "title": "Product",
+        "style": "Style",
+        "finance": "Finance",
+        "wellbeing": "Wellbeing",
+        "prims": "AI Prims"
+      },
+      "account": {
+        "title": "Account",
+        "login": "Sign in",
+        "register": "Create account"
+      },
+      "company": {
+        "title": "Company",
+        "about": "About",
+        "growth": "Growth"
+      },
+      "legal": {
+        "title": "Legal",
+        "terms": "Terms of service",
+        "privacy": "Privacy policy"
+      },
+      "social": {
+        "facebook": "Facebook",
+        "instagram": "Instagram",
+        "x": "X",
+        "github": "GitHub",
+        "youtube": "YouTube"
+      }
+    }
   },
   "display": {
     "theme": {

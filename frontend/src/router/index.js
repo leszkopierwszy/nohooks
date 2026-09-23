@@ -38,10 +38,18 @@ import StyleModuleDetail from '../views/StyleModuleDetail.vue'
 import StyleAchievements from '../views/StyleAchievements.vue'
 import StyleOutfitEditor from '../views/StyleOutfitEditor.vue'
 import Login from '../views/Login.vue'
+import Landing from '../views/Landing.vue'
 import { useAuthStore } from '../stores/auth'
 import { useUserStore } from '../stores/user'
+import { useSiteConfigStore } from '../stores/siteConfig'
 
 const routes = [
+  {
+    path: '/',
+    name: 'Landing',
+    component: Landing,
+    meta: { public: true, guestOnly: true },
+  },
   {
     path: '/login',
     name: 'Login',
@@ -49,14 +57,10 @@ const routes = [
     meta: { public: true, guestOnly: true },
   },
   {
-    path: '/',
+    path: '/_app',
     component: MainLayout,
     meta: { requiresAuth: true },
     children: [
-        {
-            path: '',
-            redirect: '/home',
-        },
         {
             path: '/home',
             name: 'Home',
@@ -332,8 +336,12 @@ const router = createRouter({
 
 router.beforeEach(async (to) => {
   const authStore = useAuthStore()
+  const siteConfig = useSiteConfigStore()
   if (!authStore.bootstrapped) {
     await authStore.bootstrap()
+  }
+  if (!siteConfig.loaded && !siteConfig.loading) {
+    await siteConfig.load()
   }
 
   const requiresAuth = to.matched.some((record) => record.meta.requiresAuth)
