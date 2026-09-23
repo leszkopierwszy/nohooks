@@ -41,6 +41,7 @@ export const sidebarNavigation = [
     subItems: [
       { labelKey: 'style.nav.outfits', href: '/style', activeMatch: 'exact' },
       { labelKey: 'style.nav.aiStylist', href: '/style/ai-stylist', activeMatch: 'exact' },
+      { labelKey: 'style.nav.styles', href: '/style/styles', activeMatch: 'styles' },
       { labelKey: 'nav.collection', href: '/collection', activeMatch: 'collection' },
     ],
   },
@@ -229,6 +230,9 @@ export function isSidebarNavItemActive(item, path) {
   if (item.activeMatch === 'collection') {
     return path.startsWith('/collection')
   }
+  if (item.activeMatch === 'styles') {
+    return path === '/style/styles' || path.startsWith('/style/styles/')
+  }
   if (item.activeMatch === 'prims') {
     return (
       path === '/souls/prims' ||
@@ -260,6 +264,7 @@ export function isSidebarNavActive(item, path) {
 }
 
 export function sidebarPageTitle(path) {
+  if (path.startsWith('/account/backend/style-modules')) return t('admin.styleModules.title')
   if (path.startsWith('/account/backend') || path.startsWith('/account/model-assistant')) {
     return t('account.nav.backend')
   }
@@ -267,6 +272,7 @@ export function sidebarPageTitle(path) {
   if (path.startsWith('/finance')) return t('nav.finance')
   if (path.startsWith('/growth')) return t('nav.growth')
   if (path.startsWith('/collection')) return t('nav.collection')
+  if (path.startsWith('/style/styles')) return t('style.nav.styles')
   if (path.startsWith('/style/ai-stylist')) return t('style.nav.aiStylist')
   if (path.startsWith('/style')) return t('nav.style')
   if (path.startsWith('/souls/animals')) return t('souls.animals.title')

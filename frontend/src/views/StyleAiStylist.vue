@@ -463,6 +463,7 @@
 
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import OutfitFlatLay from '../components/outfit/OutfitFlatLay.vue'
 import OutfitItemPicker from '../components/outfit/OutfitItemPicker.vue'
 import { useI18n } from '../composables/useI18n'
@@ -474,6 +475,7 @@ import { useOutfitsStore } from '../stores/outfits'
 import { usePersonasStore } from '../stores/personas'
 
 const { t } = useI18n()
+const route = useRoute()
 const personasStore = usePersonasStore()
 const collectionStore = useCollectionStore()
 const outfitsStore = useOutfitsStore()
@@ -760,6 +762,26 @@ onMounted(async () => {
     entityId.value = String(
       personasStore.activePrim?.id ?? personasStore.prims[0]?.id ?? ''
     )
+  }
+
+  const q = route.query
+  if (q.entity_id) {
+    entityId.value = String(q.entity_id)
+  }
+  if (q.mode === 'outfit' || q.mode === 'base' || q.mode === 'capsule') {
+    activeMode.value = String(q.mode)
+  }
+  if (q.mode === 'outfit' || q.items) {
+    outfitSubmode.value = 'manual'
+  }
+  if (q.items) {
+    const ids = String(q.items)
+      .split(',')
+      .map((v) => Number(v.trim()))
+      .filter(Number.isFinite)
+    if (ids.length) {
+      manualForm.item_ids = ids
+    }
   }
 })
 </script>

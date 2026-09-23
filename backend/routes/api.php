@@ -21,6 +21,9 @@ use App\Http\Controllers\Api\OutfitController;
 use App\Http\Controllers\Api\CapsuleController;
 use App\Http\Controllers\Api\WorkspaceDocumentController;
 use App\Http\Controllers\Api\FashionStylistController;
+use App\Http\Controllers\Api\StyleJourneyController;
+use App\Http\Controllers\Api\Admin\AdminStyleModuleController;
+use App\Http\Controllers\Api\Admin\AdminStyleAchievementController;
 
 Route::post('auth/register', [AuthController::class, 'register']);
 Route::post('auth/login', [AuthController::class, 'login']);
@@ -71,6 +74,23 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('fashion-stylist/status', [FashionStylistController::class, 'status']);
     Route::post('fashion-stylist/suggest', [FashionStylistController::class, 'suggest']);
     Route::post('fashion-stylist/base-wardrobe', [FashionStylistController::class, 'baseWardrobe']);
+
+    Route::get('style-journey', [StyleJourneyController::class, 'show']);
+    Route::post('style-journey/sync', [StyleJourneyController::class, 'sync']);
+    Route::post('style-journey/modules/{styleModule}/complete', [StyleJourneyController::class, 'complete']);
+    Route::get('style-journey/scoreboard', [StyleJourneyController::class, 'scoreboard']);
+
+    Route::middleware('admin')->prefix('admin')->group(function () {
+        Route::get('style-modules', [AdminStyleModuleController::class, 'index']);
+        Route::post('style-modules', [AdminStyleModuleController::class, 'store']);
+        Route::put('style-modules/{styleModule}', [AdminStyleModuleController::class, 'update']);
+        Route::delete('style-modules/{styleModule}', [AdminStyleModuleController::class, 'destroy']);
+
+        Route::get('style-achievements', [AdminStyleAchievementController::class, 'index']);
+        Route::post('style-achievements', [AdminStyleAchievementController::class, 'store']);
+        Route::put('style-achievements/{styleAchievement}', [AdminStyleAchievementController::class, 'update']);
+        Route::delete('style-achievements/{styleAchievement}', [AdminStyleAchievementController::class, 'destroy']);
+    });
 
     Route::apiResource('timeline-event', TimelineEventController::class);
     Route::get('savings-target', [SavingsTargetController::class, 'index']);

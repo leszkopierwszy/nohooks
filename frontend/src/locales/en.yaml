@@ -941,6 +941,63 @@ style:
   nav:
     outfits: Outfits
     aiStylist: Stylist
+    styles: Styles
+  journey:
+    title: Styles
+    subtitle: Build style awareness for this Prim — complete modules, earn XP, unlock achievements.
+    pickPrim: Select a Prim to start the style journey.
+    checkWardrobe: Check wardrobe
+    syncing: Checking…
+    synced: Wardrobe checked.
+    newlyCompleted: "Completed {count} new module(s)."
+    xp: XP
+    level: Level
+    progress: Journey
+    journeysPassedLabel: Progress
+    journeysPassedTitle: Basic journeys passed
+    journeysPassedMeta: "{percent}% complete"
+    tileSoonLabel: Soon
+    tileSoonTitle: Coming next
+    tileSoonHint: Role for this tile is not defined yet.
+    achievements: Achievements
+    achievementsTileTitle: Badges & unlocks
+    achievementsTileHint: Open badge collection
+    achievementsTitle: Achievements
+    achievementsSubtitle: Badges earned on your style journey.
+    achievementsCount: "{unlocked} of {total} unlocked"
+    achievementsEmpty: No achievements yet.
+    unlocked: Unlocked
+    locked: Locked
+    modules: Modules
+    modulesHint: Auto modules complete when your wardrobe matches. Manual ones need a checklist.
+    done: Done
+    inProgress: In progress
+    modeAuto: Auto
+    modeManual: Manual
+    checklist: Checklist
+    stillNeeded: Still needed
+    backToStyles: Back to Styles
+    moduleNotFound: Module not found for this Prim.
+    rewardMeta: "Reward: +{xp} XP"
+    completedAt: "Completed {date}"
+    missingCount: "{count} missing"
+    submitChecks: Submit checklist
+    moduleCompleted: Module completed — XP awarded.
+    checksSaved: Progress saved — finish all checks to complete.
+    noModules: No modules for this Prim yet. An admin can add them in Backend.
+    loadError: Could not load style journey.
+    needSlot: "Need {need}× {slot} (have {have})"
+    needCategory: "Need {need}× {category} (have {have})"
+  scoreboard:
+    title: Scoreboard
+    subtitle: XP ranking across all accounts.
+    rank: Rank
+    user: User
+    empty: No scores yet — complete a module to appear here.
+  stylesPage:
+    title: Styles
+    subtitle: See how to combine pieces you already own — formulas and complete looks for this Prim.
+    pickPrim: Select a Prim to see pairing styles.
   subtitle: Plan looks for each Prim by occasion — school, work, home, and more.
   generateSet: Generate set
   generatingSet: Cutting out items…
@@ -968,6 +1025,39 @@ style:
   regenerateSilhouette: Regenerate silhouette
   photoUploaded: Photo saved. You can generate a silhouette now.
   silhouetteGenerated: Silhouette ready.
+
+admin:
+  styleModules:
+    title: Style modules
+    subtitle: Define journey modules and achievements visible to all users (filtered by Prim gender).
+    linkTitle: Style modules
+    linkHint: Manage style journey modules, XP rewards, and achievements.
+    tabModules: Modules
+    tabAchievements: Achievements
+    newModule: New module
+    editModule: Edit module
+    newAchievement: New achievement
+    editAchievement: Edit achievement
+    fieldTitle: Title
+    fieldDescription: Description
+    fieldXp: XP reward
+    fieldXpBonus: XP bonus
+    fieldGender: Gender
+    genderAll: All Prims
+    fieldMode: Completion mode
+    fieldSort: Sort order
+    fieldActive: Active
+    fieldRequirements: Requirements (JSON)
+    requirementsHint: 'Auto: {"all":[{"slot":"footwear","min":1}]}. Manual: {"checks":[{"id":"a","label":"…"}]}.'
+    fieldRule: Rule (JSON)
+    ruleHint: '{"type":"modules_completed","count":1} or {"type":"xp_total","min":200}'
+    save: Save
+    saved: Saved.
+    cancel: Cancel
+    edit: Edit
+    delete: Delete
+    confirmDelete: Delete this entry?
+    invalidJson: Invalid JSON.
 
 common:
   loading: Loading…

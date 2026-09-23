@@ -28,6 +28,7 @@ class DatabaseSeeder extends Seeder
             CategorySeeder::class,
             ExpenseCategorySeeder::class,
             EntitySeeder::class,
+            StyleJourneySeeder::class,
         ]);
     }
 }

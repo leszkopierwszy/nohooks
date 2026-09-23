@@ -61,6 +61,14 @@ export function buildStaticPageEntries() {
       'ai stylist fashion outfits',
       { route: { name: 'StyleAiStylist' } }
     ),
+    entry(
+      'page:styles',
+      APP_SEARCH_KIND.PAGE,
+      t('style.nav.styles'),
+      t('nav.style'),
+      'styles pairing formulas combine outfits wardrobe',
+      { route: { name: 'StyleStyles' } }
+    ),
     entry('page:souls-prims', APP_SEARCH_KIND.PAGE, t('nav.prims'), t('nav.souls'), 'souls prims', {
       route: { name: 'SoulsPrims' },
     }),
