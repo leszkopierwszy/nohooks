@@ -157,6 +157,8 @@
                 <option value="">{{ t('souls.prims.genderUnknown') }}</option>
                 <option value="female">{{ t('souls.prims.genderFemale') }}</option>
                 <option value="male">{{ t('souls.prims.genderMale') }}</option>
+                <option value="nonbinary">{{ t('souls.prims.genderNonbinary') }}</option>
+                <option value="gay">{{ t('souls.prims.genderGay') }}</option>
               </select>
             </div>
             <div>
@@ -645,11 +647,6 @@ const highlights = computed(() => {
     lines.push(`${defaultCount} z domyślnym dopasowaniem do ${persona.value.name}`)
   }
 
-  const sharedCount = items.filter((item) => item.fits_all_personas).length
-  if (sharedCount) {
-    lines.push(`${sharedCount} wspólnych dla wszystkich person`)
-  }
-
   const collections = new Set(
     items.map((item) => item.collection_group?.name).filter(Boolean)
   )
@@ -692,12 +689,8 @@ function itemImageSrc(item) {
 function itemPersonaHint(item) {
   if (!persona.value || !item) return null
 
-  if (item.fits_all_personas && isDefaultPersonaFit(item, persona.value.id)) {
+  if (isDefaultPersonaFit(item, persona.value.id)) {
     return 'Domyślne dopasowanie'
-  }
-
-  if (item.fits_all_personas) {
-    return 'Pasuje do wszystkich'
   }
 
   return null
@@ -719,6 +712,8 @@ function itemLink(item) {
 function genderLabel(gender) {
   if (gender === 'female') return t('souls.prims.genderFemale')
   if (gender === 'male') return t('souls.prims.genderMale')
+  if (gender === 'nonbinary') return t('souls.prims.genderNonbinary')
+  if (gender === 'gay') return t('souls.prims.genderGay')
   return gender
 }
 

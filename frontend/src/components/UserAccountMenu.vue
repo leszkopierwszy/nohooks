@@ -115,6 +115,7 @@ import {
   Cog6ToothIcon,
 } from '@heroicons/vue/24/outline'
 import { useI18n } from '../composables/useI18n'
+import { resolveStorageUrl } from '../api/media'
 import { useAuthStore } from '../stores/auth'
 import { useDisplayStore } from '../stores/display'
 import { useUserStore } from '../stores/user'
@@ -149,7 +150,8 @@ const displayName = computed(
 )
 const email = computed(() => userStore.user?.email ?? '')
 const avatarSrc = computed(() => {
-  if (userStore.user?.avatar) return userStore.user.avatar
+  const raw = userStore.user?.avatar?.trim()
+  if (raw) return resolveStorageUrl(raw) ?? raw
   if (!userStore.user) {
     return userAvatarDataUrl({ displayName: t('userMenu.displayNameFallback') })
   }

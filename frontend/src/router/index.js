@@ -30,8 +30,12 @@ import GroupOverview from '../components/GroupOverview.vue'
 import Wardrobe from '../components/wardrobe.vue'
 import AccountSettings from '../views/AccountSettings.vue'
 import AccountModelAssistant from '../views/AccountModelAssistant.vue'
+import AdminStyleModules from '../views/AdminStyleModules.vue'
 import Style from '../views/Style.vue'
-import StyleBrands from '../views/StyleBrands.vue'
+import StyleAiStylist from '../views/StyleAiStylist.vue'
+import StyleStyles from '../views/StyleStyles.vue'
+import StyleModuleDetail from '../views/StyleModuleDetail.vue'
+import StyleAchievements from '../views/StyleAchievements.vue'
 import StyleOutfitEditor from '../views/StyleOutfitEditor.vue'
 import Login from '../views/Login.vue'
 import { useAuthStore } from '../stores/auth'
@@ -172,12 +176,40 @@ const routes = [
             },
         },
         {
-            path: '/style/brands',
-            name: 'StyleBrands',
-            component: StyleBrands,
+            path: '/style/ai-stylist',
+            name: 'StyleAiStylist',
+            component: StyleAiStylist,
             meta: {
                 layout: 'default'
             },
+        },
+        {
+            path: '/style/styles',
+            name: 'StyleStyles',
+            component: StyleStyles,
+            meta: {
+                layout: 'default'
+            },
+        },
+        {
+            path: '/style/styles/modules/:id',
+            name: 'StyleModuleDetail',
+            component: StyleModuleDetail,
+            meta: {
+                layout: 'default'
+            },
+        },
+        {
+            path: '/style/styles/achievements',
+            name: 'StyleAchievements',
+            component: StyleAchievements,
+            meta: {
+                layout: 'default'
+            },
+        },
+        {
+            path: '/style/brands',
+            redirect: { path: '/account', query: { tab: 'brands' } },
         },
         {
             path: '/style/outfits/new',
@@ -256,6 +288,12 @@ const routes = [
             path: '/account/backend',
             name: 'AccountBackend',
             component: AccountModelAssistant,
+            meta: { layout: 'default', requiresAdmin: true },
+        },
+        {
+            path: '/account/backend/style-modules',
+            name: 'AdminStyleModules',
+            component: AdminStyleModules,
             meta: { layout: 'default', requiresAdmin: true },
         },
         { path: '/account/model-assistant', redirect: '/account/backend' },

@@ -11,7 +11,7 @@
         :key="link.id"
         type="button"
         class="group rounded-xl border border-stone-200 bg-white p-5 text-left shadow-sm ring-1 ring-gray-900/5 transition hover:border-stone-300 hover:shadow-md"
-        @click="openLink(link.url)"
+        @click="openLink(link)"
       >
         <p class="text-sm font-semibold text-gray-900 group-hover:text-gray-950">{{ link.label }}</p>
         <p class="mt-1.5 text-xs leading-relaxed text-gray-500">{{ link.description }}</p>
@@ -27,6 +27,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   LANGFUSE_UI_URL,
   MODEL_ASSISTANT_ADD_MODEL,
@@ -38,8 +39,17 @@ import {
 import { useI18n } from '../composables/useI18n'
 
 const { t } = useI18n()
+const router = useRouter()
 
 const quickLinks = computed(() => [
+  {
+    id: 'style-modules',
+    label: t('admin.styleModules.linkTitle'),
+    description: t('admin.styleModules.linkHint'),
+    url: null,
+    routeName: 'AdminStyleModules',
+    urlDisplay: '/account/backend/style-modules',
+  },
   {
     id: 'fashion-ai',
     label: t('account.backend.links.fashionAi'),
@@ -84,7 +94,13 @@ const quickLinks = computed(() => [
   },
 ])
 
-function openLink(url) {
-  window.open(url, '_blank', 'noopener,noreferrer')
+function openLink(link) {
+  if (link?.routeName) {
+    router.push({ name: link.routeName })
+    return
+  }
+  if (link?.url) {
+    window.open(link.url, '_blank', 'noopener,noreferrer')
+  }
 }
 </script>

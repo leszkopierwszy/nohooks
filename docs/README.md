@@ -7,6 +7,8 @@
 | [flows/add-item.md](./flows/add-item.md) | **Flow dodawania itemu** (UI → API → storage) |
 | [components/](./components/) | Opisy komponentów Vue |
 | [persona-vision-comfyui-flow.md](./persona-vision-comfyui-flow.md) | Przepływ Prima → ComfyUI → avatar doll |
+| [stylist-outfit-capsule-flow.md](./stylist-outfit-capsule-flow.md) | Stylist: looki, baza szafy, kapsuły |
+| [gender-prim-and-styles.md](./gender-prim-and-styles.md) | Płeć Primy / modułów stylu — wartości, macierz widoczności, mapa kodu |
 
 ## Obsidian
 

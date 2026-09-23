@@ -22,7 +22,8 @@ class OutfitController extends Controller
                 'integer',
                 Rule::exists('entities', 'id')->where(fn ($q) => $q->where('user_id', auth()->id())),
             ],
-            'wear_date' => "{$required}|date",
+            // Optional: set for calendar outfits; omit/null for reusable looks.
+            'wear_date' => 'nullable|date',
             'label' => 'nullable|string|max:255',
             'occasion' => ['nullable', 'string', Rule::in(Outfit::OCCASIONS)],
             'notes' => 'nullable|string|max:5000',
@@ -46,6 +47,10 @@ class OutfitController extends Controller
 
         if (array_key_exists('occasion', $data)) {
             $data['occasion'] = Outfit::normalizeOccasion($data['occasion'] ?? null);
+        }
+
+        if (array_key_exists('wear_date', $data) && ($data['wear_date'] === '' || $data['wear_date'] === null)) {
+            $data['wear_date'] = null;
         }
 
         if (empty($data['source'])) {
@@ -115,6 +120,8 @@ class OutfitController extends Controller
             'to' => 'nullable|date',
             'entity_id' => 'nullable|integer',
             'occasion' => ['nullable', 'string', Rule::in(Outfit::OCCASIONS)],
+            'looks_only' => 'nullable|boolean',
+            'calendar_only' => 'nullable|boolean',
         ]);
 
         $query = Outfit::query()
@@ -122,6 +129,7 @@ class OutfitController extends Controller
                 'entity:id,name,type,avatar_doll_url,avatar_source_url',
                 'items' => fn ($q) => $q->with(['images', 'collectionGroup']),
             ])
+            ->orderByRaw('wear_date IS NULL')
             ->orderBy('wear_date')
             ->orderBy('id');
 
@@ -133,12 +141,20 @@ class OutfitController extends Controller
             $query->where('occasion', $request->input('occasion'));
         }
 
+        if ($request->boolean('looks_only')) {
+            $query->whereNull('wear_date');
+        } elseif ($request->boolean('calendar_only')) {
+            $query->whereNotNull('wear_date');
+        }
+
         if ($request->filled('from')) {
-            $query->whereDate('wear_date', '>=', $request->input('from'));
+            $query->whereNotNull('wear_date')
+                ->whereDate('wear_date', '>=', $request->input('from'));
         }
 
         if ($request->filled('to')) {
-            $query->whereDate('wear_date', '<=', $request->input('to'));
+            $query->whereNotNull('wear_date')
+                ->whereDate('wear_date', '<=', $request->input('to'));
         }
 
         return $query->get();
@@ -154,16 +170,19 @@ class OutfitController extends Controller
         $created = false;
 
         $outfit = DB::transaction(function () use ($data, $itemIds, &$created) {
-            $existing = Outfit::query()
-                ->where('entity_id', $data['entity_id'])
-                ->whereDate('wear_date', $data['wear_date'])
-                ->first();
+            // Calendar upsert only when a wear_date is present.
+            if (! empty($data['wear_date'])) {
+                $existing = Outfit::query()
+                    ->where('entity_id', $data['entity_id'])
+                    ->whereDate('wear_date', $data['wear_date'])
+                    ->first();
 
-            if ($existing) {
-                $existing->update($data);
-                $this->syncItems($existing, $itemIds);
+                if ($existing) {
+                    $existing->update($data);
+                    $this->syncItems($existing, $itemIds);
 
-                return $existing;
+                    return $existing;
+                }
             }
 
             $created = true;
@@ -190,25 +209,23 @@ class OutfitController extends Controller
 
         DB::transaction(function () use ($outfit, $data, $itemIds) {
             if ($data !== []) {
-                $conflict = null;
                 $entityId = $data['entity_id'] ?? $outfit->entity_id;
-                $wearDate = $data['wear_date'] ?? $outfit->wear_date?->format('Y-m-d');
+                $wearDate = array_key_exists('wear_date', $data)
+                    ? $data['wear_date']
+                    : $outfit->wear_date?->format('Y-m-d');
 
-                if (
-                    (array_key_exists('entity_id', $data) || array_key_exists('wear_date', $data))
-                    && ($entityId != $outfit->entity_id || $wearDate !== $outfit->wear_date?->format('Y-m-d'))
-                ) {
+                if ($wearDate) {
                     $conflict = Outfit::query()
                         ->where('entity_id', $entityId)
                         ->whereDate('wear_date', $wearDate)
                         ->where('id', '!=', $outfit->id)
                         ->exists();
-                }
 
-                if ($conflict) {
-                    throw ValidationException::withMessages([
-                        'wear_date' => ['An outfit for this Prim on this date already exists.'],
-                    ]);
+                    if ($conflict) {
+                        throw ValidationException::withMessages([
+                            'wear_date' => ['An outfit for this Prim on this date already exists.'],
+                        ]);
+                    }
                 }
 
                 $outfit->update($data);

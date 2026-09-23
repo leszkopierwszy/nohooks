@@ -1,11 +1,13 @@
 import { defineStore } from 'pinia'
 import {
+  deleteAvatarRequest,
   loginRequest,
   logoutRequest,
   meRequest,
   registerRequest,
   updatePasswordRequest,
   updateProfileRequest,
+  uploadAvatarRequest,
 } from '../api/auth'
 import { rehydrateUserLocalStores } from '../utils/rehydrateUserLocalStores'
 import {
@@ -145,6 +147,18 @@ export const useAuthStore = defineStore('auth', {
 
     async updateProfile(payload) {
       const data = await updateProfileRequest(payload)
+      if (data?.user) useUserStore().login({ ...data.user })
+      return data
+    },
+
+    async uploadAvatar(file) {
+      const data = await uploadAvatarRequest(file)
+      if (data?.user) useUserStore().login({ ...data.user })
+      return data
+    },
+
+    async deleteAvatar() {
+      const data = await deleteAvatarRequest()
       if (data?.user) useUserStore().login({ ...data.user })
       return data
     },

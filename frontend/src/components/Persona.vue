@@ -43,6 +43,8 @@
             <option value="">{{ t('souls.prims.genderUnknown') }}</option>
             <option value="female">{{ t('souls.prims.genderFemale') }}</option>
             <option value="male">{{ t('souls.prims.genderMale') }}</option>
+            <option value="nonbinary">{{ t('souls.prims.genderNonbinary') }}</option>
+            <option value="gay">{{ t('souls.prims.genderGay') }}</option>
           </select>
         </div>
 

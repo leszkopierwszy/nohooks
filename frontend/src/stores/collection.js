@@ -31,7 +31,7 @@ function mapApiItem(item) {
     notes: item.notes ?? null,
     rarity: item.rarity ?? 'common',
     like_rating: item.like_rating ?? null,
-    fits_all_personas: Boolean(item.fits_all_personas ?? true),
+    fits_all_personas: Boolean(item.fits_all_personas),
     fits_persona_ids: item.fits_persona_ids ?? null,
     default_persona_id: item.default_persona_id ?? null,
     default_persona: item.default_persona ?? null,
@@ -252,8 +252,10 @@ export const useCollectionStore = defineStore('collection', {
       const payload = {
         name: item.name,
         category_id: collectionId,
-        fits_all_personas: item.fits_all_personas ?? true,
-        fits_persona_ids: item.fits_all_personas ? null : item.fits_persona_ids ?? null,
+        fits_all_personas: false,
+        fits_persona_ids: item.fits_persona_ids ?? (
+          item.default_persona_id ? [Number(item.default_persona_id)] : null
+        ),
         default_persona_id: item.default_persona_id ?? null,
       }
 

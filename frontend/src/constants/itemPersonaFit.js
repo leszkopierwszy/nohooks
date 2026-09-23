@@ -4,6 +4,7 @@ export function itemFitsPersona(item, personaId) {
 
   const id = Number(personaId)
 
+  // Legacy: starsze itemy mogły mieć fits_all_personas=true
   if (item.fits_all_personas) return true
 
   const ids = (item.fits_persona_ids ?? []).map(Number)
@@ -28,15 +29,16 @@ export function personaFitLabel(item, personas = []) {
     personas.find((p) => Number(p.id) === Number(item.default_persona_id))?.name ??
     null
 
-  if (item.fits_all_personas) {
-    return defaultName
-      ? `Pasuje do wszystkich · domyślnie ${defaultName}`
-      : 'Pasuje do wszystkich person'
-  }
-
   if (defaultName) {
-    return `Domyślnie: ${defaultName}`
+    return defaultName
   }
 
-  return null
+  const ids = normalizeFitsPersonaIds(item.fits_persona_ids ?? [])
+  if (!ids.length) return null
+
+  const names = ids
+    .map((id) => personas.find((p) => Number(p.id) === id)?.name)
+    .filter(Boolean)
+
+  return names.length ? names.join(', ') : null
 }

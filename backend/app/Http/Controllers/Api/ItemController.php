@@ -412,23 +412,21 @@ class ItemController extends Controller
 
     private function normalizePersonaFit(array $data): array
     {
-        $fitsAll = (bool) ($data['fits_all_personas'] ?? true);
+        $data['fits_all_personas'] = false;
 
-        if ($fitsAll) {
-            $data['fits_all_personas'] = true;
-            $data['fits_persona_ids'] = null;
-        } else {
-            $data['fits_all_personas'] = false;
-            $ids = array_values(array_unique(array_map('intval', $data['fits_persona_ids'] ?? [])));
-            $data['fits_persona_ids'] = $ids ?: null;
+        $ids = array_values(array_unique(array_map('intval', $data['fits_persona_ids'] ?? [])));
 
-            if (! empty($data['default_persona_id'])) {
-                $defaultId = (int) $data['default_persona_id'];
-                if (! $ids || ! in_array($defaultId, $ids, true)) {
-                    $data['default_persona_id'] = null;
-                }
+        if (! empty($data['default_persona_id'])) {
+            $defaultId = (int) $data['default_persona_id'];
+            if (! in_array($defaultId, $ids, true)) {
+                $ids[] = $defaultId;
             }
+            $data['default_persona_id'] = $defaultId;
+        } else {
+            $data['default_persona_id'] = $ids[0] ?? null;
         }
+
+        $data['fits_persona_ids'] = $ids ?: null;
 
         if (empty($data['default_persona_id'])) {
             $data['default_persona_id'] = null;
