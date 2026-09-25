@@ -63,6 +63,8 @@ export function analyzeCutoutProfile(imageData, hints = {}) {
 
   let brightFg = 0
   let totalFgish = 0
+  let edgeVar = 0
+  let edgeN = 0
   const cx0 = Math.floor(width * 0.15)
   const cx1 = Math.ceil(width * 0.85)
   const cy0 = Math.floor(height * 0.12)
@@ -85,19 +87,59 @@ export function analyzeCutoutProfile(imageData, hints = {}) {
     }
   }
 
+  // Wariancja luminancji na obrzeżu — miękkie szare studio
+  const strip = Math.max(2, Math.min(12, Math.floor(Math.min(width, height) * 0.05)))
+  for (let x = 0; x < width; x += 4) {
+    for (const y of [0, height - 1]) {
+      for (let dy = 0; dy < strip; dy++) {
+        const yy = y === 0 ? dy : height - 1 - dy
+        const i = (yy * width + x) * 4
+        if (data[i + 3] < 128) continue
+        const lum = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]
+        edgeVar += (lum - avgLum) ** 2
+        edgeN += 1
+      }
+    }
+  }
+  const edgeStd = edgeN ? Math.sqrt(edgeVar / edgeN) : 0
+
   const centerArea = (cx1 - cx0) * (cy1 - cy0)
   const brightRatio = brightFg / Math.max(1, centerArea)
 
+  const studioGray =
+    Boolean(hints.forceStudioGray) ||
+    (avgLum >= 145 &&
+      avgLum <= 238 &&
+      avgSat < 32 &&
+      edgeStd < 28 &&
+      !isLightColorName(hints.colorHint))
+
   const lightProduct =
-    Boolean(hints.forceLight) ||
-    isLightColorName(hints.colorHint) ||
-    (avgLum > 205 && avgSat < 40 && brightRatio > 0.06) ||
-    (brightRatio > 0.18 && avgLum > 190) ||
-    (avgLum > 235 && avgSat < 25)
+    !studioGray &&
+    (Boolean(hints.forceLight) ||
+      isLightColorName(hints.colorHint) ||
+      (avgLum > 200 && avgSat < 40 && brightRatio > 0.05) ||
+      (brightRatio > 0.15 && avgLum > 185) ||
+      (avgLum > 230 && avgSat < 28))
+
+  if (studioGray) {
+    return {
+      lightProduct: false,
+      studioGray: true,
+      mode: 'studio-gray',
+      threshold: Math.min(52, Math.max(34, Math.round(28 + edgeStd * 0.9))),
+      feather: 1,
+      sharpen: false,
+      fillHoles: true,
+      // recoverBright ciągnie z powrotem szare tło — nie używaj na studio
+      recoverBright: false,
+    }
+  }
 
   if (lightProduct) {
     return {
       lightProduct: true,
+      studioGray: false,
       mode: 'light',
       threshold: 26,
       feather: 0,
@@ -109,6 +151,7 @@ export function analyzeCutoutProfile(imageData, hints = {}) {
 
   return {
     lightProduct: false,
+    studioGray: false,
     threshold: 26,
     feather: 1,
     sharpen: false,
@@ -119,7 +162,7 @@ export function analyzeCutoutProfile(imageData, hints = {}) {
 
 /**
  * @param {string|Blob|File} imageSource
- * @param {{ colorHint?: string|null, forceLight?: boolean }} [hints]
+ * @param {{ colorHint?: string|null, forceLight?: boolean, forceStudioGray?: boolean }} [hints]
  */
 export async function resolveCutoutOptions(imageSource, hints = {}) {
   const img = await new Promise((resolve, reject) => {

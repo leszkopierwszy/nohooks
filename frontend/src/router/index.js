@@ -30,11 +30,36 @@ import GroupOverview from '../components/GroupOverview.vue'
 import Wardrobe from '../components/wardrobe.vue'
 import AccountSettings from '../views/AccountSettings.vue'
 import AccountModelAssistant from '../views/AccountModelAssistant.vue'
+import AdminStyleModules from '../views/AdminStyleModules.vue'
+import Style from '../views/Style.vue'
+import StyleAiStylist from '../views/StyleAiStylist.vue'
+import StyleStyles from '../views/StyleStyles.vue'
+import StyleModuleDetail from '../views/StyleModuleDetail.vue'
+import StyleAchievements from '../views/StyleAchievements.vue'
+import StyleOutfitEditor from '../views/StyleOutfitEditor.vue'
+import Login from '../views/Login.vue'
+import Landing from '../views/Landing.vue'
+import { useAuthStore } from '../stores/auth'
+import { useUserStore } from '../stores/user'
+import { useSiteConfigStore } from '../stores/siteConfig'
 
 const routes = [
   {
     path: '/',
+    name: 'Landing',
+    component: Landing,
+    meta: { public: true, guestOnly: true },
+  },
+  {
+    path: '/login',
+    name: 'Login',
+    component: Login,
+    meta: { public: true, guestOnly: true },
+  },
+  {
+    path: '/_app',
     component: MainLayout,
+    meta: { requiresAuth: true },
     children: [
         {
             path: '/home',
@@ -147,6 +172,66 @@ const routes = [
             },        
         },
         {
+            path: '/style',
+            name: 'Style',
+            component: Style,
+            meta: {
+                layout: 'default'
+            },
+        },
+        {
+            path: '/style/ai-stylist',
+            name: 'StyleAiStylist',
+            component: StyleAiStylist,
+            meta: {
+                layout: 'default'
+            },
+        },
+        {
+            path: '/style/styles',
+            name: 'StyleStyles',
+            component: StyleStyles,
+            meta: {
+                layout: 'default'
+            },
+        },
+        {
+            path: '/style/styles/modules/:id',
+            name: 'StyleModuleDetail',
+            component: StyleModuleDetail,
+            meta: {
+                layout: 'default'
+            },
+        },
+        {
+            path: '/style/styles/achievements',
+            name: 'StyleAchievements',
+            component: StyleAchievements,
+            meta: {
+                layout: 'default'
+            },
+        },
+        {
+            path: '/style/brands',
+            redirect: { path: '/account', query: { tab: 'brands' } },
+        },
+        {
+            path: '/style/outfits/new',
+            name: 'StyleOutfitCreate',
+            component: StyleOutfitEditor,
+            meta: {
+                layout: 'default'
+            },
+        },
+        {
+            path: '/style/outfits/:id/edit',
+            name: 'StyleOutfitEdit',
+            component: StyleOutfitEditor,
+            meta: {
+                layout: 'default'
+            },
+        },
+        {
             path: '/finance',
             children: [
                 {
@@ -207,7 +292,13 @@ const routes = [
             path: '/account/backend',
             name: 'AccountBackend',
             component: AccountModelAssistant,
-            meta: { layout: 'default' },
+            meta: { layout: 'default', requiresAdmin: true },
+        },
+        {
+            path: '/account/backend/style-modules',
+            name: 'AdminStyleModules',
+            component: AdminStyleModules,
+            meta: { layout: 'default', requiresAdmin: true },
         },
         { path: '/account/model-assistant', redirect: '/account/backend' },
         {
@@ -241,6 +332,41 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
+})
+
+router.beforeEach(async (to) => {
+  const authStore = useAuthStore()
+  const siteConfig = useSiteConfigStore()
+  if (!authStore.bootstrapped) {
+    await authStore.bootstrap()
+  }
+  if (!siteConfig.loaded && !siteConfig.loading) {
+    await siteConfig.load()
+  }
+
+  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth)
+  const guestOnly = to.matched.some((record) => record.meta.guestOnly)
+  const requiresAdmin = to.matched.some((record) => record.meta.requiresAdmin)
+
+  if (requiresAuth && !authStore.isAuthenticated) {
+    return {
+      name: 'Login',
+      query: { redirect: to.fullPath },
+    }
+  }
+
+  if (guestOnly && authStore.isAuthenticated) {
+    return { path: '/home' }
+  }
+
+  if (requiresAdmin) {
+    const userStore = useUserStore()
+    if (!userStore.isAdmin) {
+      return { path: '/account' }
+    }
+  }
+
+  return true
 })
 
 export default router

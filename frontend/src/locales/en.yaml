@@ -37,10 +37,18 @@ nav:
   souls: Souls
   prims: Prims
   collection: Collection
+  style: Outfits
   finance: Finance
   growth: Growth
   calendar: Calendar
   items: Items
+
+collectionPage:
+  subtitle: Browse your wardrobe groups — clothes, shoes, and more.
+  groupsTitle: Groups
+  browseAll: Browse all items
+  newGroup: New collection
+  newGroupHint: Create a group for related items.
 
 finance:
   pageTitle: Finance
@@ -55,6 +63,27 @@ finance:
   mockAccountsCount: "{n} demo accounts"
   plannedChange: Active subscriptions
   m2mChange: Salary − active subscriptions (est. / mo.)
+  salary:
+    jobsTitle: Employment history
+    jobsSubtitle: Employers and roles for this account only — not shared with other users.
+    addEmployer: Add employer
+    newEmployer: New employer
+    editEmployer: Edit employer
+    employerName: Employer
+    addRole: Add role
+    newRole: New role
+    editRole: Edit role
+    roleTitle: Title
+    roleLabel: Role
+    years: Years
+    msGross: MS Gross
+    actions: Actions
+    edit: Edit
+    delete: Delete
+    save: Save
+    cancel: Cancel
+    empty: No employment history yet — add an employer to start.
+    noRoles: No roles yet for this employer.
   nav:
     label: Finance sections
     overview: Overview
@@ -258,19 +287,81 @@ account:
   section: Account
   title: Account settings
   subtitle: Signed-in user profile — separate from Souls (Prims).
-  avatarUrl: Avatar URL
+  avatar:
+    label: Avatar
+    change: Change photo
+    upload: Upload photo
+    remove: Remove
+    cropTitle: Adjust avatar
+    cropHint: Drag to reposition. Use zoom so the face fills the circle.
+    zoom: Zoom
+    cancel: Cancel
+    save: Use photo
+    saving: Saving…
+    saved: Avatar updated.
+    removed: Avatar removed.
+    cropError: Could not crop the image.
+    uploadError: Could not upload the avatar.
+    removeError: Could not remove the avatar.
   displayName: Display name
   username: Username
   email: Email
   bio: Bio
+  netSalary: Net salary (PLN)
+  netSalaryHint: Used for Salary and M2M Expected Savings on Finance.
   saveProfile: Save profile
   saved: Saved.
+  saveError: Could not save profile.
+  tabs:
+    profile: Profile
+    security: Security
+    brands: Brands & stores
+    notifications: Notifications
+    payments: Payments
+  brands:
+    title: Brands & stores
+    subtitle: Shops and brands you like — the AI stylist prefers these when suggesting what to buy. Add a store by pasting its URL.
+    empty: No stores yet — paste a shop URL below (e.g. Zara, H&M).
+    url: Store URL
+    name: Name
+    brand: Brand
+    brandPlaceholder: optional
+    add: Add store
+    remove: Remove
+    saved: Saved.
+    saveError: Could not save stores.
+  emailSection:
+    title: Email
+    subtitle: Sign-in address for this account.
+    save: Save email
+  placeholders:
+    notifications: Notification preferences will appear here.
+    payments: Payment methods and billing will appear here.
+  password:
+    title: Password
+    subtitle: Change the password used to sign in to the panel.
+    current: Current password
+    new: New password
+    confirm: Confirm new password
+    save: Update password
+    saved: Password updated.
+    error: Could not update password.
+  backup:
+    title: Backup
+    subtitle: Download a copy of your workspace data, or restore from a backup file.
+    download: Download backup
+    restore: Restore from file
+    downloaded: Backup downloaded.
+    restored: Backup restored. Reloading…
+    exportError: Could not create backup.
+    restoreError: Could not restore backup.
+    invalidFile: This file is not a valid workspace backup.
   nav:
     settings: User settings
     backend: Backend
   backend:
     title: Backend
-    subtitle: ComfyUI model catalog, Langfuse (import traces), and service configuration.
+    subtitle: Links to Backend Settings (:8190), ComfyUI models, Langfuse, and Fashion AI connector.
     openLink: Open in new tab
     links:
       home: Backend Settings
@@ -283,6 +374,106 @@ account:
       langfuseHint: Observability UI — product-parser and Ollama traces.
       langfuseGuide: Langfuse guide
       langfuseGuideHint: Overview and service status in Backend Settings.
+      fashionAi: Fashion AI connector
+      fashionAiHint: OpenAI API key for the AI stylist — opens Backend Settings (:8190).
+
+fashionStylist:
+  open: Stylist
+  title: Stylist
+  subtitle: Outfits from your wardrobe first — and structured wardrobe needs only when something is missing.
+  pageSubtitle: Build outfits and capsules from the wardrobe you already own.
+  notConfigured: Stylist AI is not configured yet. Manual builder, base wardrobe, and capsules still work. Add an OpenAI API key in Account → Backend for AI outfits.
+  modeOutfit: Build an outfit
+  modeOutfitHint: Assemble looks manually or with AI — owned items only.
+  modeBase: Base wardrobe
+  modeBaseHint: See how many complete outfits your closet can make.
+  modeCapsule: Build a capsule
+  modeCapsuleHint: A focused subset of pieces that unlock many outfits.
+  manual: Manual
+  aiMode: AI Stylist
+  createOutfit: Create outfit
+  saveLook: Save look
+  lookSaved: Look saved.
+  capsuleSaved: Capsule saved.
+  saveError: Something went wrong. Try again.
+  outfitComplete: Looks complete (core slots covered).
+  outfitIncomplete: Add top + bottom + shoes, or a dress + shoes.
+  anchorItem: Optional anchor item
+  anchorItemHint: Build the outfit around one piece you already own.
+  editManually: Edit manually
+  regenerate: Regenerate
+  analyzing: Analyzing…
+  analyzeWardrobe: Analyze wardrobe
+  yourWardrobe: Your wardrobe
+  itemCount: "{count} items"
+  completeOutfits: "{count} complete outfits"
+  truncatedNote: capped list — not a combinatorial explosion
+  browseOutfits: Generated outfits
+  showAllOutfits: Show all outfits
+  createAnother: Create another outfit
+  capsulePresets: Capsule type
+  capsuleName: Capsule name
+  targetOutfits: Desired outfit count
+  season: Season
+  style: Style
+  analyzeCapsule: Analyze wardrobe
+  capsuleComplete: Complete
+  capsuleAlmost: Almost there
+  roleCoverage: "{covered} / {required} required wardrobe roles covered"
+  currentPotential: "Current potential: {count} outfits"
+  missingRoles: Missing
+  unlockOutfits: "+{count} outfits if you add this role"
+  exampleOutfits: Example outfits from this capsule
+  saveCapsule: Save capsule
+  presets:
+    work: Work
+    travel: Travel
+    summer: Summer
+    winter: Winter
+    smart_casual: Smart casual
+    evening: Evening
+    custom: Custom
+  notes: Preferences
+  notesPlaceholder: e.g. warmer layers, no heels, evening wedding…
+  suggest: Analyze wardrobe
+  thinking: Thinking…
+  analysisTitle: Your wardrobe
+  possibleSets: About {count} coherent outfits from what you own
+  results: Outfit ideas from your closet
+  rolePrimary: Main pieces
+  roleSupporting: Supporting
+  roleAccessory: Accessories
+  formality: Formality {value}/10
+  needsTitle: Wardrobe needs
+  needsSubtitle: Product specifications for a future search — not claims that a store currently has these items.
+  needsNoStoresHint: Tip — add preferred stores under Account settings → Brands & stores so search hints can prioritize shops you like.
+  searchHint: Search hint on {store}
+  openStore: Open store
+  priority:
+    low: Low
+    medium: Medium
+    high: High
+  untitled: Suggested look
+  untitledNeed: Wardrobe need
+  save: Save outfit
+  saveNoItems: This suggestion has no valid wardrobe items to save.
+
+auth:
+  loginTitle: Sign in
+  loginSubtitle: Sign in to open the panel.
+  registerTitle: Create account
+  registerSubtitle: Register a new panel account.
+  password: Password
+  passwordConfirm: Confirm password
+  loginSubmit: Sign in
+  registerSubmit: Create account
+  switchToRegister: Need an account? Register
+  switchToLogin: Already have an account? Sign in
+  errorGeneric: Something went wrong. Try again.
+  verifyEmailSent: Check your email to verify your account, then sign in.
+  verifiedSuccess: Email verified. You can sign in now.
+  resendVerification: Resend verification email
+  resendVerificationSent: If an unverified account exists, a new link was sent.
 
 display:
   theme:
@@ -296,9 +487,9 @@ display:
     hint: UI labels and main page copy. Default is English.
   zoom:
     title: Content zoom
-    hint: Applies to the right column only (sidebar unchanged). 100% is the default density.
+    hint: 80%–120%. Applies to the right column only (sidebar unchanged). 100% is the default density.
   dialog:
-    title: Display
+    title: Display settings
     subtitle: Theme, language, and content zoom.
     accountLink: Account settings
     done: Done
@@ -339,6 +530,39 @@ souls:
     loading: Loading Prims…
     viewProfile: View profile →
     active: Active
+    new: New Prim
+    add: Add Prim
+    adding: Saving…
+    cancel: Cancel
+    empty: No Prims yet — use the button above to add the first one.
+    addError: Could not add the Prim.
+    name: Name
+    namePlaceholder: e.g. Nathalie
+    description: Description
+    descriptionPlaceholder: Style notes, sizing context…
+    gender: Gender
+    genderUnknown: Not set
+    genderFemale: Female
+    genderMale: Male
+    genderNonbinary: Nonbinary
+    genderGay: Gay
+    edit: Edit
+    delete: Delete
+    save: Save
+    saving: Saving…
+    saveError: Could not save Prim.
+    deleteError: Could not delete Prim.
+    deleteConfirmTitle: Delete this Prim?
+    deleteConfirmBody: “{name}” will be removed from your account.
+    uploadPhoto: Upload photo
+    photoUploading: Uploading…
+    photoUploaded: Photo saved.
+    photoError: Could not update photo.
+    clearPhoto: Remove photo
+    generateAvatar: Generate 3D avatar
+    generating: Generating…
+    avatarGenerated: 3D avatar ready.
+    generateError: Could not generate avatar — check ComfyUI / AI config.
   animals:
     title: Animals
     subtitle: Souls beyond Prims — profiles for pets and companion animals.
@@ -621,10 +845,227 @@ userMenu:
   openMenu: Open menu
   closeMenu: Close menu
   displayNameFallback: Account
-  displaySection: Display
+  displaySection: Settings
   accountSettings: Account settings
-  displaySettings: Display
+  displaySettings: Display settings
   zoom: Zoom {label}
+  logout: Sign out
+
+outfit:
+  title: Outfit
+  titlePlural: Outfits
+  sectionDay: Outfits for this day
+  emptyDay: No outfits for this day.
+  add: Add outfit
+  edit: Edit outfit
+  delete: Delete outfit
+  deleteConfirm: Delete outfit for {prim} on {date}?
+  formCreate: New outfit
+  formEdit: Edit outfit
+  prim: Prim
+  primPlaceholder: Select a Prim…
+  wearDate: Date
+  label: Label
+  labelPlaceholder: Optional name
+  name: Outfit name
+  namePlaceholder: e.g. School look — Monday
+  editorSubtitle: Pick fashion categories, then tap items to build the outfit.
+  categoriesTitle: Clothing categories
+  categoriesHint: Clothes, shoes, and accessories only — electronics and books are hidden.
+  categoriesEmpty: No fashion collections yet. Add clothes or shoes in Collection.
+  clearCategories: Clear filters
+  itemsEmptyFiltered: No items in the selected categories (or none fit this Prim).
+  selectedStrip: '{count} in outfit'
+  removeItem: Remove from outfit
+  occasion: Occasion
+  occasionNone: No occasion
+  occasions:
+    school: School
+    work: Work
+    home: Home
+    outing: Going out
+    sport: Sport
+    formal: Formal
+    casual: Casual
+    travel: Travel
+  notes: Notes
+  notesPlaceholder: Optional notes…
+  items: Items
+  itemsHint: Choose items from the collection that fit this Prim.
+  itemsEmpty: No fitting items found.
+  itemsSelected: '{count} selected'
+  save: Save outfit
+  cancel: Cancel
+  saving: Saving…
+  upcoming: Upcoming outfits
+  upcomingEmpty: No outfits planned in the next 7 days.
+  viewCalendar: Open calendar
+  itemCount: '{count} items'
+  outfitCount: '{count} outfits'
+  sourceManual: Manual
+  sourceLlm: Suggested
+
+item:
+  noImageLoaded: No image loaded
+  bodyZone: Body zone
+  bodyZoneAuto: Automatic (from type)
+  bodyZoneHint: Where it is worn — drives outfit card layout.
+  wearLayer: Layer
+  wearLayerAuto: Automatic (from type)
+  wearLayerHint: outer = coat/jacket, base = tee/undershirt.
+  hosiery:
+    title: Hosiery details
+    hint: Optional structured properties for tights (used by the AI stylist).
+    denier: Denier (DEN)
+    opacityLabel: Opacity
+    finishLabel: Finish
+    pattern: Pattern
+    toe: Toe
+    waist: Waist
+    opacity:
+      ultra_sheer: Ultra sheer
+      sheer: Sheer
+      semi_opaque: Semi-opaque
+      opaque: Opaque
+    finish:
+      matte: Matte
+      satin: Satin
+      glossy: Glossy
+  bodyZones:
+    head: Head / neck
+    torso: Torso
+    legs: Legs
+    feet: Feet
+    full: Full body (dress / jumpsuit)
+  wearLayers:
+    outer: Outer
+    mid: Mid
+    base: Base
+    accent: Accent / accessory
+
+style:
+  nav:
+    outfits: Outfits
+    aiStylist: Stylist
+    styles: Styles
+  journey:
+    title: Styles
+    subtitle: Build style awareness for this Prim — complete modules, earn XP, unlock achievements.
+    pickPrim: Select a Prim to start the style journey.
+    checkWardrobe: Check wardrobe
+    syncing: Checking…
+    synced: Wardrobe checked.
+    newlyCompleted: "Completed {count} new module(s)."
+    xp: XP
+    level: Level
+    progress: Journey
+    journeysPassedLabel: Progress
+    journeysPassedTitle: Basic journeys passed
+    journeysPassedMeta: "{percent}% complete"
+    tileSoonLabel: Soon
+    tileSoonTitle: Coming next
+    tileSoonHint: Role for this tile is not defined yet.
+    achievements: Achievements
+    achievementsTileTitle: Badges & unlocks
+    achievementsTileHint: Open badge collection
+    achievementsTitle: Achievements
+    achievementsSubtitle: Badges earned on your style journey.
+    achievementsCount: "{unlocked} of {total} unlocked"
+    achievementsEmpty: No achievements yet.
+    unlocked: Unlocked
+    locked: Locked
+    modules: Modules
+    modulesHint: Auto modules complete when your wardrobe matches. Manual ones need a checklist.
+    done: Done
+    inProgress: In progress
+    modeAuto: Auto
+    modeManual: Manual
+    filterAll: All
+    checklist: Checklist
+    stillNeeded: Still needed
+    backToStyles: Back to Styles
+    moduleNotFound: Module not found for this Prim.
+    rewardMeta: "Reward: +{xp} XP"
+    completedAt: "Completed {date}"
+    missingCount: "{count} missing"
+    submitChecks: Submit checklist
+    moduleCompleted: Module completed — XP awarded.
+    checksSaved: Progress saved — finish all checks to complete.
+    noModules: No modules for this Prim yet. An admin can add them in Backend.
+    noModulesInFilter: No modules in this filter.
+    loadError: Could not load style journey.
+    needSlot: "Need {need}× {slot} (have {have})"
+    needCategory: "Need {need}× {category} (have {have})"
+  scoreboard:
+    title: Scoreboard
+    subtitle: XP ranking across all accounts.
+    rank: Rank
+    user: User
+    empty: No scores yet — complete a module to appear here.
+  stylesPage:
+    title: Styles
+    subtitle: See how to combine pieces you already own — formulas and complete looks for this Prim.
+    pickPrim: Select a Prim to see pairing styles.
+  subtitle: Plan looks for each Prim by occasion — school, work, home, and more.
+  generateSet: Generate set
+  generatingSet: Cutting out items…
+  generateSetError: Could not create the set.
+  setPreview: Set preview
+  clearSetPreview: Show originals
+  cuttingItems: Cutting out clothes…
+  allPrims: All Prims
+  empty: No outfits yet for this Prim. Add one or pick an occasion tile.
+  emptyOccasion: No outfits in this occasion yet.
+  openDay: Open in calendar
+  openPrim: Open Prim profile
+  noPrim: Select a Prim
+  pickPrim: Select a Prim on the left to see outfits.
+  occasionsTitle: Occasions
+  clearOccasion: Show all
+  silhouetteEmpty: Upload a Prim photo to build a silhouette.
+  silhouetteNeedPhoto: Upload a photo of this Prim first.
+  silhouetteNeedGenerate: Photo ready — generate a Comfy silhouette for styling.
+  silhouetteReady: Silhouette from your Prim photo
+  silhouetteSourceOnly: Photo uploaded — generate silhouette
+  silhouetteMissing: No photo yet
+  uploadPhoto: Upload photo
+  generateSilhouette: Generate silhouette
+  regenerateSilhouette: Regenerate silhouette
+  photoUploaded: Photo saved. You can generate a silhouette now.
+  silhouetteGenerated: Silhouette ready.
+
+admin:
+  styleModules:
+    title: Style modules
+    subtitle: Define journey modules and achievements visible to all users (filtered by Prim gender).
+    linkTitle: Style modules
+    linkHint: Manage style journey modules, XP rewards, and achievements.
+    tabModules: Modules
+    tabAchievements: Achievements
+    newModule: New module
+    editModule: Edit module
+    newAchievement: New achievement
+    editAchievement: Edit achievement
+    fieldTitle: Title
+    fieldDescription: Description
+    fieldXp: XP reward
+    fieldXpBonus: XP bonus
+    fieldGender: Gender
+    genderAll: All Prims
+    fieldMode: Completion mode
+    fieldSort: Sort order
+    fieldActive: Active
+    fieldRequirements: Requirements (JSON)
+    requirementsHint: 'Auto: {"all":[{"slot":"footwear","min":1}]}. Manual: {"checks":[{"id":"a","label":"…"}]}.'
+    fieldRule: Rule (JSON)
+    ruleHint: '{"type":"modules_completed","count":1} or {"type":"xp_total","min":200}'
+    save: Save
+    saved: Saved.
+    cancel: Cancel
+    edit: Edit
+    delete: Delete
+    confirmDelete: Delete this entry?
+    invalidJson: Invalid JSON.
 
 common:
   loading: Loading…

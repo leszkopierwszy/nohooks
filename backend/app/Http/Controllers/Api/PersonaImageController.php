@@ -7,6 +7,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Entity;
 use App\Services\PersonaVision\PersonaImageProcessingService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 /**
  * API warstwy HTTP dla modułu Persona Vision.
@@ -31,23 +33,67 @@ class PersonaImageController extends Controller
     }
 
     /**
+     * POST /api/entity/{entity}/avatar
+     * Multipart photo — stores source image without requiring AI generation.
+     */
+    public function uploadAvatar(Request $request, Entity $entity)
+    {
+        $request->validate([
+            'photo' => 'required|image|max:10240',
+        ]);
+
+        $stored = Storage::disk('public')->putFile(
+            'persona-ai/sources/'.date('Y/m'),
+            $request->file('photo')
+        );
+
+        $entity->avatar_source_url = Storage::disk('public')->url($stored);
+        $entity->save();
+
+        return response()->json([
+            'entity_id' => $entity->id,
+            'avatar_source_url' => $entity->avatar_source_url,
+            'avatar_doll_url' => $entity->avatar_doll_url,
+        ]);
+    }
+
+    /**
+     * DELETE /api/entity/{entity}/avatar — clear source + generated doll.
+     */
+    public function clearAvatar(Entity $entity)
+    {
+        $entity->avatar_source_url = null;
+        $entity->avatar_doll_url = null;
+        $entity->avatar_generated_at = null;
+        $entity->save();
+
+        return response()->json([
+            'entity_id' => $entity->id,
+            'avatar_source_url' => null,
+            'avatar_doll_url' => null,
+        ]);
+    }
+
+    /**
      * POST /api/entity/{entity}/avatar/generate
      * Body: multipart photo LUB JSON { "photo_url": "https://..." }
      */
     public function generateAvatar(Request $request, Entity $entity)
     {
         $request->validate([
-            'photo_url' => 'nullable|url|max:2048',
+            'photo_url' => 'nullable|string|max:2048',
             'photo' => 'nullable|image|max:10240',
             'prompt' => 'nullable|string|max:2000',
         ]);
 
         try {
-            $source = $request->file('photo') ?? $request->input('photo_url');
+            $source = $request->file('photo')
+                ?? $request->input('photo_url')
+                ?? $entity->avatar_source_url;
 
             if (! $source) {
                 return response()->json([
-                    'message' => 'Prześlij pole photo (plik) lub photo_url (URL).',
+                    'message' => 'Najpierw wgraj zdjęcie Prima, albo prześlij photo / photo_url.',
                 ], 422);
             }
 
@@ -78,7 +124,10 @@ class PersonaImageController extends Controller
     {
         $data = $request->validate([
             'garment_image_url' => 'required|url|max:2048',
-            'item_id' => 'nullable|exists:items,id',
+            'item_id' => [
+                'nullable',
+                Rule::exists('items', 'id')->where(fn ($q) => $q->where('user_id', auth()->id())),
+            ],
             'avatar_image_url' => 'nullable|url|max:2048',
         ]);
 

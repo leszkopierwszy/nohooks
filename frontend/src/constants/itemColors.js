@@ -98,3 +98,37 @@ export function normalizeColorForStorage(color) {
   }
   return trimmed.toLowerCase()
 }
+
+/** List of normalized colors for an item (colors[] with fallback to color). */
+export function itemColorsList(item) {
+  const fromArray = Array.isArray(item?.colors)
+    ? item.colors.map((c) => normalizeColorForStorage(c)).filter(Boolean)
+    : []
+
+  if (fromArray.length) {
+    return [...new Set(fromArray)]
+  }
+
+  const single = normalizeColorForStorage(item?.color)
+  return single ? [single] : []
+}
+
+/** Primary / displayed color for an item. */
+export function itemPrimaryColor(item) {
+  return itemColorsList(item)[0] ?? null
+}
+
+export function normalizeColorsForStorage(colors) {
+  if (!Array.isArray(colors)) {
+    const single = normalizeColorForStorage(colors)
+    return single ? [single] : []
+  }
+
+  const normalized = []
+  for (const raw of colors) {
+    const value = normalizeColorForStorage(raw)
+    if (!value || normalized.includes(value)) continue
+    normalized.push(value)
+  }
+  return normalized
+}

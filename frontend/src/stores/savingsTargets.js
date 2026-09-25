@@ -15,6 +15,7 @@ import {
 } from '../utils/savingsAssets'
 import { percentOfTarget, resolveTargetAmount } from '../utils/savingsTarget'
 import { useUserAssetsStore } from './userAssets'
+import { readUserStorage } from '../utils/userScopedStorage'
 
 const LEGACY_STORAGE_KEY = 'nohooks_savings_targets_v1'
 
@@ -89,7 +90,7 @@ function todayLocalDateKey() {
 
 function loadLegacyLocal() {
   try {
-    const raw = localStorage.getItem(LEGACY_STORAGE_KEY)
+    const raw = readUserStorage(LEGACY_STORAGE_KEY)
     if (!raw) return null
     return JSON.parse(raw)
   } catch {
@@ -214,31 +215,20 @@ export const useSavingsTargetsStore = defineStore('savingsTargets', {
     },
 
     applyPayloadFromLegacy() {
-      const legacy = loadLegacyLocal()
-      if (!legacy?.targets?.length) {
-        this.targets = [
-          normalizeTarget({ id: M2M_SAVINGS_TARGET_ID, type: 'm2m', included_asset_ids: null }),
-        ].filter(Boolean)
-        this.primaryTargetId = M2M_SAVINGS_TARGET_ID
-        return
-      }
-      const targets = []
-      for (const item of legacy.targets) {
-        const t = normalizeTarget(item, targets)
-        if (t) targets.push(t)
-      }
-      const globalIds = normalizeIncludedAssetIds(legacy.includedAssetIds)
-      if (globalIds !== null) {
-        for (const t of targets) {
-          t.included_asset_ids = [...globalIds]
-        }
-      }
-      this.targets = targets
-      this.primaryTargetId = legacy.primaryTargetId || M2M_SAVINGS_TARGET_ID
+      // Do not fall back to shared browser localStorage — that leaked Bartosz data to other users.
+      this.targets = [
+        normalizeTarget({ id: M2M_SAVINGS_TARGET_ID, type: 'm2m', included_asset_ids: null }),
+      ].filter(Boolean)
+      this.primaryTargetId = M2M_SAVINGS_TARGET_ID
     },
 
     async migrateLegacyLocalOnce() {
       this.legacyMigrated = true
+
+      const { useUserStore } = await import('./user')
+      const user = useUserStore().user
+      if (!user?.isLegacyOwner) return
+
       const legacy = loadLegacyLocal()
       if (!legacy?.targets?.length) return
 
@@ -261,16 +251,6 @@ export const useSavingsTargetsStore = defineStore('savingsTargets', {
           })
         } catch {
           /* skip failed */
-        }
-      }
-
-      if (legacy.primaryTargetId && legacy.primaryTargetId !== M2M_SAVINGS_TARGET_ID) {
-        try {
-          await apiRequest(`/savings-target/${legacy.primaryTargetId}/set-primary`, {
-            method: 'POST',
-          })
-        } catch {
-          /* ignore */
         }
       }
 

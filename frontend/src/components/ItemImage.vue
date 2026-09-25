@@ -12,9 +12,9 @@
       class="absolute inset-0 overflow-hidden"
     >
       <img
-        v-if="resolvedSrc"
+        v-if="displaySrc"
         :key="imgRenderKey"
-        :src="resolvedSrc"
+        :src="displaySrc"
         :alt="alt"
         :class="computedImgClass"
         :style="imgStyle"
@@ -23,9 +23,9 @@
       />
     </div>
     <img
-      v-else-if="resolvedSrc"
+      v-else-if="displaySrc"
       :key="imgRenderKey"
-      :src="resolvedSrc"
+      :src="displaySrc"
       :alt="alt"
       :class="computedImgClass"
       draggable="false"
@@ -44,6 +44,7 @@ import {
 } from '../api/media'
 import { detectEdgeBackground, FALLBACK_BG } from '../utils/imageEdgeColor'
 import { computeCoverNormalizeTransform } from '../utils/imageCoverNormalize'
+import { getCleanedCutoutUrl } from '../utils/imageCutoutFringe'
 
 const props = defineProps({
   src: {
@@ -83,27 +84,43 @@ const props = defineProps({
     default: 'bottom',
     validator: (v) => ['bottom', 'center'].includes(v),
   },
+  /** When set, skips edge detection and uses this solid background. */
+  fixedBackground: {
+    type: String,
+    default: null,
+  },
+  /** Clean white/studio fringe on existing PNG cutouts (catalog tiles). */
+  cleanFringe: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const resolvedSrc = computed(() => resolveStorageUrl(props.src) ?? props.src)
+const displaySrc = ref(null)
 
 const usesSurfaceBg = computed(
-  () => props.checkerboard || isPngLikeImageUrl(resolvedSrc.value)
+  () =>
+    !props.fixedBackground &&
+    (props.checkerboard || isPngLikeImageUrl(resolvedSrc.value))
 )
 
 const edgeColor = ref(
-  usesSurfaceBg.value ? ITEM_IMAGE_SURFACE_BG : props.fallbackBg
+  props.fixedBackground ??
+    (usesSurfaceBg.value ? ITEM_IMAGE_SURFACE_BG : props.fallbackBg)
 )
 
 const normalizeLayout = ref(null)
 
 const imgRenderKey = computed(
   () =>
-    `${resolvedSrc.value ?? ''}:${props.normalizeScale ? 'n' : 'o'}:${props.normalizeAlign}`
+    `${displaySrc.value ?? resolvedSrc.value ?? ''}:${props.normalizeScale ? 'n' : 'o'}:${props.normalizeAlign}:${props.cleanFringe ? 'c' : 'r'}`
 )
 
 const backgroundStyle = computed(() => ({
-  backgroundColor: usesSurfaceBg.value ? ITEM_IMAGE_SURFACE_BG : edgeColor.value,
+  backgroundColor:
+    props.fixedBackground ??
+    (usesSurfaceBg.value ? ITEM_IMAGE_SURFACE_BG : edgeColor.value),
 }))
 
 const computedImgClass = computed(() => {
@@ -126,7 +143,31 @@ const imgStyle = computed(() => {
   }
 })
 
+async function refreshDisplaySrc() {
+  const src = resolvedSrc.value
+  if (!src) {
+    displaySrc.value = null
+    return
+  }
+
+  if (!props.cleanFringe || !isPngLikeImageUrl(src)) {
+    displaySrc.value = src
+    return
+  }
+
+  try {
+    displaySrc.value = await getCleanedCutoutUrl(src)
+  } catch {
+    displaySrc.value = src
+  }
+}
+
 async function refreshBackground() {
+  if (props.fixedBackground) {
+    edgeColor.value = props.fixedBackground
+    return
+  }
+
   if (!resolvedSrc.value) {
     edgeColor.value = props.fallbackBg
     return
@@ -142,10 +183,11 @@ async function refreshBackground() {
 
 async function refreshNormalizeScale() {
   normalizeLayout.value = null
-  if (!props.normalizeScale || !resolvedSrc.value) return
+  const src = displaySrc.value ?? resolvedSrc.value
+  if (!props.normalizeScale || !src) return
 
   try {
-    normalizeLayout.value = await computeCoverNormalizeTransform(resolvedSrc.value, {
+    normalizeLayout.value = await computeCoverNormalizeTransform(src, {
       fill: props.normalizeFill,
       align: props.normalizeAlign,
     })
@@ -162,7 +204,14 @@ async function onImageLoad() {
   await Promise.all([refreshBackground(), refreshNormalizeScale()])
 }
 
-watch(resolvedSrc, onImageLoad, { immediate: true })
+watch(
+  resolvedSrc,
+  async () => {
+    await refreshDisplaySrc()
+    await onImageLoad()
+  },
+  { immediate: true }
+)
 watch(
   () => [props.normalizeScale, props.normalizeFill, props.normalizeAlign],
   () => {
@@ -170,4 +219,17 @@ watch(
   }
 )
 watch(usesSurfaceBg, refreshBackground)
+watch(
+  () => props.fixedBackground,
+  () => {
+    refreshBackground()
+  }
+)
+watch(
+  () => props.cleanFringe,
+  async () => {
+    await refreshDisplaySrc()
+    await refreshNormalizeScale()
+  }
+)
 </script>

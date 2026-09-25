@@ -1,7 +1,7 @@
 <template>
   <div :class="sidebarClasses.navRoot">
     <div :class="sidebarClasses.brandRow">
-      <span :class="sidebarClasses.brandText">{{ sidebarBrandText }}</span>
+      <span :class="sidebarClasses.brandText">{{ brandLabel }}</span>
     </div>
 
     <nav :class="sidebarClasses.navSection" aria-label="Główne">
@@ -62,24 +62,34 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import SidebarNavLink from './SidebarNavLink.vue'
 import SidebarSubNavLink from './SidebarSubNavLink.vue'
 import UserAccountMenu from './UserAccountMenu.vue'
 import { useI18n } from '../composables/useI18n'
+import { useUserStore } from '../stores/user'
 import {
   sidebarBrandText,
   sidebarClasses,
   sidebarNavigation,
-  sidebarAccountNavigation,
+  sidebarAccountNavigationForUser,
   isNavGroupActive,
 } from '../config/sidebar'
+import { useSiteConfigStore } from '../stores/siteConfig'
 
 const { t } = useI18n()
 const emit = defineEmits(['navigate'])
 const route = useRoute()
+const userStore = useUserStore()
+const siteConfig = useSiteConfigStore()
+
+const brandLabel = computed(() => siteConfig.appName || sidebarBrandText)
+
+const sidebarAccountNavigation = computed(() =>
+  sidebarAccountNavigationForUser({ isAdmin: userStore.isAdmin }),
+)
 
 /** labelKey → true (wymuszone otwarte) | false (wymuszone zamknięte) */
 const groupOverrides = ref({})

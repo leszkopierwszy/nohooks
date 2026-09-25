@@ -29,14 +29,36 @@ export async function getPersonaVisionStatus() {
 }
 
 /**
+ * Upload source photo for a Prim (no AI required).
+ * @param {number|string} entityId
+ * @param {File} photo
+ */
+export async function uploadPersonaPhoto(entityId, photo) {
+  if (!(photo instanceof File)) {
+    throw new Error('Wymagany plik zdjęcia.')
+  }
+  const formData = new FormData()
+  formData.append('photo', photo)
+  return apiFormRequest(`/entity/${entityId}/avatar`, formData)
+}
+
+/**
+ * Clear Prim avatar source + generated doll.
+ * @param {number|string} entityId
+ */
+export async function clearPersonaAvatar(entityId) {
+  return apiRequest(`/entity/${entityId}/avatar`, { method: 'DELETE' })
+}
+
+/**
  * (1)+(2) Generuje awatar „lalka 3D” ze zdjęcia użytkownika.
  *
  * @param {number|string} entityId - ID persony (Entity)
- * @param {File|string} source - Plik ze zdjęciem LUB publiczny URL
+ * @param {File|string|null} [source] - Plik, publiczny URL, albo null = użyj zapisanego avatar_source_url
  * @param {{ prompt?: string }} [options]
  * @returns {Promise<{ output_url: string, avatar_doll_url?: string, prediction_id?: string }>}
  */
-export async function generatePersonaAvatar(entityId, source, options = {}) {
+export async function generatePersonaAvatar(entityId, source = null, options = {}) {
   if (source instanceof File) {
     const formData = new FormData()
     formData.append('photo', source)
@@ -47,17 +69,30 @@ export async function generatePersonaAvatar(entityId, source, options = {}) {
     return apiFormRequest(`/entity/${entityId}/avatar/generate`, formData)
   }
 
-  if (typeof source === 'string' && source.startsWith('http')) {
+  if (typeof source === 'string' && source.trim() !== '') {
+    const absolute =
+      source.startsWith('http://') || source.startsWith('https://')
+        ? source
+        : typeof window !== 'undefined'
+          ? new URL(source, window.location.origin).href
+          : source
+
     return apiRequest(`/entity/${entityId}/avatar/generate`, {
       method: 'POST',
       body: JSON.stringify({
-        photo_url: source,
+        photo_url: absolute,
         prompt: options.prompt ?? undefined,
       }),
     })
   }
 
-  throw new Error('Źródło musi być plikiem File lub URL https://')
+  // Backend użyje entity.avatar_source_url
+  return apiRequest(`/entity/${entityId}/avatar/generate`, {
+    method: 'POST',
+    body: JSON.stringify({
+      prompt: options.prompt ?? undefined,
+    }),
+  })
 }
 
 /**

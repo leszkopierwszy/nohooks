@@ -3,23 +3,23 @@
 namespace Database\Seeders;
 
 use App\Models\Category;
+use App\Models\User;
+use App\Services\TenantProvisioner;
 use Illuminate\Database\Seeder;
 
 class CategorySeeder extends Seeder
 {
     public function run(): void
     {
-        $names = [
-            'clothes',
-            'shoes',
-            'accessories',
-            'electronics',
-            'packing',
-            'books',
-        ];
+        $owner = User::query()->orderBy('id')->first();
+        if (! $owner) {
+            return;
+        }
 
-        foreach ($names as $name) {
-            Category::firstOrCreate(['name' => $name]);
+        foreach (TenantProvisioner::DEFAULT_CATEGORIES as $name) {
+            Category::withoutGlobalScopes()->firstOrCreate(
+                ['user_id' => $owner->id, 'name' => $name],
+            );
         }
     }
 }

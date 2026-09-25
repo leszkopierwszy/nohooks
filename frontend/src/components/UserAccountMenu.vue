@@ -83,21 +83,19 @@
           </button>
         </MenuItem>
 
-        <MenuItem v-for="opt in ZOOM_OPTIONS" :key="opt.value" v-slot="{ active }">
+        <div class="my-1 border-t border-gray-100" />
+
+        <MenuItem v-slot="{ active }">
           <button
             type="button"
             :class="[
               active ? 'bg-gray-50' : '',
-              'flex w-full items-center justify-between px-3 py-2 pl-10 text-left text-sm text-gray-700',
+              'flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700',
             ]"
-            @click="displayStore.setZoom(opt.value)"
+            @click="onLogout"
           >
-            <span>{{ t('userMenu.zoom', { label: opt.label }) }}</span>
-            <CheckIcon
-              v-if="zoomPercent === opt.value"
-              class="size-4 text-gray-900"
-              aria-hidden="true"
-            />
+            <ArrowRightOnRectangleIcon class="size-5 shrink-0 text-gray-400" aria-hidden="true" />
+            {{ t('userMenu.logout') }}
           </button>
         </MenuItem>
       </MenuItems>
@@ -108,21 +106,24 @@
 
 <script setup>
 import { computed } from 'vue'
-import { storeToRefs } from 'pinia'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import {
   AdjustmentsHorizontalIcon,
-  CheckIcon,
+  ArrowRightOnRectangleIcon,
   ChevronUpIcon,
   Cog6ToothIcon,
 } from '@heroicons/vue/24/outline'
 import { useI18n } from '../composables/useI18n'
-import { useDisplayStore, ZOOM_OPTIONS } from '../stores/display'
+import { resolveStorageUrl } from '../api/media'
+import { useAuthStore } from '../stores/auth'
+import { useDisplayStore } from '../stores/display'
 import { useUserStore } from '../stores/user'
 import { sidebarClasses } from '../config/sidebar'
+import { userAvatarDataUrl } from '../utils/userAvatar'
 
 const { t } = useI18n()
+const router = useRouter()
 
 const props = defineProps({
   compact: {
@@ -141,22 +142,30 @@ const props = defineProps({
 })
 
 const displayStore = useDisplayStore()
+const authStore = useAuthStore()
 const userStore = useUserStore()
-const { zoomPercent } = storeToRefs(displayStore)
 
 const displayName = computed(
   () => userStore.user?.displayName ?? userStore.user?.username ?? t('userMenu.displayNameFallback')
 )
 const email = computed(() => userStore.user?.email ?? '')
-const avatarSrc = computed(
-  () =>
-    userStore.user?.avatar ||
-    'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
-)
+const avatarSrc = computed(() => {
+  const raw = userStore.user?.avatar?.trim()
+  if (raw) return resolveStorageUrl(raw) ?? raw
+  if (!userStore.user) {
+    return userAvatarDataUrl({ displayName: t('userMenu.displayNameFallback') })
+  }
+  return userAvatarDataUrl(userStore.user)
+})
 
 const menuPositionClass = computed(() =>
   props.placement === 'down'
     ? 'right-0 top-full mt-2 origin-top-right'
     : 'left-0 bottom-full mb-2 origin-bottom-left'
 )
+
+async function onLogout() {
+  await authStore.logout()
+  await router.push({ name: 'Login' })
+}
 </script>

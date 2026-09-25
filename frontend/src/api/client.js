@@ -59,6 +59,15 @@ function apiHtmlResponseHint(status) {
   return `Serwer zwrócił stronę HTML zamiast JSON${statusHint}. Sprawdź VITE_API_URL (obecnie: ${API_BASE}) — poprawna wartość to /api (dev) lub http://localhost:8000/api.`
 }
 
+function authHeaders() {
+  try {
+    const token = localStorage.getItem('nohooks_auth_token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  } catch {
+    return {}
+  }
+}
+
 export async function apiRequest(path, options = {}) {
   const {
     timeoutMs,
@@ -80,6 +89,7 @@ export async function apiRequest(path, options = {}) {
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
+        ...authHeaders(),
         ...extraHeaders,
       },
       body,
@@ -133,6 +143,7 @@ export async function apiFormRequest(path, formData, options = {}) {
       method: method ?? 'POST',
       headers: {
         Accept: 'application/json',
+        ...authHeaders(),
         ...extraHeaders,
       },
       body: formData,

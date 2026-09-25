@@ -12,11 +12,11 @@ import { translate as t } from '../i18n'
 
 import {
   UserIcon,
-  RectangleGroupIcon,
   CubeTransparentIcon,
   BanknotesIcon,
   CalendarIcon,
   SparklesIcon,
+  SwatchIcon,
   Cog6ToothIcon,
   CpuChipIcon,
 } from '@heroicons/vue/24/outline'
@@ -34,7 +34,17 @@ export const sidebarNavigation = [
       { labelKey: 'souls.animals.title', href: '/souls/animals', activeMatch: 'exact' },
     ],
   },
-  { labelKey: 'nav.collection', href: '/collection', icon: RectangleGroupIcon },
+  {
+    labelKey: 'nav.style',
+    href: '/style',
+    icon: SwatchIcon,
+    subItems: [
+      { labelKey: 'style.nav.outfits', href: '/style', activeMatch: 'exact' },
+      { labelKey: 'style.nav.aiStylist', href: '/style/ai-stylist', activeMatch: 'exact' },
+      { labelKey: 'style.nav.styles', href: '/style/styles', activeMatch: 'styles' },
+      { labelKey: 'nav.collection', href: '/collection', activeMatch: 'collection' },
+    ],
+  },
   {
     labelKey: 'nav.finance',
     href: '/finance',
@@ -74,8 +84,14 @@ export const sidebarAccountNavigation = [
     href: '/account/backend',
     icon: CpuChipIcon,
     activeMatch: 'prefix',
+    adminOnly: true,
   },
 ]
+
+/** Account nav filtered for the signed-in user (hides admin-only entries). */
+export function sidebarAccountNavigationForUser({ isAdmin = false } = {}) {
+  return sidebarAccountNavigation.filter((item) => !item.adminOnly || isAdmin)
+}
 
 // ——— Wymiary i layout —————————————————————————————————————————————————————
 
@@ -185,9 +201,16 @@ export function isFinanceSectionActive(path) {
   return path.startsWith('/finance')
 }
 
-/** Czy aktualna trasa należy do grupy z podmenu (Souls, Finanse, Rozwój, …). */
+export function isStyleSectionActive(path) {
+  return path.startsWith('/style') || path.startsWith('/collection')
+}
+
+/** Czy aktualna trasa należy do grupy z podmenu (Souls, Style, Finanse, Rozwój, …). */
 export function isNavGroupActive(item, path) {
   if (!item?.subItems?.length) return false
+  if (item.labelKey === 'nav.style' || item.href?.startsWith('/style') || item.href === '/collection') {
+    return isStyleSectionActive(path)
+  }
   if (item.href?.startsWith('/growth')) {
     return isGrowthSectionActive(path)
   }
@@ -204,6 +227,12 @@ export function isSidebarNavItemActive(item, path) {
   if (item.activeMatch === 'exact') {
     return path === item.href
   }
+  if (item.activeMatch === 'collection') {
+    return path.startsWith('/collection')
+  }
+  if (item.activeMatch === 'styles') {
+    return path === '/style/styles' || path.startsWith('/style/styles/')
+  }
   if (item.activeMatch === 'prims') {
     return (
       path === '/souls/prims' ||
@@ -213,15 +242,19 @@ export function isSidebarNavItemActive(item, path) {
     )
   }
   if (item.subItems) {
+    if (item.labelKey === 'nav.style') return isStyleSectionActive(path)
     if (item.href?.startsWith('/growth')) return path.startsWith('/growth')
     if (item.href?.startsWith('/finance')) return path.startsWith('/finance')
-    return isSoulsSectionActive(path)
+    if (item.href?.startsWith('/style')) return isStyleSectionActive(path)
+    if (item.href?.startsWith('/souls')) return isSoulsSectionActive(path)
+    return item.subItems.some((sub) => isSidebarNavItemActive(sub, path))
   }
   if (item.activeMatch === 'growth-goals') {
     return path === '/growth' || path.startsWith('/growth/goals')
   }
   if (item.href === '/home') return path === '/home' || path === '/'
   if (item.href === '/collection') return path.startsWith('/collection')
+  if (item.href === '/style') return path.startsWith('/style')
   return path === item.href || path.startsWith(`${item.href}/`)
 }
 
@@ -231,6 +264,7 @@ export function isSidebarNavActive(item, path) {
 }
 
 export function sidebarPageTitle(path) {
+  if (path.startsWith('/account/backend/style-modules')) return t('admin.styleModules.title')
   if (path.startsWith('/account/backend') || path.startsWith('/account/model-assistant')) {
     return t('account.nav.backend')
   }
@@ -238,6 +272,9 @@ export function sidebarPageTitle(path) {
   if (path.startsWith('/finance')) return t('nav.finance')
   if (path.startsWith('/growth')) return t('nav.growth')
   if (path.startsWith('/collection')) return t('nav.collection')
+  if (path.startsWith('/style/styles')) return t('style.nav.styles')
+  if (path.startsWith('/style/ai-stylist')) return t('style.nav.aiStylist')
+  if (path.startsWith('/style')) return t('nav.style')
   if (path.startsWith('/souls/animals')) return t('souls.animals.title')
   if (path.startsWith('/souls/prims') || /^\/souls\/prims\/\d+/.test(path)) return t('nav.prims')
   if (path.startsWith('/souls') || path.startsWith('/personas')) return t('nav.souls')
@@ -249,5 +286,5 @@ export function sidebarPageTitle(path) {
   return item?.labelKey ? t(item.labelKey) : t('nav.overview')
 }
 
-/** Tekst brandu — zmień w sidebarClasses.brandText lub tutaj */
+/** Fallback brand text when site config has not loaded yet */
 export const sidebarBrandText = 'nohooks'

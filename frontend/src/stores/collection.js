@@ -21,13 +21,17 @@ function mapApiItem(item) {
     collection_group: item.collection_group?.name ?? null,
     description: item.description ?? null,
     color: item.color ?? null,
+    colors: Array.isArray(item.colors) ? item.colors : null,
     season: item.season ?? null,
     size: item.size ?? null,
     size_system: item.size_system ?? null,
+    body_zone: item.body_zone ?? null,
+    wear_layer: item.wear_layer ?? null,
+    garment_attributes: item.garment_attributes ?? null,
     notes: item.notes ?? null,
     rarity: item.rarity ?? 'common',
     like_rating: item.like_rating ?? null,
-    fits_all_personas: Boolean(item.fits_all_personas ?? true),
+    fits_all_personas: Boolean(item.fits_all_personas),
     fits_persona_ids: item.fits_persona_ids ?? null,
     default_persona_id: item.default_persona_id ?? null,
     default_persona: item.default_persona ?? null,
@@ -248,8 +252,10 @@ export const useCollectionStore = defineStore('collection', {
       const payload = {
         name: item.name,
         category_id: collectionId,
-        fits_all_personas: item.fits_all_personas ?? true,
-        fits_persona_ids: item.fits_all_personas ? null : item.fits_persona_ids ?? null,
+        fits_all_personas: false,
+        fits_persona_ids: item.fits_persona_ids ?? (
+          item.default_persona_id ? [Number(item.default_persona_id)] : null
+        ),
         default_persona_id: item.default_persona_id ?? null,
       }
 
@@ -267,7 +273,13 @@ export const useCollectionStore = defineStore('collection', {
       if (item.notes) payload.notes = item.notes
       if (item.source_url) payload.source_url = item.source_url
       if (item.description) payload.description = item.description
-      if (item.color) payload.color = item.color
+      if (item.colors?.length) {
+        payload.colors = item.colors
+        payload.color = item.colors[0]
+      } else if (item.color) {
+        payload.color = item.color
+        payload.colors = [item.color]
+      }
       if (item.size) payload.size = item.size
       if (item.size_system) payload.size_system = item.size_system
 

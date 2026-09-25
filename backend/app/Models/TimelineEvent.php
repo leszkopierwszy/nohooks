@@ -2,14 +2,18 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToUser;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class TimelineEvent extends Model
 {
+    use BelongsToUser;
+
     public const PLANNED_RECURRENCES = ['monthly', 'quarterly', 'half_yearly', 'yearly'];
 
     protected $fillable = [
+        'user_id',
         'event_date',
         'start_time',
         'end_time',

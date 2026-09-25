@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToUser;
 use Illuminate\Database\Eloquent\Model;
 
 class Entity extends Model
 {
-    //
+    use BelongsToUser;
+
     protected $fillable = [
+        'user_id',
         'name',
         'description',
         'type',
@@ -43,5 +46,10 @@ class Entity extends Model
     public function tryOns()
     {
         return $this->hasMany(EntityTryOn::class)->latest();
+    }
+
+    public function outfits()
+    {
+        return $this->hasMany(Outfit::class)->orderBy('wear_date');
     }
 }

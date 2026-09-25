@@ -20,9 +20,23 @@ if [ ! -f .env ]; then
 fi
 
 # shellcheck disable=SC1091
-set -a
-source .env 2>/dev/null || true
-set +a
+# Ładuj tylko COMFYUI_* (cały .env może mieć spacje w wartościach i wywalić set -e).
+if [ -f .env ]; then
+  while IFS= read -r line || [ -n "$line" ]; do
+    case "$line" in
+      ''|\#*) continue ;;
+      COMFYUI_*=*)
+        key="${line%%=*}"
+        val="${line#*=}"
+        val="${val%\"}"
+        val="${val#\"}"
+        val="${val%\'}"
+        val="${val#\'}"
+        export "$key=$val"
+        ;;
+    esac
+  done < .env
+fi
 
 MODELS_PATH="${COMFYUI_MODELS_HOST_PATH:-./comfyui-models}"
 USER_PATH="${COMFYUI_USER_HOST_PATH:-./comfyui/user}"

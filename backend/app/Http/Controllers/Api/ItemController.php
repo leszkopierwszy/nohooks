@@ -3,16 +3,20 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use App\Models\Item;
 use App\Services\ExchangeRateService;
 use App\Services\ItemDuplicationService;
 use App\Services\ItemImageOrientationService;
 use App\Services\LangfuseTraceService;
+use App\Support\ClothingBodyPlacement;
+use App\Support\GarmentAttributes;
 use App\Models\ItemImage;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class ItemController extends Controller
@@ -139,47 +143,49 @@ class ItemController extends Controller
 
     private function assertValidUploadedImages(Request $request): void
     {
-        $files = $request->file('new_images');
+        foreach (['new_images', 'new_cutout_images', 'new_url_cutout_images', 'existing_cutout_images'] as $field) {
+            $files = $request->file($field);
 
-        if ($files === null) {
-            return;
-        }
-
-        $list = $files instanceof UploadedFile
-            ? [$files]
-            : (is_array($files) ? array_values($files) : []);
-
-        $errors = [];
-
-        foreach ($list as $index => $file) {
-            if (! $file instanceof UploadedFile) {
+            if ($files === null) {
                 continue;
             }
 
-            if ($file->isValid()) {
-                continue;
+            $list = $files instanceof UploadedFile
+                ? [$files]
+                : (is_array($files) ? $files : []);
+
+            $errors = [];
+
+            foreach ($list as $index => $file) {
+                if (! $file instanceof UploadedFile) {
+                    continue;
+                }
+
+                if ($file->isValid()) {
+                    continue;
+                }
+
+                $message = $this->describeUploadError($file);
+
+                Log::warning('item.image.upload_failed', [
+                    'index' => $index,
+                    'field' => "{$field}.{$index}",
+                    'error_code' => $file->getError(),
+                    'error_message' => $file->getErrorMessage(),
+                    'client_name' => $file->getClientOriginalName(),
+                    'client_mime' => $file->getClientMimeType(),
+                    'client_size_bytes' => $file->getSize(),
+                    'php_upload_max_filesize' => ini_get('upload_max_filesize'),
+                    'php_post_max_size' => ini_get('post_max_size'),
+                    'user_message' => $message,
+                ]);
+
+                $errors["{$field}.{$index}"] = [$message];
             }
 
-            $message = $this->describeUploadError($file);
-
-            Log::warning('item.image.upload_failed', [
-                'index' => $index,
-                'field' => "new_images.{$index}",
-                'error_code' => $file->getError(),
-                'error_message' => $file->getErrorMessage(),
-                'client_name' => $file->getClientOriginalName(),
-                'client_mime' => $file->getClientMimeType(),
-                'client_size_bytes' => $file->getSize(),
-                'php_upload_max_filesize' => ini_get('upload_max_filesize'),
-                'php_post_max_size' => ini_get('post_max_size'),
-                'user_message' => $message,
-            ]);
-
-            $errors["new_images.{$index}"] = [$message];
-        }
-
-        if ($errors !== []) {
-            throw ValidationException::withMessages($errors);
+            if ($errors !== []) {
+                throw ValidationException::withMessages($errors);
+            }
         }
     }
 
@@ -188,24 +194,33 @@ class ItemController extends Controller
         $this->preparePersonaFitInput($request);
         $this->assertValidUploadedImages($request);
 
+        $userId = auth()->id();
+        $entityOwned = Rule::exists('entities', 'id')->where(fn ($q) => $q->where('user_id', $userId));
+        $categoryOwned = Rule::exists('categories', 'id')->where(fn ($q) => $q->where('user_id', $userId));
+
         $rules = [
-            'entity_id' => 'nullable|exists:entities,id',
+            'entity_id' => ['nullable', $entityOwned],
             'fits_all_personas' => 'sometimes|boolean',
             'fits_persona_ids' => 'nullable|array',
-            'fits_persona_ids.*' => 'integer|exists:entities,id',
-            'default_persona_id' => 'nullable|exists:entities,id',
+            'fits_persona_ids.*' => ['integer', $entityOwned],
+            'default_persona_id' => ['nullable', $entityOwned],
             'character_id' => 'nullable|exists:characters,id',
             'name' => ($creating ? 'required' : 'sometimes').'|string|max:255',
             'rarity' => 'nullable|string|in:common,uncommon,rare,epic,legendary',
             'like_rating' => 'nullable|integer|min:1|max:5',
             'brand' => 'nullable|string|max:128',
             'category' => 'nullable|string|max:255',
+            'body_zone' => ($creating ? 'nullable' : 'sometimes|nullable').'|string|in:head,torso,legs,feet,full',
+            'wear_layer' => ($creating ? 'nullable' : 'sometimes|nullable').'|string|in:outer,mid,base,accent',
+            'garment_attributes' => ($creating ? 'nullable' : 'sometimes|nullable').'|array',
             'description' => 'nullable|string',
             'color' => 'nullable|string|max:64',
+            'colors' => 'nullable|array|max:16',
+            'colors.*' => 'nullable|string|max:64',
             'season' => 'nullable|string|max:32',
             'size' => 'nullable|string|max:16',
             'size_system' => 'nullable|in:eu,us',
-            'category_id' => 'nullable|exists:categories,id',
+            'category_id' => ['nullable', $categoryOwned],
             'gift' => 'sometimes|boolean',
             'purchase_price' => 'nullable|numeric|min:0',
             'purchase_currency' => 'nullable|string|in:PLN,EUR,USD,GBP,CHF,CZK',
@@ -214,35 +229,204 @@ class ItemController extends Controller
             'source_url' => 'nullable|url|max:2048',
             'new_images' => 'nullable|array|max:'.self::MAX_IMAGES,
             'new_images.*' => 'file|mimes:jpeg,jpg,png,gif,webp|max:5120',
+            'new_cutout_images' => 'nullable|array|max:'.self::MAX_IMAGES,
+            'new_cutout_images.*' => 'file|mimes:png|max:10240',
+            'new_url_cutout_images' => 'nullable|array|max:'.self::MAX_IMAGES,
+            'new_url_cutout_images.*' => 'file|mimes:png|max:10240',
+            'existing_cutout_images' => 'nullable|array|max:'.self::MAX_IMAGES,
+            'existing_cutout_images.*' => 'file|mimes:png|max:10240',
             'new_image_urls' => 'nullable|string',
             'remove_image_ids' => 'nullable|string',
             'image_order_slots' => 'nullable|string',
         ];
 
+        $this->prepareGarmentAttributesInput($request);
+        $this->prepareColorsInput($request);
+
         $data = $request->validate($rules);
 
-        return $this->normalizePersonaFit($data);
+        return $this->applyColors(
+            $this->applyGarmentAttributes(
+                $this->applyBodyPlacement(
+                    $this->normalizePersonaFit($data),
+                    $creating
+                )
+            )
+        );
+    }
+
+    private function prepareColorsInput(Request $request): void
+    {
+        if (! $request->has('colors')) {
+            return;
+        }
+
+        $value = $request->input('colors');
+        if ($value === '' || $value === null) {
+            $request->merge(['colors' => []]);
+
+            return;
+        }
+
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            $request->merge(['colors' => is_array($decoded) ? $decoded : []]);
+        }
+    }
+
+    private function applyColors(array $data): array
+    {
+        if (array_key_exists('colors', $data)) {
+            $normalized = [];
+            foreach ($data['colors'] ?? [] as $raw) {
+                if (! is_string($raw)) {
+                    continue;
+                }
+                $value = strtolower(trim($raw));
+                if ($value === '' || in_array($value, $normalized, true)) {
+                    continue;
+                }
+                $normalized[] = $value;
+            }
+
+            $data['colors'] = $normalized === [] ? null : $normalized;
+            $data['color'] = $normalized[0] ?? null;
+
+            return $data;
+        }
+
+        if (array_key_exists('color', $data)) {
+            $color = is_string($data['color']) ? strtolower(trim($data['color'])) : null;
+            if ($color === '') {
+                $color = null;
+            }
+            $data['color'] = $color;
+            $data['colors'] = $color ? [$color] : null;
+        }
+
+        return $data;
+    }
+
+    private function prepareGarmentAttributesInput(Request $request): void
+    {
+        if (! $request->has('garment_attributes')) {
+            return;
+        }
+
+        $value = $request->input('garment_attributes');
+        if ($value === '' || $value === null) {
+            $request->merge(['garment_attributes' => null]);
+
+            return;
+        }
+
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            $request->merge(['garment_attributes' => is_array($decoded) ? $decoded : null]);
+        }
+    }
+
+    private function applyGarmentAttributes(array $data): array
+    {
+        if (! array_key_exists('garment_attributes', $data)) {
+            return $data;
+        }
+
+        $raw = $data['garment_attributes'];
+        if ($raw === null || $raw === []) {
+            $data['garment_attributes'] = null;
+
+            return $data;
+        }
+
+        if (! is_array($raw)) {
+            $data['garment_attributes'] = null;
+
+            return $data;
+        }
+
+        $data['garment_attributes'] = GarmentAttributes::normalize(
+            $data['category'] ?? null,
+            $raw
+        );
+
+        return $data;
+    }
+
+    private function applyBodyPlacement(array $data, bool $creating = false): array
+    {
+        $submittedZone = array_key_exists('body_zone', $data);
+        $submittedLayer = array_key_exists('wear_layer', $data);
+
+        if ($submittedZone) {
+            $data['body_zone'] = ClothingBodyPlacement::normalizeZone($data['body_zone']);
+        }
+        if ($submittedLayer) {
+            $data['wear_layer'] = ClothingBodyPlacement::normalizeLayer($data['wear_layer']);
+        }
+
+        $needsInfer = $creating
+            || ($submittedZone && empty($data['body_zone']))
+            || ($submittedLayer && empty($data['wear_layer']))
+            || ($creating === false && $submittedZone === false && $submittedLayer === false && array_key_exists('category', $data));
+
+        if (! $needsInfer) {
+            return $data;
+        }
+
+        $collectionName = null;
+        if (! empty($data['category_id'])) {
+            $collectionName = Category::query()
+                ->where('user_id', auth()->id())
+                ->where('id', $data['category_id'])
+                ->value('name');
+        }
+
+        $inferred = ClothingBodyPlacement::infer(
+            $data['category'] ?? null,
+            $collectionName,
+            $data['name'] ?? null
+        );
+
+        // Store category as canonical English type when we can resolve it
+        if (! empty($data['category'])) {
+            $canonical = ClothingBodyPlacement::resolveCanonicalType($data['category']);
+            if ($canonical) {
+                $data['category'] = $canonical;
+            }
+        }
+
+        if ($creating || ($submittedZone && empty($data['body_zone'])) || (! $submittedZone && array_key_exists('category', $data))) {
+            if (empty($data['body_zone'])) {
+                $data['body_zone'] = $inferred['body_zone'];
+            }
+        }
+        if ($creating || ($submittedLayer && empty($data['wear_layer'])) || (! $submittedLayer && array_key_exists('category', $data))) {
+            if (empty($data['wear_layer'])) {
+                $data['wear_layer'] = $inferred['wear_layer'];
+            }
+        }
+
+        return $data;
     }
 
     private function normalizePersonaFit(array $data): array
     {
-        $fitsAll = (bool) ($data['fits_all_personas'] ?? true);
+        $data['fits_all_personas'] = false;
 
-        if ($fitsAll) {
-            $data['fits_all_personas'] = true;
-            $data['fits_persona_ids'] = null;
-        } else {
-            $data['fits_all_personas'] = false;
-            $ids = array_values(array_unique(array_map('intval', $data['fits_persona_ids'] ?? [])));
-            $data['fits_persona_ids'] = $ids ?: null;
+        $ids = array_values(array_unique(array_map('intval', $data['fits_persona_ids'] ?? [])));
 
-            if (! empty($data['default_persona_id'])) {
-                $defaultId = (int) $data['default_persona_id'];
-                if (! $ids || ! in_array($defaultId, $ids, true)) {
-                    $data['default_persona_id'] = null;
-                }
+        if (! empty($data['default_persona_id'])) {
+            $defaultId = (int) $data['default_persona_id'];
+            if (! in_array($defaultId, $ids, true)) {
+                $ids[] = $defaultId;
             }
+            $data['default_persona_id'] = $defaultId;
+        } else {
+            $data['default_persona_id'] = $ids[0] ?? null;
         }
+
+        $data['fits_persona_ids'] = $ids ?: null;
 
         if (empty($data['default_persona_id'])) {
             $data['default_persona_id'] = null;
@@ -267,6 +451,10 @@ class ItemController extends Controller
         if ($image->image_path) {
             Storage::disk('public')->delete($image->image_path);
         }
+
+        if ($image->cutout_path) {
+            Storage::disk('public')->delete($image->cutout_path);
+        }
     }
 
     private function assertUnderImageLimit(Item $item): void
@@ -276,6 +464,57 @@ class ItemController extends Controller
                 'new_images' => ['Maksymalnie '.self::MAX_IMAGES.' zdjęcia na item.'],
             ]);
         }
+    }
+
+    private function storeCutoutFile(?UploadedFile $file): ?string
+    {
+        if (! $file instanceof UploadedFile) {
+            return null;
+        }
+
+        return $file->store('items/cutouts', 'public');
+    }
+
+    /** @return array<int|string, UploadedFile> */
+    private function uploadedCutoutMap(Request $request, string $field): array
+    {
+        $files = $request->file($field);
+
+        if ($files === null) {
+            return [];
+        }
+
+        if ($files instanceof UploadedFile) {
+            return [0 => $files];
+        }
+
+        if (! is_array($files)) {
+            return [];
+        }
+
+        $map = [];
+        foreach ($files as $key => $file) {
+            if ($file instanceof UploadedFile) {
+                $map[$key] = $file;
+            }
+        }
+
+        return $map;
+    }
+
+    private function replaceImageCutout(ItemImage $image, ?UploadedFile $file): void
+    {
+        if (! $file instanceof UploadedFile) {
+            return;
+        }
+
+        if ($image->cutout_path) {
+            Storage::disk('public')->delete($image->cutout_path);
+        }
+
+        $image->update([
+            'cutout_path' => $this->storeCutoutFile($file),
+        ]);
     }
 
     /** @return list<UploadedFile> */
@@ -317,6 +556,9 @@ class ItemController extends Controller
         $slots = $this->decodeJsonList($request->input('image_order_slots'));
         $newFiles = $this->uploadedImages($request);
         $newUrls = $this->decodeJsonList($request->input('new_image_urls'));
+        $fileCutouts = $this->uploadedCutoutMap($request, 'new_cutout_images');
+        $urlCutouts = $this->uploadedCutoutMap($request, 'new_url_cutout_images');
+        $existingCutouts = $this->uploadedCutoutMap($request, 'existing_cutout_images');
         $addedNewImages = false;
 
         if ($slots !== []) {
@@ -333,6 +575,9 @@ class ItemController extends Controller
 
                     if ($image) {
                         $image->update(['sort_order' => $sortOrder++]);
+                        if (isset($existingCutouts[$id])) {
+                            $this->replaceImageCutout($image, $existingCutouts[$id]);
+                        }
                     }
 
                     continue;
@@ -349,6 +594,7 @@ class ItemController extends Controller
 
                     $item->images()->create([
                         'image_path' => $newFiles[$idx]->store('items', 'public'),
+                        'cutout_path' => $this->storeCutoutFile($fileCutouts[$idx] ?? null),
                         'sort_order' => $sortOrder++,
                     ]);
                     $addedNewImages = true;
@@ -371,6 +617,7 @@ class ItemController extends Controller
 
                     $item->images()->create([
                         'external_url' => $newUrls[$idx],
+                        'cutout_path' => $this->storeCutoutFile($urlCutouts[$idx] ?? null),
                         'sort_order' => $sortOrder++,
                     ]);
                     $addedNewImages = true;
@@ -386,18 +633,19 @@ class ItemController extends Controller
 
         $sortOrder = (int) $item->images()->max('sort_order');
 
-        foreach ($newFiles as $file) {
+        foreach ($newFiles as $idx => $file) {
             $this->assertUnderImageLimit($item);
 
             $sortOrder++;
             $item->images()->create([
                 'image_path' => $file->store('items', 'public'),
+                'cutout_path' => $this->storeCutoutFile($fileCutouts[$idx] ?? null),
                 'sort_order' => $sortOrder,
             ]);
             $addedNewImages = true;
         }
 
-        foreach ($newUrls as $url) {
+        foreach ($newUrls as $idx => $url) {
             if (!is_string($url) || $url === '' || !filter_var($url, FILTER_VALIDATE_URL)) {
                 continue;
             }
@@ -407,9 +655,17 @@ class ItemController extends Controller
             $sortOrder++;
             $item->images()->create([
                 'external_url' => $url,
+                'cutout_path' => $this->storeCutoutFile($urlCutouts[$idx] ?? null),
                 'sort_order' => $sortOrder,
             ]);
             $addedNewImages = true;
+        }
+
+        foreach ($existingCutouts as $id => $file) {
+            $image = $item->images()->where('id', (int) $id)->first();
+            if ($image) {
+                $this->replaceImageCutout($image, $file);
+            }
         }
 
         if ($addedNewImages) {

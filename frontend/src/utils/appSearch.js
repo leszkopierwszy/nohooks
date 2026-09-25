@@ -50,6 +50,25 @@ export function buildStaticPageEntries() {
     entry('page:collection', APP_SEARCH_KIND.PAGE, t('nav.collection'), t('nav.collection'), 'collection', {
       route: { name: 'collection' },
     }),
+    entry('page:style', APP_SEARCH_KIND.PAGE, t('nav.style'), t('nav.style'), 'style outfits fashion', {
+      route: { name: 'Style' },
+    }),
+    entry(
+      'page:ai-stylist',
+      APP_SEARCH_KIND.PAGE,
+      t('fashionStylist.title'),
+      t('nav.style'),
+      'ai stylist fashion outfits',
+      { route: { name: 'StyleAiStylist' } }
+    ),
+    entry(
+      'page:styles',
+      APP_SEARCH_KIND.PAGE,
+      t('style.nav.styles'),
+      t('nav.style'),
+      'styles pairing formulas combine outfits wardrobe',
+      { route: { name: 'StyleStyles' } }
+    ),
     entry('page:souls-prims', APP_SEARCH_KIND.PAGE, t('nav.prims'), t('nav.souls'), 'souls prims', {
       route: { name: 'SoulsPrims' },
     }),

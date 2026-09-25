@@ -8,7 +8,7 @@ import { toAbsoluteMediaUrl } from '../api/media'
 const ANALYSIS_MAX = 320
 const transformCache = new Map()
 const MAX_CACHE = 200
-const CACHE_VERSION = 'v5'
+const CACHE_VERSION = 'v6'
 const BBOX_PADDING = 0.14
 const MIN_ROTATE_DEG = 1.25
 const MAX_ROTATE_DEG = 10
@@ -382,25 +382,31 @@ export async function computeCoverNormalizeTransform(
   let normMinY = stats.minY / height
   let normMaxY = (stats.maxY + 1) / height
 
-  const expanded = expandNormalizedBounds(normMinX, normMaxX, normMinY, normMaxY, bboxPadding)
+  const rawW = Math.max(0.08, normMaxX - normMinX)
+  const rawH = Math.max(0.08, normMaxY - normMinY)
+  // Tall / near-full-frame objects (dresses) need less padding so they don't shrink too much.
+  const padding =
+    rawH > 0.82 || rawW > 0.82 ? Math.min(bboxPadding, 0.06) : bboxPadding
+  const expanded = expandNormalizedBounds(normMinX, normMaxX, normMinY, normMaxY, padding)
   normMinX = expanded.minX
   normMaxX = expanded.maxX
   normMinY = expanded.minY
   normMaxY = expanded.maxY
 
-  const bw = Math.max(0.08, normMaxX - normMinX)
-  const bh = Math.max(0.08, normMaxY - normMinY)
+  const boxW = Math.max(0.08, normMaxX - normMinX)
+  const boxH = Math.max(0.08, normMaxY - normMinY)
   const cx = (normMinX + normMaxX) / 2
   const cy = (normMinY + normMaxY) / 2
 
   const { fitW, fitH, offsetX, offsetY } = objectContainLayout(imgAspect, 1)
 
-  const objW = bw * fitW
-  const objH = bh * fitH
+  const objW = boxW * fitW
+  const objH = boxH * fitH
   let scale = fill / Math.max(objW, objH)
   scale = Math.min(1.35, Math.max(0.5, scale))
 
-  const useBottom = align === 'bottom'
+  // Prefer center for near-full-frame subjects even if caller asked for bottom.
+  const useBottom = align === 'bottom' && boxH < 0.82
   const anchorNormX = useBottom ? baseline.centerX : cx
   const anchorNormY = useBottom ? baseline.centerY : cy
   const targetX = 0.5

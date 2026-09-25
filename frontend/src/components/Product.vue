@@ -18,15 +18,27 @@
         </nav>
   
         <div class="mx-auto mt-6 max-w-2xl sm:px-6 lg:grid lg:max-w-7xl lg:grid-cols-3 lg:gap-8 lg:px-8">
-          <ItemImage
-            v-for="(image, index) in galleryImages"
-            :key="index"
-            :src="image.src"
-            :alt="image.alt"
-            :container-class="galleryImageClasses[index]"
-            img-class="size-full"
-            normalize-scale
-          />
+          <template v-if="galleryImages.length">
+            <ItemImage
+              v-for="(image, index) in galleryImages"
+              :key="index"
+              :src="image.src"
+              :alt="image.alt"
+              :container-class="galleryImageClasses[index]"
+              img-class="size-full"
+              normalize-scale
+            />
+          </template>
+          <div
+            v-else
+            class="flex aspect-4/5 size-full items-center justify-center rounded-lg bg-gray-100 sm:rounded-lg lg:col-span-3 lg:aspect-3/4 lg:max-h-144"
+            role="img"
+            :aria-label="t('item.noImageLoaded')"
+          >
+            <p class="px-6 text-center text-sm font-medium text-gray-500 sm:text-base">
+              {{ t('item.noImageLoaded') }}
+            </p>
+          </div>
         </div>
   
         <div class="mx-auto max-w-2xl px-4 pt-10 pb-16 sm:px-6 lg:grid lg:max-w-7xl lg:grid-cols-3 lg:grid-rows-[auto_auto_1fr] lg:gap-x-8 lg:px-8 lg:pt-16 lg:pb-24">
@@ -82,7 +94,7 @@
             </div>
 
             <div v-if="personaFitText" class="mt-8">
-              <h3 class="text-sm font-medium text-gray-900">Dopasowanie do person</h3>
+              <h3 class="text-sm font-medium text-gray-900">Persona</h3>
               <p class="mt-2 text-sm text-gray-700">{{ personaFitText }}</p>
             </div>
 
@@ -96,18 +108,26 @@
               <p class="mt-2 text-lg font-medium text-gray-900">{{ seasonLabel }}</p>
             </div>
 
-            <div v-if="item?.color" class="mt-8">
-              <h3 class="text-sm font-medium text-gray-900">Kolor</h3>
-              <div class="mt-3 flex items-center gap-3">
-                <span
-                  class="size-8 shrink-0 rounded-full outline -outline-offset-1 outline-black/10"
-                  :class="[
-                    colorSwatch ? '' : 'bg-gray-200',
-                    colorSwatchNeedsBorder(item.color) ? 'border border-gray-300' : 'border border-gray-200',
-                  ]"
-                  :style="colorSwatch ?? undefined"
-                />
-                <span class="text-sm text-gray-700">{{ colorLabel }}</span>
+            <div v-if="itemColors.length" class="mt-8">
+              <h3 class="text-sm font-medium text-gray-900">
+                {{ itemColors.length > 1 ? 'Kolory' : 'Kolor' }}
+              </h3>
+              <div class="mt-3 flex flex-wrap items-center gap-3">
+                <div
+                  v-for="color in itemColors"
+                  :key="color"
+                  class="flex items-center gap-2"
+                >
+                  <span
+                    class="size-8 shrink-0 rounded-full outline -outline-offset-1 outline-black/10"
+                    :class="[
+                      colorSwatchStyle(color) ? '' : 'bg-gray-200',
+                      colorSwatchNeedsBorder(color) ? 'border border-gray-300' : 'border border-gray-200',
+                    ]"
+                    :style="colorSwatchStyle(color) ?? undefined"
+                  />
+                  <span class="text-sm text-gray-700">{{ displayColorName(color) }}</span>
+                </div>
               </div>
             </div>
 
@@ -192,7 +212,7 @@
   import { useCollectionStore } from '../stores/collection'
   import { useItemsStore } from '../stores/items'
   import { itemGalleryUrls } from '../api/media'
-  import { colorSwatchNeedsBorder, colorSwatchStyle, displayColorName } from '../constants/itemColors'
+  import { colorSwatchNeedsBorder, colorSwatchStyle, displayColorName, itemColorsList } from '../constants/itemColors'
   import { displayBrandName } from '../constants/itemBrands'
   import { displaySeasonName } from '../constants/itemSeasons'
   import { displayRarityName } from '../constants/itemRarity'
@@ -207,6 +227,7 @@
   import ItemImage from './ItemImage.vue'
   import LikeRatingPicker from './LikeRatingPicker.vue'
   import EditItemModal from './EditItemModal.vue'
+  import { useI18n } from '../composables/useI18n'
 
   const props = defineProps({
     name: {
@@ -223,6 +244,7 @@
     },
   })
 
+  const { t } = useI18n()
   const router = useRouter()
   const route = useRoute()
   const collectionStore = useCollectionStore()
@@ -347,22 +369,23 @@
     const it = item.value
     if (!it) return null
 
-    if (it.fits_all_personas) {
-      const name = resolvePersonaName(it.default_persona_id)
-      return name
-        ? `Pasuje do wszystkich person · domyślnie ${name}`
-        : 'Pasuje do wszystkich person'
-    }
-
     const defaultName = resolvePersonaName(it.default_persona_id)
-    return defaultName ? `Domyślnie pasuje do: ${defaultName}` : null
+    if (defaultName) return defaultName
+
+    const ids = (it.fits_persona_ids ?? []).map(Number).filter(Number.isFinite)
+    if (!ids.length) return null
+
+    const names = ids
+      .map((id) => resolvePersonaName(id))
+      .filter(Boolean)
+
+    return names.length ? names.join(', ') : null
   })
 
   const brandLabel = computed(() => displayBrandName(item.value?.brand))
   const seasonLabel = computed(() => displaySeasonName(item.value?.season))
   const rarityLabel = computed(() => displayRarityName(item.value?.rarity))
-  const colorLabel = computed(() => displayColorName(item.value?.color))
-  const colorSwatch = computed(() => colorSwatchStyle(item.value?.color))
+  const itemColors = computed(() => itemColorsList(item.value))
 
   const displayPrice = computed(() => {
     if (!item.value) return null
@@ -396,19 +419,12 @@
     'row-span-2 aspect-4/5 size-full rounded-lg sm:rounded-lg lg:aspect-3/4',
   ]
 
-  const fallbackGallery = [
-    {
-      src: 'https://tailwindcss.com/plus-assets/img/ecommerce-images/product-page-02-featured-product-shot.jpg',
-      alt: 'Product',
-    },
-  ]
-
   const galleryImages = computed(() => {
     const alt = item.value?.name ?? 'Item'
     const urls = itemGalleryUrls(item.value)
 
     if (!urls.length) {
-      return fallbackGallery
+      return []
     }
 
     return urls.map((src, index) => ({
