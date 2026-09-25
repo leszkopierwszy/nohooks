@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ConfigController;
 use App\Http\Controllers\Api\EntityController;
 use App\Http\Controllers\Api\EntityBodySnapshotController;
 use App\Http\Controllers\Api\CharacterController;
@@ -25,8 +26,15 @@ use App\Http\Controllers\Api\StyleJourneyController;
 use App\Http\Controllers\Api\Admin\AdminStyleModuleController;
 use App\Http\Controllers\Api\Admin\AdminStyleAchievementController;
 
+Route::get('config', [ConfigController::class, 'show']);
+
 Route::post('auth/register', [AuthController::class, 'register']);
 Route::post('auth/login', [AuthController::class, 'login']);
+Route::get('auth/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
+    ->middleware(['signed', 'throttle:6,1'])
+    ->name('verification.verify');
+Route::post('auth/email/resend', [AuthController::class, 'resendVerification'])
+    ->middleware('throttle:6,1');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('auth/logout', [AuthController::class, 'logout']);

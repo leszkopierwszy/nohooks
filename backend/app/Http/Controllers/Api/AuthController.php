@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\TenantProvisioner;
+use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -13,6 +14,11 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
+    private function emailVerificationRequired(): bool
+    {
+        return (bool) config('site.email_verification', false);
+    }
+
     private function toApi(User $user): array
     {
         static $legacyOwnerId = null;
@@ -31,6 +37,7 @@ class AuthController extends Controller
             'isAdmin' => $user->isAdmin(),
             /** Only this account may claim pre-auth browser localStorage into its workspace. */
             'isLegacyOwner' => $legacyOwnerId !== null && (int) $user->id === (int) $legacyOwnerId,
+            'emailVerified' => $user->hasVerifiedEmail(),
         ];
     }
 
@@ -75,20 +82,33 @@ class AuthController extends Controller
             'password' => ['required', 'confirmed', Password::defaults()],
         ]);
 
+        $requiresVerification = $this->emailVerificationRequired();
+
         $user = User::query()->create([
             'name' => $data['displayName'],
             'username' => $data['username'],
             'email' => $data['email'],
             'password' => $data['password'],
+            'email_verified_at' => $requiresVerification ? null : now(),
         ]);
 
         app(TenantProvisioner::class)->provision($user);
+
+        if ($requiresVerification) {
+            $user->sendEmailVerificationNotification();
+
+            return response()->json([
+                'emailVerificationRequired' => true,
+                'message' => 'Check your email to verify your account before signing in.',
+            ], 201);
+        }
 
         $token = $user->createToken('panel')->plainTextToken;
 
         return response()->json([
             'token' => $token,
             'user' => $this->toApi($user),
+            'emailVerificationRequired' => false,
         ], 201);
     }
 
@@ -107,11 +127,68 @@ class AuthController extends Controller
             ]);
         }
 
+        if ($this->emailVerificationRequired() && ! $user->hasVerifiedEmail()) {
+            throw ValidationException::withMessages([
+                'email' => ['Please verify your email before signing in.'],
+            ]);
+        }
+
         $token = $user->createToken('panel')->plainTextToken;
 
         return response()->json([
             'token' => $token,
             'user' => $this->toApi($user),
+        ]);
+    }
+
+    public function verifyEmail(Request $request, string $id, string $hash)
+    {
+        $user = User::query()->findOrFail($id);
+
+        if (! hash_equals(sha1($user->getEmailForVerification()), $hash)) {
+            abort(403, 'Invalid verification link.');
+        }
+
+        if (! $user->hasVerifiedEmail()) {
+            $user->markEmailAsVerified();
+            event(new Verified($user));
+        }
+
+        $frontend = config('site.frontend_url', 'http://localhost:5173');
+        $redirect = $frontend.'/login?verified=1';
+
+        if ($request->expectsJson() && ! $request->query('redirect')) {
+            return response()->json([
+                'ok' => true,
+                'message' => 'Email verified. You can sign in.',
+            ]);
+        }
+
+        return redirect()->away($redirect);
+    }
+
+    public function resendVerification(Request $request)
+    {
+        if (! $this->emailVerificationRequired()) {
+            return response()->json([
+                'ok' => true,
+                'message' => 'Email verification is not required.',
+            ]);
+        }
+
+        $data = $request->validate([
+            'email' => ['required', 'email'],
+        ]);
+
+        $user = User::query()->where('email', $data['email'])->first();
+
+        if ($user && ! $user->hasVerifiedEmail()) {
+            $user->sendEmailVerificationNotification();
+        }
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'If an unverified account exists for that email, a new link was sent.',
         ]);
     }
 

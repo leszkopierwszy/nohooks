@@ -1,7 +1,7 @@
 <template>
   <div :class="sidebarClasses.navRoot">
     <div :class="sidebarClasses.brandRow">
-      <span :class="sidebarClasses.brandText">{{ sidebarBrandText }}</span>
+      <span :class="sidebarClasses.brandText">{{ brandLabel }}</span>
     </div>
 
     <nav :class="sidebarClasses.navSection" aria-label="Główne">
@@ -77,11 +77,15 @@ import {
   sidebarAccountNavigationForUser,
   isNavGroupActive,
 } from '../config/sidebar'
+import { useSiteConfigStore } from '../stores/siteConfig'
 
 const { t } = useI18n()
 const emit = defineEmits(['navigate'])
 const route = useRoute()
 const userStore = useUserStore()
+const siteConfig = useSiteConfigStore()
+
+const brandLabel = computed(() => siteConfig.appName || sidebarBrandText)
 
 const sidebarAccountNavigation = computed(() =>
   sidebarAccountNavigationForUser({ isAdmin: userStore.isAdmin }),

@@ -500,7 +500,11 @@
     "registerSubmit": "Create account",
     "switchToRegister": "Need an account? Register",
     "switchToLogin": "Already have an account? Sign in",
-    "errorGeneric": "Something went wrong. Try again."
+    "errorGeneric": "Something went wrong. Try again.",
+    "verifyEmailSent": "Check your email to verify your account, then sign in.",
+    "verifiedSuccess": "Email verified. You can sign in now.",
+    "resendVerification": "Resend verification email",
+    "resendVerificationSent": "If an unverified account exists, a new link was sent."
   },
   "display": {
     "theme": {

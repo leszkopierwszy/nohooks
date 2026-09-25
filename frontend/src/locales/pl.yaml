@@ -470,6 +470,10 @@ auth:
   switchToRegister: Nie masz konta? Zarejestruj się
   switchToLogin: Masz już konto? Zaloguj się
   errorGeneric: Coś poszło nie tak. Spróbuj ponownie.
+  verifyEmailSent: Sprawdź e-mail, potwierdź konto, a potem się zaloguj.
+  verifiedSuccess: E-mail potwierdzony. Możesz się zalogować.
+  resendVerification: Wyślij ponownie mail weryfikacyjny
+  resendVerificationSent: Jeśli istnieje niepotwierdzone konto, wysłaliśmy nowy link.
 
 display:
   theme:

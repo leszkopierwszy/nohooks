@@ -286,5 +286,5 @@ export function sidebarPageTitle(path) {
   return item?.labelKey ? t(item.labelKey) : t('nav.overview')
 }
 
-/** Tekst brandu — zmień w sidebarClasses.brandText lub tutaj */
+/** Fallback brand text when site config has not loaded yet */
 export const sidebarBrandText = 'nohooks'
