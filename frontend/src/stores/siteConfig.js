@@ -7,6 +7,8 @@ export const useSiteConfigStore = defineStore('siteConfig', {
   state: () => ({
     appName: FALLBACK_NAME,
     emailVerificationRequired: false,
+    /** @type {Record<string, object>} locale → landing copy from config/landing.php */
+    landing: {},
     loaded: false,
     loading: false,
     error: '',
@@ -23,6 +25,9 @@ export const useSiteConfigStore = defineStore('siteConfig', {
           this.appName = String(data.appName).trim()
         }
         this.emailVerificationRequired = Boolean(data?.emailVerificationRequired)
+        if (data?.landing && typeof data.landing === 'object') {
+          this.landing = data.landing
+        }
         this.loaded = true
         if (typeof document !== 'undefined' && this.appName) {
           document.title = this.appName

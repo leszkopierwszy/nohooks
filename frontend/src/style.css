@@ -42,6 +42,23 @@ html {
     --color-stone-200: var(--color-zinc-700);
     --color-stone-300: var(--color-zinc-600);
   }
+
+  /* Public landing stays light even when the app shell is dark. */
+  .dark .landing {
+    color-scheme: light;
+    --color-white: #ffffff;
+    --color-gray-50: #f9fafb;
+    --color-gray-100: #f3f4f6;
+    --color-gray-200: #e5e7eb;
+    --color-gray-300: #d1d5db;
+    --color-gray-400: #9ca3af;
+    --color-gray-500: #6b7280;
+    --color-gray-600: #4b5563;
+    --color-gray-700: #374151;
+    --color-gray-800: #1f2937;
+    --color-gray-900: #111827;
+    --color-gray-950: #030712;
+  }
 }
 
 @layer utilities {

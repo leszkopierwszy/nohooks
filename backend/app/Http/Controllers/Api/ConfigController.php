@@ -7,7 +7,7 @@ use App\Http\Controllers\Controller;
 class ConfigController extends Controller
 {
     /**
-     * Read-only public bootstrap from config/site.php (+ .env).
+     * Read-only public bootstrap from config/site.php + config/landing.php.
      * Nothing here is writable via API.
      */
     public function show()
@@ -15,6 +15,7 @@ class ConfigController extends Controller
         return response()->json([
             'appName' => (string) config('site.name', 'nohooks'),
             'emailVerificationRequired' => (bool) config('site.email_verification', false),
+            'landing' => config('landing', []),
         ]);
     }
 }

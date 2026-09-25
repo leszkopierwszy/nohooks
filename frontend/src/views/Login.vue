@@ -175,6 +175,9 @@ function syncModeFromQuery() {
   } else {
     mode.value = 'login'
   }
+  if (typeof route.query.email === 'string' && route.query.email.trim()) {
+    form.email = route.query.email.trim()
+  }
   if (route.query.verified === '1') {
     info.value = t('auth.verifiedSuccess')
   }
